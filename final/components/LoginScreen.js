@@ -11,6 +11,7 @@ import {
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { useNavigation } from "@react-navigation/core";
 import { auth } from "../firebase";
@@ -24,14 +25,12 @@ const LoginScreen = () => {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        // User is signed in, display an error message or handle as needed
         Alert.alert("Login Error", "You are already logged in.");
-        // Optional: Redirect to HomeScreen or another screen
         navigation.replace("Home");
       }
     });
 
-    return unsubscribe; // Unsubscribe on unmount
+    return unsubscribe;
   }, []);
 
   const handleSignUp = () => {
@@ -70,13 +69,30 @@ const LoginScreen = () => {
       });
   };
 
+  const handlePasswordReset = () => {
+    if (email) {
+      sendPasswordResetEmail(auth, email)
+        .then(() => {
+          Alert.alert(
+            "Check your email",
+            "Password reset link has been sent to your email."
+          );
+        })
+        .catch((error) => {
+          Alert.alert("Error", error.message);
+        });
+    } else {
+      Alert.alert("Input Required", "Please enter your email address.");
+    }
+  };
+
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding">
       <View style={styles.inputContainer}>
         <TextInput
           placeholder="Email"
           value={email}
-          onChangeText={(text) => setEmail(text)}
+          onChangeText={(text) => setEmail(text.toLowerCase())} // Convert to lowercase
           style={styles.input}
         />
         <TextInput
@@ -97,6 +113,12 @@ const LoginScreen = () => {
           style={[styles.button, styles.buttonOutline]}
         >
           <Text style={styles.buttonOutlineText}>Register</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handlePasswordReset}
+          style={[styles.button, styles.buttonOutline]}
+        >
+          <Text style={styles.buttonOutlineText}>Reset Password</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
