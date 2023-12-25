@@ -1,18 +1,25 @@
 import { StatusBar } from "expo-status-bar";
 import React from "react";
-import { Text } from "react-native"; // Removed the StatusBar import from react-native
-import { StyleSheet, View } from "react-native";
-import Signup from "./components/SignUp";
-import Login from "./components/Login";
-import { auth } from "./configuration/firebase";
+import { StyleSheet, Text, View } from "react-native";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import LoginScreen from "./components/LoginScreen";
+import HomeScreen from "./components/HomeScreen";
+
+const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Signup /> {/* Render the Signup component */}
-      <Login /> {/* Render the Login component */}
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen
+          options={{ headerShown: false }}
+          name="Login"
+          component={LoginScreen}
+        />
+        <Stack.Screen name="Home" component={HomeScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
