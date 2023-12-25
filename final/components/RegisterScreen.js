@@ -1,5 +1,4 @@
 // RegisterScreen.js
-
 import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -56,7 +55,7 @@ const RegisterScreen = () => {
         <TextInput
           placeholder="Email"
           value={email}
-          onChangeText={(text) => setEmail(text)}
+          onChangeText={(text) => setEmail(text.toLowerCase())}
           style={styles.input}
         />
         <TextInput
@@ -67,15 +66,15 @@ const RegisterScreen = () => {
           secureTextEntry
         />
         <TextInput
-          placeholder="Name"
-          value={name}
-          onChangeText={(text) => setName(text)}
-          style={styles.input}
-        />
-        <TextInput
           placeholder="First Name"
           value={firstName}
           onChangeText={(text) => setFirstName(text)}
+          style={styles.input}
+        />
+        <TextInput
+          placeholder="Last Name"
+          value={name}
+          onChangeText={(text) => setName(text)}
           style={styles.input}
         />
         <TextInput
@@ -91,7 +90,6 @@ const RegisterScreen = () => {
           style={styles.input}
         />
       </View>
-
       <TouchableOpacity onPress={handleSignUp} style={styles.button}>
         <Text style={styles.buttonText}>Register</Text>
       </TouchableOpacity>
