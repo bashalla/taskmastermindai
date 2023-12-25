@@ -32,24 +32,6 @@ const LoginScreen = () => {
     return unsubscribe;
   }, []);
 
-  const handleSignUp = () => {
-    createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredentials) => {
-        const user = userCredentials.user;
-        console.log("Registered with:", user.email);
-      })
-      .catch((error) => {
-        if (error.code === "auth/email-already-in-use") {
-          Alert.alert(
-            "Registration Error",
-            "This email is already registered. Please login or use a different email."
-          );
-        } else {
-          Alert.alert("Registration Error", error.message);
-        }
-      });
-  };
-
   const handleLogin = () => {
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredentials) => {
@@ -91,7 +73,7 @@ const LoginScreen = () => {
         <TextInput
           placeholder="Email"
           value={email}
-          onChangeText={(text) => setEmail(text.toLowerCase())} // Convert to lowercase
+          onChangeText={(text) => setEmail(text.toLowerCase())}
           style={styles.input}
         />
         <TextInput
@@ -108,7 +90,7 @@ const LoginScreen = () => {
           <Text style={styles.buttonText}>Login</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={handleSignUp}
+          onPress={() => navigation.navigate("Register")}
           style={[styles.button, styles.buttonOutline]}
         >
           <Text style={styles.buttonOutlineText}>Register</Text>
@@ -123,8 +105,6 @@ const LoginScreen = () => {
     </KeyboardAvoidingView>
   );
 };
-
-export default LoginScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -172,3 +152,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
+export default LoginScreen;
