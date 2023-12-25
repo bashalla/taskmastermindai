@@ -25,7 +25,6 @@ const LoginScreen = () => {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        Alert.alert("Login Error", "You are already logged in.");
         navigation.replace("Home");
       }
     });
@@ -75,7 +74,7 @@ const LoginScreen = () => {
         .then(() => {
           Alert.alert(
             "Check your email",
-            "Password reset link has been sent to your email."
+            "Password reset link has been sent to your email, if email exists."
           );
         })
         .catch((error) => {
