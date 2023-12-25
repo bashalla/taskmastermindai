@@ -1,12 +1,16 @@
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, View } from "react-native";
-
-import SumTest from "./components/Sum";
+import React from "react";
+import { Text } from "react-native"; // Removed the StatusBar import from react-native
+import { StyleSheet, View } from "react-native";
+import Signup from "./components/SignUp";
+import Login from "./components/Login";
+import { auth } from "./configuration/firebase";
 
 export default function App() {
   return (
     <View style={styles.container}>
-      <Text>I Love my Habi</Text>
+      <Signup /> {/* Render the Signup component */}
+      <Login /> {/* Render the Login component */}
       <StatusBar style="auto" />
     </View>
   );
