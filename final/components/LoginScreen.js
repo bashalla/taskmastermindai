@@ -1,4 +1,3 @@
-import { useNavigation } from "@react-navigation/core";
 import React, { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -7,8 +6,13 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
-
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import { useNavigation } from "@react-navigation/core";
 import { auth } from "../firebase";
 
 const LoginScreen = () => {
@@ -20,31 +24,50 @@ const LoginScreen = () => {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
+        // User is signed in, display an error message or handle as needed
+        Alert.alert("Login Error", "You are already logged in.");
+        // Optional: Redirect to HomeScreen or another screen
         navigation.replace("Home");
       }
     });
 
-    return unsubscribe;
+    return unsubscribe; // Unsubscribe on unmount
   }, []);
 
   const handleSignUp = () => {
-    auth
-      .createUserWithEmailAndPassword(email, password)
+    createUserWithEmailAndPassword(auth, email, password)
       .then((userCredentials) => {
         const user = userCredentials.user;
         console.log("Registered with:", user.email);
       })
-      .catch((error) => alert(error.message));
+      .catch((error) => {
+        if (error.code === "auth/email-already-in-use") {
+          Alert.alert(
+            "Registration Error",
+            "This email is already registered. Please login or use a different email."
+          );
+        } else {
+          Alert.alert("Registration Error", error.message);
+        }
+      });
   };
 
   const handleLogin = () => {
-    auth
-      .signInWithEmailAndPassword(email, password)
+    signInWithEmailAndPassword(auth, email, password)
       .then((userCredentials) => {
         const user = userCredentials.user;
         console.log("Logged in with:", user.email);
       })
-      .catch((error) => alert(error.message));
+      .catch((error) => {
+        if (error.code === "auth/invalid-credential") {
+          Alert.alert(
+            "Login Error",
+            "Invalid email or password. Please check your credentials and try again."
+          );
+        } else {
+          Alert.alert("Login Error", error.message);
+        }
+      });
   };
 
   return (
