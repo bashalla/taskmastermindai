@@ -39,7 +39,11 @@ const LoginScreen = () => {
         console.log("Logged in with:", user.email);
       })
       .catch((error) => {
-        if (error.code === "auth/invalid-credential") {
+        if (
+          error.code === "auth/invalid-credential" ||
+          error.code === "auth/missing-password" ||
+          error.code === "auth/invalid-email"
+        ) {
           Alert.alert(
             "Login Error",
             "Invalid email or password. Please check your credentials and try again."

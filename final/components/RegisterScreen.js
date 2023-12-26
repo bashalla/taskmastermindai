@@ -25,6 +25,21 @@ const RegisterScreen = () => {
   const navigation = useNavigation();
 
   const handleSignUp = () => {
+    // Check if any of the input fields are empty
+    if (
+      !email ||
+      !password ||
+      !confirmPassword ||
+      !firstName ||
+      !name ||
+      !nationality ||
+      !gender ||
+      !age
+    ) {
+      Alert.alert("Incomplete Form", "Please fill in all the fields.");
+      return; // Prevent registration if any field is empty
+    }
+
     // Check if passwords match
     if (password !== confirmPassword) {
       Alert.alert("Password Mismatch", "Passwords do not match.");
@@ -96,7 +111,7 @@ const RegisterScreen = () => {
           placeholder="Nationality"
           value={nationality}
           onChangeText={(text) => setNationality(text)}
-          style={styles.input}
+          style={[styles.input, { marginBottom: 10 }]} // Add marginBottom
         />
         <Text>Gender:</Text>
         <View style={styles.radioContainer}>
