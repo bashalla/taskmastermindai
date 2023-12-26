@@ -13,8 +13,21 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import * as ImagePicker from "expo-image-picker";
 import placeholderImage from "../assets/adaptive-icon.png";
-import ImageResizer from "react-native-image-resizer";
+import * as ImageManipulator from "expo-image-manipulator";
 // Adjust the path to your placeholder image
+
+const resizeImage = async (imageUri) => {
+  try {
+    const result = await ImageManipulator.manipulateAsync(
+      imageUri,
+      [{ resize: { width: 800, height: 600 } }], // Adjust size as needed
+      { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+    );
+    return result.uri;
+  } catch (error) {
+    console.error("Error resizing image:", error);
+  }
+};
 
 function ProfileScreen() {
   const [userData, setUserData] = useState({
@@ -69,14 +82,12 @@ function ProfileScreen() {
       const asset = result.assets[0];
       const imageUri = asset.uri;
 
-      // Resize the image using react-native-image-resizer
+      // Resize the image using expo-image-manipulator
       try {
-        const resizedImage = await ImageResizer.createResizedImage(
+        const resizedImage = await ImageManipulator.manipulateAsync(
           imageUri,
-          800,
-          600,
-          "JPEG",
-          80
+          [{ resize: { width: 800, height: 600 } }],
+          { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
         );
         const resizedImageUri = resizedImage.uri;
 
