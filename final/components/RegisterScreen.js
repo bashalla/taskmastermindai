@@ -9,23 +9,22 @@ import {
   Alert,
 } from "react-native";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { useNavigation } from "@react-navigation/core";
-import { auth, db } from "../firebase"; // Adjust this path to the actual location of your Firebase config file
+import { useNavigation } from "@react-navigation/native"; // Change import
+import { auth, db } from "../firebase";
 import { doc, setDoc } from "firebase/firestore";
 
 const RegisterScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState(""); // New state for password confirmation
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [name, setName] = useState("");
   const [nationality, setNationality] = useState("");
   const [gender, setGender] = useState("");
   const [age, setAge] = useState("");
-  const navigation = useNavigation();
+  const navigation = useNavigation(); // Get navigation object
 
   const handleSignUp = () => {
-    // Check if any of the input fields are empty
     if (
       !email ||
       !password ||
@@ -37,13 +36,12 @@ const RegisterScreen = () => {
       !age
     ) {
       Alert.alert("Incomplete Form", "Please fill in all the fields.");
-      return; // Prevent registration if any field is empty
+      return;
     }
 
-    // Check if passwords match
     if (password !== confirmPassword) {
       Alert.alert("Password Mismatch", "Passwords do not match.");
-      return; // Prevent registration if passwords don't match
+      return;
     }
 
     createUserWithEmailAndPassword(auth, email, password)
@@ -51,7 +49,6 @@ const RegisterScreen = () => {
         const user = userCredentials.user;
         console.log("Registered with:", user.email);
 
-        // Add additional user info to Firestore
         const userRef = doc(db, "users", user.uid);
         setDoc(userRef, {
           name: name,
@@ -61,11 +58,9 @@ const RegisterScreen = () => {
           age: age,
         })
           .then(() => {
-            // Handle successful registration
             navigation.navigate("Home");
           })
           .catch((error) => {
-            // Handle any errors
             Alert.alert("Registration Error", error.message);
           });
       })
@@ -74,6 +69,12 @@ const RegisterScreen = () => {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding">
+      <TouchableOpacity
+        onPress={() => navigation.goBack()}
+        style={styles.backButton}
+      >
+        <Text style={styles.backButtonText}>Back</Text>
+      </TouchableOpacity>
       <View style={styles.inputContainer}>
         <TextInput
           placeholder="Email"
@@ -89,7 +90,7 @@ const RegisterScreen = () => {
           secureTextEntry
         />
         <TextInput
-          placeholder="Confirm Password" // New input for password confirmation
+          placeholder="Confirm Password"
           value={confirmPassword}
           onChangeText={(text) => setConfirmPassword(text)}
           style={styles.input}
@@ -111,7 +112,7 @@ const RegisterScreen = () => {
           placeholder="Nationality"
           value={nationality}
           onChangeText={(text) => setNationality(text)}
-          style={[styles.input, { marginBottom: 10 }]} // Add marginBottom
+          style={[styles.input, { marginBottom: 10 }]}
         />
         <Text>Gender:</Text>
         <View style={styles.radioContainer}>
@@ -158,6 +159,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  backButton: {
+    position: "absolute",
+    top: 80,
+    left: 20,
+  },
+  backButtonText: {
+    color: "#0782F9",
+    fontSize: 16,
+  },
   inputContainer: {
     width: "80%",
   },
@@ -166,7 +176,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 10,
     borderRadius: 10,
-    marginTop: 10, // Increase the top margin for better spacing
+    marginTop: 10,
   },
   button: {
     backgroundColor: "#0782F9",
@@ -184,7 +194,7 @@ const styles = StyleSheet.create({
   radioContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10, // Increase the top margin for better spacing
+    marginTop: 10,
   },
   radioButton: {
     flexDirection: "row",
@@ -194,7 +204,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: "#0782F9", // Change this to your desired color
+    backgroundColor: "#0782F9",
     marginLeft: 5,
   },
 });
