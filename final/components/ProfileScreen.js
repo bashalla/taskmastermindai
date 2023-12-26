@@ -13,6 +13,7 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import * as ImagePicker from "expo-image-picker";
 import { updatePassword } from "firebase/auth";
+import placeholderImage from "../assets/adaptive-icon.png"; // Adjust the path to your placeholder image
 
 function ProfileScreen() {
   const [userData, setUserData] = useState({
@@ -55,19 +56,32 @@ function ProfileScreen() {
       quality: 1,
     });
 
-    if (!result.cancelled) {
-      const response = await fetch(result.uri);
+    if (result.canceled) {
+      // Handle the case when the user cancels image selection.
+      return;
+    }
+
+    if (result.assets && result.assets.length > 0) {
+      const asset = result.assets[0]; // Get the first selected asset.
+
+      // You can access the selected image URI using asset.uri.
+      const imageUri = asset.uri;
+
+      const response = await fetch(imageUri);
       const blob = await response.blob();
       const storageRef = ref(storage, `profileImages/${auth.currentUser.uid}`);
-      uploadBytes(storageRef, blob).then((snapshot) => {
-        getDownloadURL(snapshot.ref).then((downloadURL) => {
-          setProfileImage(downloadURL);
-          updateProfileImage(downloadURL);
-        });
-      });
+
+      try {
+        const snapshot = await uploadBytes(storageRef, blob);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        setProfileImage(downloadURL);
+        updateProfileImage(downloadURL);
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        // Handle the error here.
+      }
     }
   };
-
   const updateProfileImage = async (url) => {
     const userDoc = doc(db, "users", auth.currentUser.uid);
     await updateDoc(userDoc, {
@@ -102,7 +116,7 @@ function ProfileScreen() {
     <View style={styles.container}>
       <TouchableOpacity onPress={handleSelectImage}>
         <Image
-          source={{ uri: profileImage || "default_profile_image_url" }}
+          source={profileImage ? { uri: profileImage } : placeholderImage}
           style={styles.profileImage}
         />
       </TouchableOpacity>
