@@ -1,11 +1,37 @@
-import { useNavigation } from "@react-navigation/core";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { auth } from "../firebase";
 
-const HomeScreen = () => {
-  const navigation = useNavigation();
+const Tab = createBottomTabNavigator();
 
+// Define other screens for Category, Rewards, and Profile
+function CategoryScreen() {
+  return (
+    <View>
+      <Text>Category</Text>
+    </View>
+  );
+}
+
+function RewardsScreen() {
+  return (
+    <View>
+      <Text>Rewards</Text>
+    </View>
+  );
+}
+
+function ProfileScreen() {
+  return (
+    <View>
+      <Text>Profile</Text>
+    </View>
+  );
+}
+
+// Your original HomeScreen component
+function HomeScreen() {
   const handleSignOut = () => {
     auth
       .signOut()
@@ -23,9 +49,19 @@ const HomeScreen = () => {
       </TouchableOpacity>
     </View>
   );
-};
+}
 
-export default HomeScreen;
+// Main component with bottom tab navigator
+export default function App() {
+  return (
+    <Tab.Navigator>
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Category" component={CategoryScreen} />
+      <Tab.Screen name="Rewards" component={RewardsScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {

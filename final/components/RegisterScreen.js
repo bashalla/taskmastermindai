@@ -7,9 +7,10 @@ import {
   TouchableOpacity,
   View,
   Alert,
+  Platform,
 } from "react-native";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { useNavigation } from "@react-navigation/native"; // Change import
+import { useNavigation } from "@react-navigation/native";
 import { auth, db } from "../firebase";
 import { doc, setDoc } from "firebase/firestore";
 
@@ -22,7 +23,7 @@ const RegisterScreen = () => {
   const [nationality, setNationality] = useState("");
   const [gender, setGender] = useState("");
   const [age, setAge] = useState("");
-  const navigation = useNavigation(); // Get navigation object
+  const navigation = useNavigation();
 
   const handleSignUp = () => {
     if (
@@ -68,7 +69,11 @@ const RegisterScreen = () => {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior="padding">
+    <KeyboardAvoidingView
+      style={styles.container}
+      // behavior={Platform.OS === "ios" ? "padding" : null}
+      // keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 30}
+    >
       <TouchableOpacity
         onPress={() => navigation.goBack()}
         style={styles.backButton}
