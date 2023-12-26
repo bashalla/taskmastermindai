@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { auth } from "../firebase";
+import ProfileScreen from "./ProfileScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -18,14 +19,6 @@ function RewardsScreen() {
   return (
     <View>
       <Text>Rewards</Text>
-    </View>
-  );
-}
-
-function ProfileScreen() {
-  return (
-    <View>
-      <Text>Profile</Text>
     </View>
   );
 }

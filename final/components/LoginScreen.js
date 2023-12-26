@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   StyleSheet,
@@ -12,23 +12,9 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
-  getAuth,
-  signInWithCredential,
-  GithubAuthProvider,
 } from "firebase/auth";
 import { useNavigation } from "@react-navigation/core";
-import * as AuthSession from "expo-auth-session";
-import * as Random from "expo-random";
 import { auth } from "../firebase";
-
-const githubConfig = {
-  clientId: "Iv1.5f86f75a4b7af4da",
-  clientSecret: "8b6c093410253b51bc4d79d55a91e39094143a1e",
-  redirectUrl: AuthSession.makeRedirectUri({
-    useProxy: true, // Use proxy for better handling in development
-  }),
-  scopes: ["identity"],
-};
 
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
@@ -53,7 +39,18 @@ const LoginScreen = () => {
         console.log("Logged in with:", user.email);
       })
       .catch((error) => {
-        Alert.alert("Login Error", error.message);
+        if (
+          error.code === "auth/invalid-credential" ||
+          error.code === "auth/missing-password" ||
+          error.code === "auth/invalid-email"
+        ) {
+          Alert.alert(
+            "Login Error",
+            "Invalid email or password. Please check your credentials and try again."
+          );
+        } else {
+          Alert.alert("Login Error", error.message);
+        }
       });
   };
 
@@ -63,7 +60,7 @@ const LoginScreen = () => {
         .then(() => {
           Alert.alert(
             "Check your email",
-            "Password reset link has been sent to your email."
+            "Password reset link has been sent to your email, if email exists."
           );
         })
         .catch((error) => {
@@ -74,52 +71,13 @@ const LoginScreen = () => {
     }
   };
 
-  const handleGitHubLogin = async () => {
-    try {
-      const authUrl = `https://github.com/login/oauth/authorize?client_id=${
-        githubConfig.clientId
-      }&redirect_uri=${encodeURIComponent(
-        githubConfig.redirectUrl
-      )}&scope=${githubConfig.scopes.join(" ")}`;
-      const result = await AuthSession.startAsync({ authUrl });
-
-      if (result.type === "success" && result.params.code) {
-        const code = result.params.code;
-        const response = await fetch(
-          "https://github.com/login/oauth/access_token",
-          {
-            method: "POST",
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              client_id: githubConfig.clientId,
-              client_secret: githubConfig.clientSecret,
-              code: code,
-            }),
-          }
-        );
-        const data = await response.json();
-        const credential = GithubAuthProvider.credential(data.access_token);
-        await signInWithCredential(auth, credential);
-
-        console.log("GitHub sign in successful");
-        navigation.navigate("Home");
-      }
-    } catch (error) {
-      console.error("GitHub authentication failed", error);
-      Alert.alert("Authentication failed", error.message);
-    }
-  };
-
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding">
       <View style={styles.inputContainer}>
         <TextInput
           placeholder="Email"
           value={email}
-          onChangeText={(text) => setEmail(text)}
+          onChangeText={(text) => setEmail(text.toLowerCase())}
           style={styles.input}
         />
         <TextInput
@@ -146,9 +104,6 @@ const LoginScreen = () => {
           style={[styles.button, styles.buttonOutline]}
         >
           <Text style={styles.buttonOutlineText}>Reset Password</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleGitHubLogin} style={styles.button}>
-          <Text style={styles.buttonText}>Login with GitHub</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
