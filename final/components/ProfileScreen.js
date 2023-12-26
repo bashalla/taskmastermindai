@@ -12,8 +12,9 @@ import { auth, db, storage } from "../firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import * as ImagePicker from "expo-image-picker";
-import { updatePassword } from "firebase/auth";
-import placeholderImage from "../assets/adaptive-icon.png"; // Adjust the path to your placeholder image
+import placeholderImage from "../assets/adaptive-icon.png";
+import ImageResizer from "react-native-image-resizer";
+// Adjust the path to your placeholder image
 
 function ProfileScreen() {
   const [userData, setUserData] = useState({
@@ -43,12 +44,14 @@ function ProfileScreen() {
   }, []);
 
   const handleSelectImage = async () => {
+    // Request media library permissions
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       alert("Sorry, we need camera roll permissions to make this work!");
       return;
     }
 
+    // Launch image library to select an image
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -56,32 +59,50 @@ function ProfileScreen() {
       quality: 1,
     });
 
+    // Exit if selection is cancelled
     if (result.canceled) {
-      // Handle the case when the user cancels image selection.
       return;
     }
 
+    // Proceed if an image is selected
     if (result.assets && result.assets.length > 0) {
-      const asset = result.assets[0]; // Get the first selected asset.
-
-      // You can access the selected image URI using asset.uri.
+      const asset = result.assets[0];
       const imageUri = asset.uri;
 
-      const response = await fetch(imageUri);
-      const blob = await response.blob();
-      const storageRef = ref(storage, `profileImages/${auth.currentUser.uid}`);
-
+      // Resize the image using react-native-image-resizer
       try {
-        const snapshot = await uploadBytes(storageRef, blob);
-        const downloadURL = await getDownloadURL(snapshot.ref);
-        setProfileImage(downloadURL);
-        updateProfileImage(downloadURL);
-      } catch (error) {
-        console.error("Error uploading image:", error);
-        // Handle the error here.
+        const resizedImage = await ImageResizer.createResizedImage(
+          imageUri,
+          800,
+          600,
+          "JPEG",
+          80
+        );
+        const resizedImageUri = resizedImage.uri;
+
+        // Prepare the image for upload
+        const response = await fetch(resizedImageUri);
+        const blob = await response.blob();
+        const storageRef = ref(
+          storage,
+          `profileImages/${auth.currentUser.uid}`
+        );
+
+        // Upload the image
+        try {
+          const snapshot = await uploadBytes(storageRef, blob);
+          const downloadURL = await getDownloadURL(snapshot.ref);
+          setProfileImage(downloadURL);
+          updateProfileImage(downloadURL);
+        } catch (uploadError) {
+          console.error("Error uploading image:", uploadError);
+        }
+      } catch (resizeError) {
+        console.error("Error resizing image:", resizeError);
       }
     }
   };
+
   const updateProfileImage = async (url) => {
     const userDoc = doc(db, "users", auth.currentUser.uid);
     await updateDoc(userDoc, {
