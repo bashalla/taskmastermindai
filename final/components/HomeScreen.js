@@ -31,12 +31,13 @@ function ProfileScreen() {
 }
 
 // Your original HomeScreen component
-function HomeScreen() {
+function HomeScreen({ navigation }) {
+  // Accept navigation prop here
   const handleSignOut = () => {
     auth
       .signOut()
       .then(() => {
-        navigation.replace("Login");
+        navigation.replace("Login"); // Use the navigation prop
       })
       .catch((error) => alert(error.message));
   };
@@ -55,14 +56,13 @@ function HomeScreen() {
 export default function App() {
   return (
     <Tab.Navigator>
-      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Dashboard" component={HomeScreen} />
       <Tab.Screen name="Category" component={CategoryScreen} />
       <Tab.Screen name="Rewards" component={RewardsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
