@@ -1,43 +1,21 @@
+// HomeScreen.js
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { auth } from "../firebase";
-import ProfileScreen from "./ProfileScreen";
+import { auth } from "../firebase"; // Adjust the path as per your project structure
 
-const Tab = createBottomTabNavigator();
-
-// Define other screens for Category, Rewards, and Profile
-function CategoryScreen() {
-  return (
-    <View>
-      <Text>Category</Text>
-    </View>
-  );
-}
-
-function RewardsScreen() {
-  return (
-    <View>
-      <Text>Rewards</Text>
-    </View>
-  );
-}
-
-// Your original HomeScreen component
 function HomeScreen({ navigation }) {
-  // Accept navigation prop here
   const handleSignOut = () => {
     auth
       .signOut()
       .then(() => {
-        navigation.replace("Login"); // Use the navigation prop
+        navigation.replace("Login");
       })
       .catch((error) => alert(error.message));
   };
 
   return (
     <View style={styles.container}>
-      <Text>Email: {auth.currentUser?.email}</Text>
+      <Text>Hi, {auth.currentUser?.email}</Text>
       <TouchableOpacity onPress={handleSignOut} style={styles.button}>
         <Text style={styles.buttonText}>Sign out</Text>
       </TouchableOpacity>
@@ -45,17 +23,6 @@ function HomeScreen({ navigation }) {
   );
 }
 
-// Main component with bottom tab navigator
-export default function App() {
-  return (
-    <Tab.Navigator>
-      <Tab.Screen name="Dashboard" component={HomeScreen} />
-      <Tab.Screen name="Category" component={CategoryScreen} />
-      <Tab.Screen name="Rewards" component={RewardsScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
-    </Tab.Navigator>
-  );
-}
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -76,3 +43,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
+export default HomeScreen;

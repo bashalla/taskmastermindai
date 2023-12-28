@@ -1,15 +1,35 @@
-import { StatusBar } from "expo-status-bar";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import LoginScreen from "./components/LoginScreen";
-import HomeScreen from "./components/HomeScreen";
 import RegisterScreen from "./components/RegisterScreen";
+import HomeScreen from "./components/HomeScreen";
+import CategoryScreen from "./components/CategoryScreen";
+import RewardsScreen from "./components/RewardsScreen"; // Assuming you have this component
 import ProfileScreen from "./components/ProfileScreen";
+import TaskCreationScreen from "./components/TaskScreen"; // Import your TaskCreationScreen component
 
 const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
 
+// Define your Tab Navigator
+function MyTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false, // This will hide the header for all screens in the tab navigator
+      }}
+    >
+      <Tab.Screen name="Dashboard" component={HomeScreen} />
+      <Tab.Screen name="Category" component={CategoryScreen} />
+      <Tab.Screen name="Rewards" component={RewardsScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
+  );
+}
+
+// Main App component with Stack Navigator
 export default function App() {
   return (
     <NavigationContainer>
@@ -25,25 +45,17 @@ export default function App() {
           component={RegisterScreen}
         />
         <Stack.Screen
-          options={{ headerShown: false }}
           name="Home"
-          component={HomeScreen}
+          component={MyTabs}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
+          name="TaskCreation" // Define the screen name here
+          component={TaskCreationScreen} // Use your TaskCreationScreen component
           options={{ headerShown: false }}
-          name="Profile"
-          component={ProfileScreen}
         />
+        {/* You can add other screens here if needed */}
       </Stack.Navigator>
     </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
