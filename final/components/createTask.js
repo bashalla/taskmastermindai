@@ -23,6 +23,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
 import Icon from "react-native-vector-icons/MaterialIcons"; // Import Icon
 import { db } from "../firebase";
+import * as Location from "expo-location";
 
 const CreateTask = ({ navigation, route }) => {
   const { categoryId } = route.params;
@@ -70,6 +71,19 @@ const CreateTask = ({ navigation, route }) => {
       console.error("Error preparing document for upload: ", error);
       throw error;
     }
+  };
+
+  const getLocation = async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission to access location was denied");
+      return;
+    }
+
+    let location = await Location.getCurrentPositionAsync({});
+    setLocation(
+      `Lat: ${location.coords.latitude}, Long: ${location.coords.longitude}`
+    );
   };
 
   const handleSaveTask = async () => {
@@ -169,6 +183,7 @@ const CreateTask = ({ navigation, route }) => {
           style={styles.input}
           placeholder="Location"
           value={location}
+          onFocus={getLocation} // Trigger location tracking when the user focuses on the input
           onChangeText={setLocation}
         />
       </View>
@@ -184,6 +199,7 @@ const CreateTask = ({ navigation, route }) => {
 
       {/* Deadline Picker */}
       <View style={styles.centeredView}>
+        <Text style={styles.headerText}>Deadline</Text>
         <TouchableOpacity
           style={styles.iconButton}
           onPress={() => setShowDatePicker(true)}
@@ -223,6 +239,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 15,
+  },
+  headerText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 5,
   },
   icon: {
     marginRight: 10,

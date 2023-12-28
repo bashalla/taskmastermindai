@@ -20,6 +20,7 @@
     "expo-document-picker": "~11.5.4",
     "expo-image-manipulator": "^11.5.0",
     "expo-image-picker": "~14.3.2",
+    "expo-location": "^16.3.0",
     "expo-random": "~13.2.0",
     "expo-status-bar": "~1.6.0",
     "expo-web-browser": "~12.3.2",
