@@ -11,6 +11,13 @@ import {
   Platform,
 } from "react-native";
 import { addDoc, collection } from "firebase/firestore";
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from "firebase/storage";
+
 import { useFocusEffect } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
@@ -18,14 +25,52 @@ import Icon from "react-native-vector-icons/MaterialIcons"; // Import Icon
 import { db } from "../firebase";
 
 const CreateTask = ({ navigation, route }) => {
-  const { categoryId, categoryName } = route.params;
-  const [tasks, setTasks] = useState([]);
+  const { categoryId } = route.params;
   const [taskName, setTaskName] = useState("");
   const [description, setDescription] = useState("");
   const [deadline, setDeadline] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [document, setDocument] = useState(null);
   const [location, setLocation] = useState("");
+  const [selectedFileName, setSelectedFileName] = useState(""); // Added state for selected file name
+
+  const uploadDocumentToFirebase = async (document) => {
+    if (!document) return null;
+
+    try {
+      const storage = getStorage();
+      const storageRef = ref(storage, `taskDocuments/${document.name}`);
+      const response = await fetch(document.uri);
+      const blob = await response.blob();
+
+      const uploadTask = uploadBytesResumable(storageRef, blob);
+
+      return new Promise((resolve, reject) => {
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            // Observe state change events such as progress, pause, and resume
+            // You can use this to show upload progress to the user
+          },
+          (error) => {
+            // Handle unsuccessful uploads
+            console.error("Error during upload: ", error);
+            reject(error);
+          },
+          () => {
+            // Handle successful uploads on complete
+            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+              console.log("File available at", downloadURL);
+              resolve(downloadURL);
+            });
+          }
+        );
+      });
+    } catch (error) {
+      console.error("Error preparing document for upload: ", error);
+      throw error;
+    }
+  };
 
   const handleSaveTask = async () => {
     // Validate input fields
@@ -40,17 +85,13 @@ const CreateTask = ({ navigation, route }) => {
       description,
       deadline: deadline.toISOString(),
       location,
-      categoryId, // Make sure this matches the category you are filtering in TaskScreen
-      // Add document URL if you've uploaded a document
-      // documentUrl: 'URL of the uploaded document' // Uncomment and use the actual URL after uploading
+      categoryId,
     };
 
     try {
       // Upload document to Firebase Storage and get the URL (if a document is selected)
-      let documentUrl = "";
       if (document) {
-        // Assuming you have a function to handle the upload and it returns the URL
-        documentUrl = await uploadDocumentToFirebase(document);
+        const documentUrl = await uploadDocumentToFirebase(document);
         taskData.documentUrl = documentUrl;
       }
 
@@ -58,7 +99,6 @@ const CreateTask = ({ navigation, route }) => {
       await addDoc(collection(db, "tasks"), taskData);
       Alert.alert("Task Created", "Your task has been created successfully.");
 
-      // Call the onGoBack function passed through navigation params to refresh the task list
       if (route.params?.onGoBack) {
         route.params.onGoBack();
       }
@@ -71,13 +111,16 @@ const CreateTask = ({ navigation, route }) => {
 
   const selectDocument = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: "*/*",
-      });
+      const result = await DocumentPicker.getDocumentAsync({ type: "*/*" });
+      console.log("Document Picker Result:", result); // Log the entire result
 
-      if (result.type === "success") {
-        setDocument(result);
-        // Further processing like uploading to Firebase Storage
+      if (!result.cancelled && result.assets) {
+        console.log("Selected document name:", result.assets[0].name); // Log the file name
+        setDocument(result.assets[0]);
+        setSelectedFileName(result.assets[0].name); // Update selected file name
+      } else {
+        console.log("Document selection was cancelled");
+        setSelectedFileName(""); // Reset file name on cancel
       }
     } catch (err) {
       console.error("Error picking a document:", err);
@@ -135,7 +178,9 @@ const CreateTask = ({ navigation, route }) => {
         <Icon name="attach-file" size={20} color="white" />
         <Text style={styles.buttonText}>Select Document</Text>
       </TouchableOpacity>
-      {document && <Text>Selected Document: {document.name}</Text>}
+      <View style={styles.selectedDocumentContainer}>
+        <Text>Selected Document: {selectedFileName || "None"}</Text>
+      </View>
 
       {/* Deadline Picker */}
       <View style={styles.centeredView}>
@@ -183,11 +228,11 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   centeredView: {
-    alignItems: "center", // Center align everything in this view
-    marginVertical: 15, // Add some vertical spacing
+    alignItems: "center",
+    marginVertical: 15,
   },
   iconButton: {
-    marginBottom: 10, // Space between icon and date picker
+    marginBottom: 10,
   },
   input: {
     borderWidth: 1,
@@ -195,10 +240,10 @@ const styles = StyleSheet.create({
     padding: 10,
     flex: 1,
     borderRadius: 5,
-    marginRight: 10, // Added margin to separate from icons
+    marginRight: 10,
   },
   multilineInput: {
-    height: 120, // Adjusted height for multiline input
+    height: 120,
   },
   button: {
     flexDirection: "row",
@@ -208,8 +253,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    width: "60%", // Reduced width
-    alignSelf: "center", // Center align button
+    width: "60%",
+    alignSelf: "center",
     marginBottom: 10,
   },
   buttonText: {
@@ -223,13 +268,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     borderRadius: 10,
     alignItems: "center",
-    width: "60%", // Reduced width
-    alignSelf: "center", // Center align button
+    width: "60%",
+    alignSelf: "center",
     marginBottom: 10,
   },
   cancelButtonText: {
     color: "white",
     fontWeight: "700",
+  },
+  selectedDocumentContainer: {
+    marginTop: 10,
+    alignItems: "center",
   },
 });
 
