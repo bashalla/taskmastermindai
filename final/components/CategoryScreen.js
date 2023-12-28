@@ -11,7 +11,6 @@ import {
 } from "react-native";
 import { auth, db } from "../firebase";
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
-import TaskCreationScreen from "./TaskScreen";
 
 const CategoryScreen = ({ navigation }) => {
   const [categoryName, setCategoryName] = useState("");
@@ -19,9 +18,9 @@ const CategoryScreen = ({ navigation }) => {
   const [selectedColor, setSelectedColor] = useState("");
   const [categories, setCategories] = useState([]);
 
-  // Add this function to navigate to the TaskCreationScreen with category information.
+  // Add this function to navigate to the TaskScreen with category information.
   const handleCategoryClick = (categoryId, categoryName) => {
-    navigation.navigate("TaskCreation", { categoryId, categoryName });
+    navigation.navigate("TaskScreen", { categoryId, categoryName });
   };
 
   // Predefined colors
@@ -34,7 +33,7 @@ const CategoryScreen = ({ navigation }) => {
   const fetchCategories = async () => {
     const q = query(
       collection(db, "categories"),
-      where("userId", "==", auth.currentUser.uid)
+      where("userId", "==", auth.currentUser.uid) // Filter by the current user's ID
     );
     const querySnapshot = await getDocs(q);
     const fetchedCategories = [];

@@ -6,38 +6,49 @@ import {
   StyleSheet,
   FlatList,
   View,
+  Alert,
 } from "react-native";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { useFocusEffect } from "@react-navigation/native";
 import { db } from "../firebase";
 
-const TaskPage = ({ navigation }) => {
+const TaskScreen = ({ navigation, route }) => {
+  const { categoryId, categoryName } = route.params;
   const [tasks, setTasks] = useState([]);
-
-  useEffect(() => {
-    fetchTasks();
-  }, []);
 
   const fetchTasks = async () => {
     try {
-      const querySnapshot = await getDocs(collection(db, "tasks"));
+      const tasksRef = collection(db, "tasks");
+      const q = query(tasksRef, where("categoryId", "==", categoryId));
+      const querySnapshot = await getDocs(q);
       const fetchedTasks = [];
 
       querySnapshot.forEach((doc) => {
-        const taskData = doc.data();
-        const taskName = taskData.name;
-
-        fetchedTasks.push({ id: doc.id, name: taskName });
+        fetchedTasks.push({ ...doc.data(), id: doc.id });
       });
 
       setTasks(fetchedTasks);
     } catch (error) {
-      console.error("Error fetching tasks: ", error);
+      console.error("Error fetching tasks:", error);
+      Alert.alert("Error", "Unable to fetch tasks.");
     }
   };
 
+  // useEffect for initial fetch
+  useEffect(() => {
+    fetchTasks();
+  }, [categoryId]);
+
+  // useFocusEffect to refetch tasks when the screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchTasks();
+    }, [categoryId])
+  );
+
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Tasks</Text>
+      <Text style={styles.title}>Tasks for {categoryName}</Text>
 
       <FlatList
         style={styles.taskList}
@@ -53,8 +64,11 @@ const TaskPage = ({ navigation }) => {
       <TouchableOpacity
         style={styles.addButton}
         onPress={() => {
-          // Navigate to the TaskCreation screen for creating a new task
-          navigation.navigate("TaskCreation");
+          // In the component where you navigate to CreateTask
+          navigation.navigate("CreateTask", {
+            categoryId,
+            onGoBack: () => fetchTasks(),
+          });
         }}
       >
         <Text style={styles.addButtonIcon}>+</Text>
@@ -79,7 +93,6 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   title: {
-    marginTop: 20,
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 10,
@@ -108,7 +121,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 100,
     right: 40,
-    marginBottom: 20,
   },
 
   addButtonIcon: {
@@ -123,7 +135,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     width: "90%",
     alignSelf: "center",
-    marginBottom: 20,
   },
   backButtonText: {
     color: "white",
@@ -131,4 +142,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TaskPage;
+export default TaskScreen;

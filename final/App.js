@@ -8,7 +8,9 @@ import HomeScreen from "./components/HomeScreen";
 import CategoryScreen from "./components/CategoryScreen";
 import RewardsScreen from "./components/RewardsScreen"; // Assuming you have this component
 import ProfileScreen from "./components/ProfileScreen";
-import TaskCreationScreen from "./components/TaskScreen"; // Import your TaskCreationScreen component
+import TaskScreen from "./components/TaskScreen"; // Import your TaskCreationScreen component
+import TaskCreationScreen from "./components/CreateTask"; // Import your TaskCreationScreen component
+import CreateTask from "./components/CreateTask";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -50,11 +52,20 @@ export default function App() {
           options={{ headerShown: false }}
         />
         <Stack.Screen
-          name="TaskCreation" // Define the screen name here
-          component={TaskCreationScreen} // Use your TaskCreationScreen component
+          name="TaskScreen"
+          component={TaskScreen}
           options={{ headerShown: false }}
         />
-        {/* You can add other screens here if needed */}
+        <Stack.Screen
+          name="CreateTask"
+          component={CreateTask}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="CategoryScreen"
+          component={CategoryScreen}
+          options={{ headerShown: false }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
