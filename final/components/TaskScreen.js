@@ -22,24 +22,20 @@ const TaskScreen = ({ navigation, route }) => {
       const q = query(tasksRef, where("categoryId", "==", categoryId));
       const querySnapshot = await getDocs(q);
       const fetchedTasks = [];
-
       querySnapshot.forEach((doc) => {
         fetchedTasks.push({ ...doc.data(), id: doc.id });
       });
-
       setTasks(fetchedTasks);
     } catch (error) {
-      console.error("Error fetching tasks:", error);
+      console.error("Error fetching tasks: ", error);
       Alert.alert("Error", "Unable to fetch tasks.");
     }
   };
 
-  // useEffect for initial fetch
   useEffect(() => {
     fetchTasks();
   }, [categoryId]);
 
-  // useFocusEffect to refetch tasks when the screen is focused
   useFocusEffect(
     React.useCallback(() => {
       fetchTasks();
@@ -49,7 +45,6 @@ const TaskScreen = ({ navigation, route }) => {
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Tasks for {categoryName}</Text>
-
       <FlatList
         style={styles.taskList}
         data={tasks}
@@ -60,25 +55,17 @@ const TaskScreen = ({ navigation, route }) => {
           </View>
         )}
       />
-
       <TouchableOpacity
         style={styles.addButton}
         onPress={() => {
-          // In the component where you navigate to CreateTask
-          navigation.navigate("CreateTask", {
-            categoryId,
-            onGoBack: () => fetchTasks(),
-          });
+          navigation.navigate("CreateTask", { categoryId });
         }}
       >
         <Text style={styles.addButtonIcon}>+</Text>
       </TouchableOpacity>
-
       <TouchableOpacity
         style={styles.backButton}
-        onPress={() => {
-          navigation.goBack();
-        }}
+        onPress={() => navigation.goBack()}
       >
         <Text style={styles.backButtonText}>Back to Categories</Text>
       </TouchableOpacity>
@@ -95,7 +82,8 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 10,
+    marginTop: 20,
+    marginBottom: 20,
   },
   taskList: {
     flex: 1,
@@ -113,32 +101,33 @@ const styles = StyleSheet.create({
   },
   addButton: {
     backgroundColor: "#0782F9",
-    width: 60, // Set the width and height to the same value
-    height: 60, // Set the width and height to the same value
-    borderRadius: 30, // Half of the width/height makes it round
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
     position: "absolute",
-    bottom: 100,
-    right: 40,
+    bottom: 20,
+    right: 20,
   },
-
   addButtonIcon: {
     color: "white",
     fontSize: 24,
   },
   backButton: {
-    backgroundColor: "#0782F9",
-    padding: 15,
+    backgroundColor: "#d9534f",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
     borderRadius: 10,
     alignItems: "center",
-    marginTop: 20,
-    width: "90%",
-    alignSelf: "center",
+    justifyContent: "center",
+    position: "absolute",
+    bottom: 90,
+    left: 20,
   },
   backButtonText: {
     color: "white",
-    fontWeight: "700",
+    fontSize: 16,
   },
 });
 
