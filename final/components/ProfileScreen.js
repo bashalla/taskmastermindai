@@ -12,7 +12,22 @@ import { auth, db, storage } from "../firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import * as ImagePicker from "expo-image-picker";
-import { updatePassword } from "firebase/auth";
+import placeholderImage from "../assets/adaptive-icon.png";
+import * as ImageManipulator from "expo-image-manipulator";
+// Adjust the path to your placeholder image
+
+const resizeImage = async (imageUri) => {
+  try {
+    const result = await ImageManipulator.manipulateAsync(
+      imageUri,
+      [{ resize: { width: 800, height: 600 } }], // Adjust size as needed
+      { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+    );
+    return result.uri;
+  } catch (error) {
+    console.error("Error resizing image:", error);
+  }
+};
 
 function ProfileScreen() {
   const [userData, setUserData] = useState({
@@ -42,12 +57,14 @@ function ProfileScreen() {
   }, []);
 
   const handleSelectImage = async () => {
+    // Request media library permissions
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       alert("Sorry, we need camera roll permissions to make this work!");
       return;
     }
 
+    // Launch image library to select an image
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -55,16 +72,45 @@ function ProfileScreen() {
       quality: 1,
     });
 
-    if (!result.cancelled) {
-      const response = await fetch(result.uri);
-      const blob = await response.blob();
-      const storageRef = ref(storage, `profileImages/${auth.currentUser.uid}`);
-      uploadBytes(storageRef, blob).then((snapshot) => {
-        getDownloadURL(snapshot.ref).then((downloadURL) => {
+    // Exit if selection is cancelled
+    if (result.canceled) {
+      return;
+    }
+
+    // Proceed if an image is selected
+    if (result.assets && result.assets.length > 0) {
+      const asset = result.assets[0];
+      const imageUri = asset.uri;
+
+      // Resize the image using expo-image-manipulator
+      try {
+        const resizedImage = await ImageManipulator.manipulateAsync(
+          imageUri,
+          [{ resize: { width: 800, height: 600 } }],
+          { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+        );
+        const resizedImageUri = resizedImage.uri;
+
+        // Prepare the image for upload
+        const response = await fetch(resizedImageUri);
+        const blob = await response.blob();
+        const storageRef = ref(
+          storage,
+          `profileImages/${auth.currentUser.uid}`
+        );
+
+        // Upload the image
+        try {
+          const snapshot = await uploadBytes(storageRef, blob);
+          const downloadURL = await getDownloadURL(snapshot.ref);
           setProfileImage(downloadURL);
           updateProfileImage(downloadURL);
-        });
-      });
+        } catch (uploadError) {
+          console.error("Error uploading image:", uploadError);
+        }
+      } catch (resizeError) {
+        console.error("Error resizing image:", resizeError);
+      }
     }
   };
 
@@ -102,7 +148,7 @@ function ProfileScreen() {
     <View style={styles.container}>
       <TouchableOpacity onPress={handleSelectImage}>
         <Image
-          source={{ uri: profileImage || "default_profile_image_url" }}
+          source={profileImage ? { uri: profileImage } : placeholderImage}
           style={styles.profileImage}
         />
       </TouchableOpacity>
