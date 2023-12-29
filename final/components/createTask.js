@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   SafeAreaView,
   Text,
@@ -9,8 +9,13 @@ import {
   Alert,
   Button,
   Platform,
+  Dimensions,
+  KeyboardAvoidingView,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import {
   getStorage,
   ref,
@@ -24,6 +29,9 @@ import * as DocumentPicker from "expo-document-picker";
 import Icon from "react-native-vector-icons/MaterialIcons"; // Import Icon
 import { db } from "../firebase";
 import * as Location from "expo-location";
+import MapView, { Marker } from "react-native-maps";
+import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
+import { GOOGLE_API_KEY } from "@env";
 
 const CreateTask = ({ navigation, route }) => {
   const { categoryId } = route.params;
@@ -33,7 +41,8 @@ const CreateTask = ({ navigation, route }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [document, setDocument] = useState(null);
   const [location, setLocation] = useState("");
-  const [selectedFileName, setSelectedFileName] = useState(""); // Added state for selected file name
+  const [selectedFileName, setSelectedFileName] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
 
   const uploadDocumentToFirebase = async (document) => {
     if (!document) return null;
@@ -73,18 +82,25 @@ const CreateTask = ({ navigation, route }) => {
     }
   };
 
-  const getLocation = async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permission to access location was denied");
-      return;
-    }
+  const [region, setRegion] = useState(null);
 
-    let location = await Location.getCurrentPositionAsync({});
-    setLocation(
-      `Lat: ${location.coords.latitude}, Long: ${location.coords.longitude}`
-    );
-  };
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission to access location was denied");
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      setRegion({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
+      });
+    })();
+  }, []);
 
   const handleSaveTask = async () => {
     // Validate input fields
@@ -93,12 +109,15 @@ const CreateTask = ({ navigation, route }) => {
       return;
     }
 
-    // Prepare task data
+    // Prepare task data with timestamp and location
     const taskData = {
       name: taskName,
       description,
       deadline: deadline.toISOString(),
-      location,
+      location: region
+        ? { latitude: region.latitude, longitude: region.longitude }
+        : null,
+      createdAt: serverTimestamp(), // Adds a timestamp
       categoryId,
     };
 
@@ -110,9 +129,11 @@ const CreateTask = ({ navigation, route }) => {
       }
 
       // Save the task to Firestore
-      await addDoc(collection(db, "tasks"), taskData);
+      const docRef = await addDoc(collection(db, "tasks"), taskData);
+      console.log("Task created with ID: ", docRef.id);
       Alert.alert("Task Created", "Your task has been created successfully.");
 
+      // Navigation or additional logic after successful task creation
       if (route.params?.onGoBack) {
         route.params.onGoBack();
       }
@@ -152,80 +173,127 @@ const CreateTask = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Task Name Input */}
-      <View style={styles.inputContainer}>
-        <Icon name="title" size={20} style={styles.icon} />
-        <TextInput
-          style={styles.input}
-          placeholder="Task Name"
-          value={taskName}
-          onChangeText={setTaskName}
-        />
-      </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+    >
+      <ScrollView>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <SafeAreaView style={styles.container}>
+            <Text style={styles.header}>Create a New Task</Text>
 
-      {/* Description Input */}
-      <View style={styles.inputContainer}>
-        <Icon name="description" size={20} style={styles.icon} />
-        <TextInput
-          style={[styles.input, styles.multilineInput]}
-          placeholder="Description"
-          multiline
-          value={description}
-          onChangeText={setDescription}
-        />
-      </View>
+            <View style={styles.inputContainer}>
+              <Icon name="title" size={20} style={styles.icon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Task Name"
+                value={taskName}
+                onChangeText={setTaskName}
+              />
+            </View>
 
-      {/* Location Input */}
-      <View style={styles.inputContainer}>
-        <Icon name="place" size={20} style={styles.icon} />
-        <TextInput
-          style={styles.input}
-          placeholder="Location"
-          value={location}
-          onFocus={getLocation} // Trigger location tracking when the user focuses on the input
-          onChangeText={setLocation}
-        />
-      </View>
+            <View style={styles.inputContainer}>
+              <Icon name="description" size={20} style={styles.icon} />
+              <TextInput
+                style={[styles.input, styles.multilineInput]}
+                placeholder="Description"
+                multiline
+                value={description}
+                onChangeText={setDescription}
+              />
+            </View>
 
-      {/* Document Picker */}
-      <TouchableOpacity style={styles.button} onPress={selectDocument}>
-        <Icon name="attach-file" size={20} color="white" />
-        <Text style={styles.buttonText}>Select Document</Text>
-      </TouchableOpacity>
-      <View style={styles.selectedDocumentContainer}>
-        <Text>Selected Document: {selectedFileName || "None"}</Text>
-      </View>
+            <GooglePlacesAutocomplete
+              placeholder="Search for places"
+              fetchDetails={true}
+              onFocus={() => setIsSearching(true)}
+              onBlur={() => setIsSearching(false)}
+              onPress={(data, details = null) => {
+                setRegion({
+                  latitude: details.geometry.location.lat,
+                  longitude: details.geometry.location.lng,
+                  latitudeDelta: 0.005,
+                  longitudeDelta: 0.005,
+                });
+              }}
+              query={{
+                key: GOOGLE_API_KEY,
+                language: "en",
+              }}
+              styles={{
+                textInputContainer: {
+                  backgroundColor: "grey",
+                },
+                textInput: {
+                  height: 38,
+                  color: "#5d5d5d",
+                  fontSize: 16,
+                },
+                predefinedPlacesDescription: {
+                  color: "#1faadb",
+                },
+              }}
+            />
 
-      {/* Deadline Picker */}
-      <View style={styles.centeredView}>
-        <Text style={styles.headerText}>Deadline</Text>
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={() => setShowDatePicker(true)}
-        >
-          <Icon name="calendar-today" size={30} color="#0782F9" />
-        </TouchableOpacity>
+            <View style={styles.mapContainer}>
+              {region && (
+                <MapView
+                  style={styles.map}
+                  region={region}
+                  onRegionChangeComplete={setRegion}
+                  showsUserLocation={true}
+                >
+                  <Marker coordinate={region} />
+                </MapView>
+              )}
+            </View>
 
-        {showDatePicker && (
-          <DateTimePicker
-            value={deadline}
-            mode="date"
-            display="default"
-            minimumDate={new Date()}
-            onChange={onChangeDate}
-          />
-        )}
-      </View>
+            <TouchableOpacity style={styles.button} onPress={selectDocument}>
+              <Icon name="attach-file" size={20} color="white" />
+              <Text style={styles.buttonText}>Select Document</Text>
+            </TouchableOpacity>
+            <View style={styles.selectedDocumentContainer}>
+              <Text>Selected Document: {selectedFileName || "None"}</Text>
+            </View>
 
-      {/* Save and Cancel Buttons */}
-      <TouchableOpacity style={styles.button} onPress={handleSaveTask}>
-        <Text style={styles.buttonText}>Save Task</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-        <Text style={styles.cancelButtonText}>Cancel</Text>
-      </TouchableOpacity>
-    </SafeAreaView>
+            <View style={styles.centeredView}>
+              <Text style={styles.headerText}>Deadline</Text>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Icon name="calendar-today" size={30} color="#0782F9" />
+              </TouchableOpacity>
+
+              {showDatePicker && (
+                <DateTimePicker
+                  value={deadline}
+                  mode="date"
+                  display="default"
+                  minimumDate={new Date()}
+                  onChange={(event, selectedDate) => {
+                    const currentDate = selectedDate || deadline;
+                    setShowDatePicker(Platform.OS === "ios");
+                    setDeadline(new Date(currentDate.setHours(0, 0, 0, 0)));
+                  }}
+                />
+              )}
+            </View>
+
+            <TouchableOpacity style={styles.button} onPress={handleSaveTask}>
+              <Text style={styles.buttonText}>Save Task</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={handleCancel}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </SafeAreaView>
+        </TouchableWithoutFeedback>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -234,6 +302,13 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 10,
     backgroundColor: "#f4f4f4",
+  },
+  header: {
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 20,
+    marginTop: 20,
   },
   inputContainer: {
     flexDirection: "row",
@@ -300,6 +375,16 @@ const styles = StyleSheet.create({
   selectedDocumentContainer: {
     marginTop: 10,
     alignItems: "center",
+  },
+  mapContainer: {
+    height: 200, // Adjust the height as needed
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  map: {
+    ...StyleSheet.absoluteFillObject,
   },
 });
 
