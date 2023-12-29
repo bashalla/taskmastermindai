@@ -12,8 +12,6 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   ScrollView,
-  TouchableWithoutFeedback,
-  Keyboard,
 } from "react-native";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import {
@@ -41,8 +39,7 @@ const CreateTask = ({ navigation, route }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [document, setDocument] = useState(null);
   const [location, setLocation] = useState("");
-  const [selectedFileName, setSelectedFileName] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
+  const [selectedFileName, setSelectedFileName] = useState(""); // Added state for selected file name
 
   const uploadDocumentToFirebase = async (document) => {
     if (!document) return null;
@@ -173,127 +170,111 @@ const CreateTask = ({ navigation, route }) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
-    >
-      <ScrollView>
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <SafeAreaView style={styles.container}>
-            <Text style={styles.header}>Create a New Task</Text>
+    <SafeAreaView style={styles.container}>
+      {/* Task Name Input */}
+      <View style={styles.inputContainer}>
+        <Icon name="title" size={20} style={styles.icon} />
+        <TextInput
+          style={styles.input}
+          placeholder="Task Name"
+          value={taskName}
+          onChangeText={setTaskName}
+        />
+      </View>
 
-            <View style={styles.inputContainer}>
-              <Icon name="title" size={20} style={styles.icon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Task Name"
-                value={taskName}
-                onChangeText={setTaskName}
-              />
-            </View>
+      {/* Description Input */}
+      <View style={styles.inputContainer}>
+        <Icon name="description" size={20} style={styles.icon} />
+        <TextInput
+          style={[styles.input, styles.multilineInput]}
+          placeholder="Description"
+          multiline
+          value={description}
+          onChangeText={setDescription}
+        />
+      </View>
 
-            <View style={styles.inputContainer}>
-              <Icon name="description" size={20} style={styles.icon} />
-              <TextInput
-                style={[styles.input, styles.multilineInput]}
-                placeholder="Description"
-                multiline
-                value={description}
-                onChangeText={setDescription}
-              />
-            </View>
+      {/* Location Search */}
+      <GooglePlacesAutocomplete
+        placeholder="Search for places"
+        fetchDetails={true}
+        onPress={(data, details = null) => {
+          // 'details' is provided when fetchDetails is true
+          setRegion({
+            latitude: details.geometry.location.lat,
+            longitude: details.geometry.location.lng,
+            latitudeDelta: 0.005,
+            longitudeDelta: 0.005,
+          });
+        }}
+        query={{
+          key: GOOGLE_API_KEY,
+          language: "en",
+        }}
+        styles={{
+          textInput: {
+            height: 38,
+            color: "#5d5d5d",
+            fontSize: 16,
+          },
+          predefinedPlacesDescription: {
+            color: "#1faadb",
+          },
+        }}
+      />
 
-            <GooglePlacesAutocomplete
-              placeholder="Search for places"
-              fetchDetails={true}
-              onFocus={() => setIsSearching(true)}
-              onBlur={() => setIsSearching(false)}
-              onPress={(data, details = null) => {
-                setRegion({
-                  latitude: details.geometry.location.lat,
-                  longitude: details.geometry.location.lng,
-                  latitudeDelta: 0.005,
-                  longitudeDelta: 0.005,
-                });
-              }}
-              query={{
-                key: GOOGLE_API_KEY,
-                language: "en",
-              }}
-              styles={{
-                textInputContainer: {
-                  backgroundColor: "grey",
-                },
-                textInput: {
-                  height: 38,
-                  color: "#5d5d5d",
-                  fontSize: 16,
-                },
-                predefinedPlacesDescription: {
-                  color: "#1faadb",
-                },
-              }}
-            />
+      {/* Map View */}
+      <View style={styles.mapContainer}>
+        {region && (
+          <MapView
+            style={styles.map}
+            region={region}
+            onRegionChangeComplete={setRegion}
+            showsUserLocation={true}
+          >
+            <Marker coordinate={region} />
+          </MapView>
+        )}
+      </View>
 
-            <View style={styles.mapContainer}>
-              {region && (
-                <MapView
-                  style={styles.map}
-                  region={region}
-                  onRegionChangeComplete={setRegion}
-                  showsUserLocation={true}
-                >
-                  <Marker coordinate={region} />
-                </MapView>
-              )}
-            </View>
+      {/* Document Picker */}
+      <TouchableOpacity style={styles.button} onPress={selectDocument}>
+        <Icon name="attach-file" size={20} color="white" />
+        <Text style={styles.buttonText}>Select Document</Text>
+      </TouchableOpacity>
+      <View style={styles.selectedDocumentContainer}>
+        <Text>Selected Document: {selectedFileName || "None"}</Text>
+      </View>
 
-            <TouchableOpacity style={styles.button} onPress={selectDocument}>
-              <Icon name="attach-file" size={20} color="white" />
-              <Text style={styles.buttonText}>Select Document</Text>
-            </TouchableOpacity>
-            <View style={styles.selectedDocumentContainer}>
-              <Text>Selected Document: {selectedFileName || "None"}</Text>
-            </View>
+      {/* Deadline Picker */}
+      <View style={styles.centeredView}>
+        <Text style={styles.headerText}>Deadline</Text>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => setShowDatePicker(true)}
+        >
+          <Icon name="calendar-today" size={30} color="#0782F9" />
+        </TouchableOpacity>
 
-            <View style={styles.centeredView}>
-              <Text style={styles.headerText}>Deadline</Text>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => setShowDatePicker(true)}
-              >
-                <Icon name="calendar-today" size={30} color="#0782F9" />
-              </TouchableOpacity>
+        {showDatePicker && (
+          <DateTimePicker
+            value={deadline}
+            mode="date"
+            display="default"
+            minimumDate={new Date()}
+            onChange={onChangeDate}
+          />
+        )}
+      </View>
 
-              {showDatePicker && (
-                <DateTimePicker
-                  value={deadline}
-                  mode="date"
-                  display="default"
-                  minimumDate={new Date()}
-                  onChange={(event, selectedDate) => {
-                    const currentDate = selectedDate || deadline;
-                    setShowDatePicker(Platform.OS === "ios");
-                    setDeadline(new Date(currentDate.setHours(0, 0, 0, 0)));
-                  }}
-                />
-              )}
-            </View>
-
-            <TouchableOpacity style={styles.button} onPress={handleSaveTask}>
-              <Text style={styles.buttonText}>Save Task</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={handleCancel}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-          </SafeAreaView>
-        </TouchableWithoutFeedback>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      {/* Save and Cancel Buttons */}
+      <TouchableOpacity style={styles.button} onPress={handleSaveTask}>
+        <Text style={styles.buttonText}>Save Task</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+        <Text style={styles.cancelButtonText}>Cancel</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
   );
 };
 
@@ -303,18 +284,7 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: "#f4f4f4",
   },
-  header: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 20,
-    marginTop: 20,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 15,
-  },
+
   headerText: {
     fontSize: 18,
     fontWeight: "bold",
@@ -377,14 +347,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   mapContainer: {
-    height: 200, // Adjust the height as needed
+    height: 300, // Adjust the height as needed
     width: "100%",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 10, // Reduce the margin
   },
   map: {
     ...StyleSheet.absoluteFillObject,
+  },
+  textInputContainer: {
+    backgroundColor: "grey",
+    marginBottom: 10, // Reduce the margin
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10, // Reduce the margin
   },
 });
 
