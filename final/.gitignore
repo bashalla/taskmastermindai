@@ -135,4 +135,5 @@ dist
 
 .vscode
 
+#Firebase Api Keys
 .firebase

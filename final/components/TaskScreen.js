@@ -50,9 +50,18 @@ const TaskScreen = ({ navigation, route }) => {
         data={tasks}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={styles.taskItem}>
-            <Text style={styles.taskName}>{item.name}</Text>
-          </View>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate("TaskDetailScreen", {
+                task: item,
+                onTaskUpdate: fetchTasks,
+              });
+            }}
+          >
+            <View style={styles.taskItem}>
+              <Text style={styles.taskName}>{item.name}</Text>
+            </View>
+          </TouchableOpacity>
         )}
       />
       <TouchableOpacity

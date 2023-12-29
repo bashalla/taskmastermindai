@@ -11,6 +11,7 @@ import ProfileScreen from "./components/ProfileScreen";
 import TaskScreen from "./components/TaskScreen"; // Import your TaskCreationScreen component
 import TaskCreationScreen from "./components/CreateTask"; // Import your TaskCreationScreen component
 import CreateTask from "./components/CreateTask";
+import TaskDetailScreen from "./components/TaskDetailScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -64,6 +65,11 @@ export default function App() {
         <Stack.Screen
           name="CategoryScreen"
           component={CategoryScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="TaskDetailScreen"
+          component={TaskDetailScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
