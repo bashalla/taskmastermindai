@@ -20,6 +20,7 @@ import {
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { useFocusEffect } from "@react-navigation/native";
 import { db } from "../firebase";
+import * as Calendar from "expo-calendar";
 
 const TaskScreen = ({ navigation, route }) => {
   const { categoryId, categoryName } = route.params;
@@ -44,6 +45,19 @@ const TaskScreen = ({ navigation, route }) => {
   };
 
   useEffect(() => {
+    (async () => {
+      const { status: calendarStatus } =
+        await Calendar.requestCalendarPermissionsAsync();
+      const { status: remindersStatus } =
+        await Calendar.requestRemindersPermissionsAsync();
+      if (calendarStatus !== "granted" || remindersStatus !== "granted") {
+        Alert.alert(
+          "Permissions required",
+          "Calendar and reminders access is needed to add events"
+        );
+      }
+    })();
+
     fetchTasks();
   }, [categoryId]);
 
@@ -92,6 +106,46 @@ const TaskScreen = ({ navigation, route }) => {
     navigation.navigate("TaskDetailScreen", { task: item });
   };
 
+  const addTaskToCalendar = async (task) => {
+    try {
+      const defaultCalendarSource =
+        Platform.OS === "ios"
+          ? await getDefaultCalendarSource()
+          : { isLocalAccount: true, name: "Expo Calendar" };
+
+      const newCalendarID = await Calendar.createCalendarAsync({
+        title: "Expo Calendar",
+        color: "blue",
+        entityType: Calendar.EntityTypes.EVENT,
+        sourceId: defaultCalendarSource.id,
+        source: defaultCalendarSource,
+        name: "internalCalendarName",
+        ownerAccount: "personal",
+        accessLevel: Calendar.CalendarAccessLevel.OWNER,
+      });
+
+      const eventId = await Calendar.createEventAsync(newCalendarID, {
+        title: task.name,
+        startDate: new Date(task.deadline),
+        endDate: new Date(new Date(task.deadline).getTime() + 60 * 60 * 1000), // For example, 1 hour later
+        timeZone: "GMT",
+      });
+
+      Alert.alert("Success", "Task added to calendar");
+    } catch (error) {
+      console.error("Error adding to calendar: ", error);
+      Alert.alert("Error", "Unable to add task to calendar.");
+    }
+  };
+
+  const getDefaultCalendarSource = async () => {
+    const calendars = await Calendar.getCalendarsAsync();
+    const defaultCalendars = calendars.filter(
+      (each) => each.source.name === "Default"
+    );
+    return defaultCalendars.length > 0 ? defaultCalendars[0].source : {};
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Tasks for {categoryName}</Text>
@@ -127,20 +181,27 @@ const TaskScreen = ({ navigation, route }) => {
                 {item.isCompleted ? (
                   <Icon name="done" size={20} color="green" />
                 ) : (
-                  <TouchableOpacity onPress={() => markTaskAsDone(item)}>
-                    <Text style={styles.completeTaskText}>Complete Task</Text>
-                  </TouchableOpacity>
+                  <>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => markTaskAsDone(item)}
+                    >
+                      <Text style={styles.completeTaskText}>Complete Task</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => deleteTask(item)}
+                    >
+                      <Icon name="delete" size={20} color="red" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => addTaskToCalendar(item)}
+                    >
+                      <Icon name="calendar-today" size={20} color="blue" />
+                    </TouchableOpacity>
+                  </>
                 )}
-                <TouchableOpacity
-                  onPress={() => deleteTask(item)}
-                  disabled={item.isCompleted}
-                >
-                  <Icon
-                    name="delete"
-                    size={20}
-                    color={item.isCompleted ? "gray" : "red"}
-                  />
-                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -209,6 +270,9 @@ const styles = StyleSheet.create({
   taskActions: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  actionButton: {
+    marginLeft: 10, // Add some space to the left of each button
   },
   completeTaskText: {
     color: "#0782F9",

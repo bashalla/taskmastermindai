@@ -17,6 +17,7 @@
     "@react-navigation/native-stack": "^6.9.17",
     "expo": "~49.0.15",
     "expo-auth-session": "~5.0.2",
+    "expo-calendar": "^11.3.2",
     "expo-document-picker": "~11.5.4",
     "expo-image-manipulator": "^11.5.0",
     "expo-image-picker": "~14.3.2",
