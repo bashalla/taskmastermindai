@@ -18,6 +18,8 @@ import {
   doc,
   getDoc,
 } from "firebase/firestore";
+import axios from "axios";
+import { OPEN_WEATHER } from "@env";
 
 function HomeScreen({ navigation }) {
   const [userName, setUserName] = useState("");
@@ -50,33 +52,49 @@ function HomeScreen({ navigation }) {
     }
   };
 
+  const fetchWeather = async (latitude, longitude) => {
+    try {
+      const apiKey = OPEN_WEATHER; // Use your OpenWeather API key
+      const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&appid=${apiKey}`;
+
+      const response = await axios.get(url);
+      const currentWeather = response.data.current.weather[0].main;
+      return currentWeather;
+    } catch (error) {
+      console.error("Error fetching weather:", error);
+      return null;
+    }
+  };
+
   const fetchTasksDueToday = async () => {
     try {
       const today = new Date();
       const dateStringToday = today.toISOString().split("T")[0];
-      console.log("Today's Date:", dateStringToday); // Debugging line
 
       const tasksRef = collection(db, "tasks");
       const q = query(tasksRef, where("userId", "==", auth.currentUser.uid));
-
       const querySnapshot = await getDocs(q);
-      console.log("Total tasks fetched:", querySnapshot.docs.length); // Debugging line
 
-      const fetchedTasks = [];
+      let fetchedTasks = [];
       querySnapshot.forEach((doc) => {
         const task = doc.data();
         const taskDate = task.deadline.split("T")[0];
-        console.log(
-          `Task: ${task.name}, Deadline: ${taskDate}, Completed: ${task.isCompleted}`
-        ); // Debugging line
         if (taskDate === dateStringToday && !task.isCompleted) {
-          // Check if task is not completed
           fetchedTasks.push({ ...task, id: doc.id });
         }
       });
 
-      console.log("Fetched tasks due today:", fetchedTasks); // Debugging line
-      setTasks(fetchedTasks);
+      const fetchedTasksWithWeather = await Promise.all(
+        fetchedTasks.map(async (task) => {
+          const weatherCode = await fetchWeather(
+            task.location.latitude,
+            task.location.longitude
+          );
+          return { ...task, weatherCode };
+        })
+      );
+
+      setTasks(fetchedTasksWithWeather);
     } catch (error) {
       console.error("Error fetching tasks: ", error);
     }
@@ -105,6 +123,19 @@ function HomeScreen({ navigation }) {
       .catch((error) => alert(error.message));
   };
 
+  const getWeatherIconName = (weatherCode) => {
+    switch (weatherCode) {
+      case "Clear":
+        return "wb-sunny";
+      case "Rain":
+        return "umbrella";
+      case "Clouds":
+        return "cloud";
+      default:
+        return "error";
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <CustomHeader onSignOut={handleSignOut} />
@@ -115,6 +146,11 @@ function HomeScreen({ navigation }) {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.taskItem}>
+            <Icon
+              name={getWeatherIconName(item.weatherCode)}
+              size={24}
+              color="#000"
+            />
             <Text style={styles.taskText}>{item.name}</Text>
           </View>
         )}
