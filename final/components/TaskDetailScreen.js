@@ -224,7 +224,18 @@ const TaskDetailsScreen = ({ navigation, route }) => {
             onChange={(event, selectedDate) => {
               const currentDate = selectedDate || deadline;
               setShowDatePicker(Platform.OS === "ios");
-              setDeadline(currentDate);
+
+              // Adjust the selected date to the end of the day
+              const adjustedDate = new Date(
+                currentDate.getFullYear(),
+                currentDate.getMonth(),
+                currentDate.getDate(),
+                23,
+                59,
+                59 // Set to the last moment of the day
+              );
+
+              setDeadline(adjustedDate);
             }}
           />
         )}
