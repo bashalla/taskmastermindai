@@ -134,3 +134,6 @@ dist
 .pnp.*
 
 .vscode
+
+#Firebase Api Keys
+.firebase
