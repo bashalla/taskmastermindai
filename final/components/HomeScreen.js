@@ -45,25 +45,27 @@ function HomeScreen({ navigation }) {
 
     const fetchTasksDueToday = async () => {
       try {
-        const startOfDay = new Date();
-        startOfDay.setHours(0, 0, 0, 0);
-
-        const endOfDay = new Date(startOfDay);
-        endOfDay.setDate(endOfDay.getDate() + 1);
+        const today = new Date();
+        const dateStringToday = today.toISOString().split("T")[0];
+        console.log("Today's Date:", dateStringToday); // Debugging line
 
         const tasksRef = collection(db, "tasks");
-        const q = query(
-          tasksRef,
-          where("userId", "==", auth.currentUser.uid),
-          where("deadline", ">=", Timestamp.fromDate(startOfDay)),
-          where("deadline", "<", Timestamp.fromDate(endOfDay))
-        );
+        const q = query(tasksRef, where("userId", "==", auth.currentUser.uid));
 
         const querySnapshot = await getDocs(q);
+        console.log("Total tasks fetched:", querySnapshot.docs.length); // Debugging line
+
         const fetchedTasks = [];
         querySnapshot.forEach((doc) => {
-          fetchedTasks.push({ ...doc.data(), id: doc.id });
+          const task = doc.data();
+          const taskDate = task.deadline.split("T")[0];
+          console.log(`Task: ${task.name}, Deadline: ${taskDate}`); // Debugging line
+          if (taskDate === dateStringToday) {
+            fetchedTasks.push({ ...task, id: doc.id });
+          }
         });
+
+        console.log("Fetched tasks due today:", fetchedTasks); // Debugging line
         setTasks(fetchedTasks);
       } catch (error) {
         console.error("Error fetching tasks: ", error);
