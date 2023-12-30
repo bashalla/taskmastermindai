@@ -20,27 +20,38 @@ const EditCategoryScreen = ({ navigation, route }) => {
 
   const colors = ["#ff6347", "#4682b4", "#32cd32", "#ff69b4", "#ffa500"];
 
+  useEffect(() => {
+    navigation.setOptions({
+      headerShown: true,
+      title: "Edit Category",
+    });
+  }, [navigation]);
+
   const handleUpdateCategory = async () => {
     if (!categoryName.trim() || !labelName.trim() || !selectedColor) {
       Alert.alert("Error", "Please fill in all fields.");
       return;
     }
 
-    const categoryRef = doc(db, "categories", category.id);
-    await updateDoc(categoryRef, {
-      name: categoryName,
-      label: labelName,
-      color: selectedColor,
-    });
+    try {
+      const categoryRef = doc(db, "categories", category.id);
+      await updateDoc(categoryRef, {
+        name: categoryName,
+        label: labelName,
+        color: selectedColor,
+      });
 
-    Alert.alert("Success", "Category updated successfully.");
-    navigation.goBack();
+      Alert.alert("Success", "Category updated successfully.");
+      navigation.goBack();
+    } catch (error) {
+      console.error("Error updating category: ", error);
+      Alert.alert("Error", "There was a problem updating the category.");
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
-        <Text style={styles.header}>Edit Category</Text>
         <TextInput
           style={styles.input}
           placeholder="Category Name"
@@ -79,9 +90,10 @@ const EditCategoryScreen = ({ navigation, route }) => {
 
 const styles = StyleSheet.create({
   container: {
+    marginTop: 60,
     flex: 1,
     padding: 10,
-    backgroundColor: "#f4f4f4", // you can change the background color as needed
+    backgroundColor: "#f4f4f4",
   },
   scrollView: {
     flex: 1,
@@ -119,7 +131,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginHorizontal: 5,
     borderWidth: 2,
-    borderColor: "white", // Change as needed
+    borderColor: "white",
   },
   selectedColor: {
     borderColor: "black",
