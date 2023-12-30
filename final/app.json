@@ -14,7 +14,11 @@
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCalendarUsageDescription": "This app requires access to your calendar to manage tasks.",
+        "NSRemindersUsageDescription": "This app requires access to your reminders to manage task reminders."
+      }
     },
     "android": {
       "adaptiveIcon": {
