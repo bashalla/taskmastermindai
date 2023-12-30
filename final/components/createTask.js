@@ -25,7 +25,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
 import Icon from "react-native-vector-icons/MaterialIcons"; // Import Icon
-import { db } from "../firebase";
+import { db, auth } from "../firebase";
 import * as Location from "expo-location";
 import MapView, { Marker } from "react-native-maps";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
@@ -41,6 +41,7 @@ const CreateTask = ({ navigation, route }) => {
   const [location, setLocation] = useState("");
   const [region, setRegion] = useState(null);
   const [selectedFileName, setSelectedFileName] = useState(""); // Added state for selected file name
+  const [tempDate, setTempDate] = useState(new Date());
 
   const uploadDocumentsToFirebase = async (documents) => {
     const urls = [];
@@ -77,21 +78,47 @@ const CreateTask = ({ navigation, route }) => {
   };
 
   useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("Permission to access location was denied");
-        return;
-      }
+    // Function to get the end of the current day
+    const getEndOfToday = () => {
+      const now = new Date();
+      return new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        23,
+        59,
+        59,
+        999
+      );
+    };
 
-      let location = await Location.getCurrentPositionAsync({});
-      setRegion({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        latitudeDelta: 0.005,
-        longitudeDelta: 0.005,
-      });
-    })();
+    // Set the deadline to the end of the current day
+    setDeadline(getEndOfToday());
+
+    // Function to request and fetch location
+    const fetchLocation = async () => {
+      try {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert("Permission to access location was denied");
+          return;
+        }
+
+        let location = await Location.getCurrentPositionAsync({});
+        setRegion({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        });
+      } catch (error) {
+        console.error("Error fetching location:", error);
+        Alert.alert("Error", "Unable to fetch current location.");
+      }
+    };
+
+    // Fetch location
+    fetchLocation();
   }, []);
 
   const handleSaveTask = async () => {
@@ -111,6 +138,7 @@ const CreateTask = ({ navigation, route }) => {
         : null,
       createdAt: serverTimestamp(), // Adds a timestamp
       categoryId,
+      userId: auth.currentUser.uid, // Add the user ID
     };
 
     try {
@@ -161,8 +189,23 @@ const CreateTask = ({ navigation, route }) => {
 
   const onChangeDate = (event, selectedDate) => {
     const currentDate = selectedDate || deadline;
+    setTempDate(currentDate); // Update the temporary date
     setShowDatePicker(Platform.OS === "ios");
-    setDeadline(currentDate);
+  };
+
+  // Call this function when the user confirms the date selection
+  const confirmDateSelection = () => {
+    const endOfDay = new Date(
+      tempDate.getFullYear(),
+      tempDate.getMonth(),
+      tempDate.getDate(),
+      23,
+      59,
+      59,
+      999
+    );
+    setDeadline(endOfDay); // Update the actual deadline
+    setShowDatePicker(false); // Close the date picker
   };
 
   const handleCancel = () => {
