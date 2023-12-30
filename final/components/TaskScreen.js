@@ -181,23 +181,27 @@ const TaskScreen = ({ navigation, route }) => {
                 {item.isCompleted ? (
                   <Icon name="done" size={20} color="green" />
                 ) : (
-                  <TouchableOpacity onPress={() => markTaskAsDone(item)}>
-                    <Text style={styles.completeTaskText}>Complete Task</Text>
-                  </TouchableOpacity>
+                  <>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => markTaskAsDone(item)}
+                    >
+                      <Text style={styles.completeTaskText}>Complete Task</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => deleteTask(item)}
+                    >
+                      <Icon name="delete" size={20} color="red" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => addTaskToCalendar(item)}
+                    >
+                      <Icon name="calendar-today" size={20} color="blue" />
+                    </TouchableOpacity>
+                  </>
                 )}
-                <TouchableOpacity
-                  onPress={() => deleteTask(item)}
-                  disabled={item.isCompleted}
-                >
-                  <Icon
-                    name="delete"
-                    size={20}
-                    color={item.isCompleted ? "gray" : "red"}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => addTaskToCalendar(item)}>
-                  <Icon name="calendar-today" size={20} color="blue" />
-                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -266,6 +270,9 @@ const styles = StyleSheet.create({
   taskActions: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  actionButton: {
+    marginLeft: 10, // Add some space to the left of each button
   },
   completeTaskText: {
     color: "#0782F9",
