@@ -8,7 +8,16 @@ import {
   View,
   Alert,
 } from "react-native";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  doc,
+  updateDoc,
+  deleteDoc,
+} from "firebase/firestore";
+import Icon from "react-native-vector-icons/MaterialIcons";
 import { useFocusEffect } from "@react-navigation/native";
 import { db } from "../firebase";
 
@@ -23,7 +32,9 @@ const TaskScreen = ({ navigation, route }) => {
       const querySnapshot = await getDocs(q);
       const fetchedTasks = [];
       querySnapshot.forEach((doc) => {
-        fetchedTasks.push({ ...doc.data(), id: doc.id });
+        const task = { ...doc.data(), id: doc.id };
+        task.isOverdue = new Date() > new Date(task.deadline);
+        fetchedTasks.push(task);
       });
       setTasks(fetchedTasks);
     } catch (error) {
@@ -42,33 +53,102 @@ const TaskScreen = ({ navigation, route }) => {
     }, [categoryId])
   );
 
+  const markTaskAsDone = async (task) => {
+    const now = new Date();
+    let points = 0;
+    if (now <= new Date(task.deadline)) {
+      points = 10; // Example points
+    }
+
+    const taskRef = doc(db, "tasks", task.id);
+    await updateDoc(taskRef, {
+      isCompleted: true,
+      points: points,
+    });
+
+    fetchTasks();
+  };
+
+  const deleteTask = async (task) => {
+    if (task.isCompleted) {
+      Alert.alert("Task Completed", "Completed tasks cannot be deleted.");
+      return;
+    }
+
+    const taskRef = doc(db, "tasks", task.id);
+    await deleteDoc(taskRef);
+
+    fetchTasks();
+  };
+
+  const navigateToTaskDetail = (item) => {
+    if (item.isCompleted) {
+      Alert.alert(
+        "Task Completed",
+        "This task is already completed and cannot be edited."
+      );
+      return;
+    }
+    navigation.navigate("TaskDetailScreen", { task: item });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Tasks for {categoryName}</Text>
       <FlatList
-        style={styles.taskList}
         data={tasks}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => {
-              navigation.navigate("TaskDetailScreen", {
-                task: item,
-                onTaskUpdate: fetchTasks,
-              });
-            }}
-          >
+          <View style={styles.taskItemContainer}>
             <View style={styles.taskItem}>
-              <Text style={styles.taskName}>{item.name}</Text>
+              <TouchableOpacity
+                style={styles.taskDetails}
+                onPress={() => navigateToTaskDetail(item)}
+                disabled={item.isCompleted}
+              >
+                <Text style={styles.taskName}>{item.name}</Text>
+                <Text
+                  style={
+                    item.isCompleted
+                      ? styles.done
+                      : item.isOverdue
+                      ? styles.overdue
+                      : null
+                  }
+                >
+                  {item.isCompleted
+                    ? "Done"
+                    : item.isOverdue
+                    ? "Overdue"
+                    : "On Time"}
+                </Text>
+              </TouchableOpacity>
+              <View style={styles.taskActions}>
+                {item.isCompleted ? (
+                  <Icon name="done" size={20} color="green" />
+                ) : (
+                  <TouchableOpacity onPress={() => markTaskAsDone(item)}>
+                    <Text style={styles.completeTaskText}>Complete Task</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  onPress={() => deleteTask(item)}
+                  disabled={item.isCompleted}
+                >
+                  <Icon
+                    name="delete"
+                    size={20}
+                    color={item.isCompleted ? "gray" : "red"}
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
-          </TouchableOpacity>
+          </View>
         )}
       />
       <TouchableOpacity
         style={styles.addButton}
-        onPress={() => {
-          navigation.navigate("CreateTask", { categoryId });
-        }}
+        onPress={() => navigation.navigate("CreateTask", { categoryId })}
       >
         <Text style={styles.addButtonIcon}>+</Text>
       </TouchableOpacity>
@@ -97,16 +177,42 @@ const styles = StyleSheet.create({
   taskList: {
     flex: 1,
   },
+  taskItemContainer: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+  },
   taskItem: {
-    backgroundColor: "#e0e0e0",
+    backgroundColor: "#f0f0f0",
     padding: 15,
-    marginVertical: 5,
     borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  taskDetails: {
+    flex: 1,
   },
   taskName: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#333333",
+  },
+  overdue: {
+    color: "red",
+    marginLeft: 5,
+  },
+  done: {
+    color: "green",
+    marginLeft: 5,
+  },
+  taskActions: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  completeTaskText: {
+    color: "#0782F9",
+    marginRight: 10,
   },
   addButton: {
     backgroundColor: "#0782F9",
