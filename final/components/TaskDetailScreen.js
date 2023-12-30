@@ -11,14 +11,14 @@ import {
   Linking,
   ScrollView,
 } from "react-native";
+import { updateDoc, doc } from "firebase/firestore";
 import {
-  updateDoc,
-  doc,
   getStorage,
   ref,
   uploadBytesResumable,
   getDownloadURL,
-} from "firebase/firestore";
+} from "firebase/storage";
+
 import { db } from "../firebase";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
@@ -34,10 +34,10 @@ const TaskDetailsScreen = ({ navigation, route }) => {
   const [description, setDescription] = useState(task.description);
   const [deadline, setDeadline] = useState(new Date(task.deadline));
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [documentUrl, setDocumentUrl] = useState(task.documentUrl);
+  const [documentUrls, setDocumentUrls] = useState(task.documentUrls || []);
   const [region, setRegion] = useState({
-    latitude: task.location.latitude,
-    longitude: task.location.longitude,
+    latitude: task.location ? task.location.latitude : 0,
+    longitude: task.location ? task.location.longitude : 0,
     latitudeDelta: 0.005,
     longitudeDelta: 0.005,
   });
@@ -63,7 +63,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         name: taskName,
         description,
         deadline: deadline.toISOString(),
-        documentUrl,
+        documentUrls,
         location: region,
       };
 
@@ -81,171 +81,165 @@ const TaskDetailsScreen = ({ navigation, route }) => {
     }
   };
 
-  const updateDocument = async () => {
+  const handleDocumentUpload = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({ type: "*/*" });
-
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "*/*",
+        multiple: true,
+      });
       if (result.cancelled) return;
 
-      const storage = getStorage();
-      const storageRef = ref(storage, `taskDocuments/${result.name}`);
-      const response = await fetch(result.uri);
-      const blob = await response.blob();
+      const newDocumentUrls = await Promise.all(
+        result.assets.map(async (document) => {
+          const storage = getStorage();
+          const storageRef = ref(storage, `taskDocuments/${document.name}`);
+          const response = await fetch(document.uri);
+          const blob = await response.blob();
 
-      const uploadTask = uploadBytesResumable(storageRef, blob);
+          const uploadTask = uploadBytesResumable(storageRef, blob);
 
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          // Handle upload progress here
-        },
-        (error) => {
-          // Handle unsuccessful uploads
-          console.error("Error during document upload: ", error);
-          Alert.alert(
-            "Upload Error",
-            "There was an error uploading the document."
-          );
-        },
-        () => {
-          // Handle successful uploads on complete
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-            console.log("Document uploaded! URL:", downloadURL);
-            setDocumentUrl(downloadURL); // Update state with new URL
-            // Here, also update the task's document URL in your database
+          return new Promise((resolve, reject) => {
+            uploadTask.on(
+              "state_changed",
+              (snapshot) => {
+                /* Handle upload progress */
+              },
+              (error) => {
+                reject(error);
+              },
+              () => {
+                getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                  resolve({ name: document.name, url: downloadURL });
+                });
+              }
+            );
           });
-        }
+        })
       );
+
+      setDocumentUrls([...documentUrls, ...newDocumentUrls]);
     } catch (error) {
-      console.error("Error picking a document:", error);
-      Alert.alert("Error", "There was an error picking a document.");
+      console.error("Error during document upload:", error);
+      Alert.alert("Upload Error", "There was an error uploading the document.");
     }
   };
 
-  // Function to open the current document
-  const openDocument = () => {
-    if (documentUrl) {
-      Linking.openURL(documentUrl);
-    }
-  };
-
-  // Function to handle date change
-  const onChangeDate = (event, selectedDate) => {
-    const currentDate = selectedDate || deadline;
-    setShowDatePicker(Platform.OS === "ios");
-    setDeadline(currentDate);
+  const deleteDocument = (index) => {
+    setDocumentUrls(documentUrls.filter((_, i) => i !== index));
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
-        {/* Task Name Input */}
-        <View style={styles.inputContainer}>
-          <Icon name="title" size={20} style={styles.icon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Task Name"
-            value={taskName}
-            onChangeText={setTaskName}
-          />
-        </View>
-
-        {/* Description Input */}
-        <View style={styles.inputContainer}>
-          <Icon name="description" size={20} style={styles.icon} />
-          <TextInput
-            style={[styles.input, styles.multilineInput]}
-            placeholder="Description"
-            multiline
-            value={description}
-            onChangeText={setDescription}
-          />
-        </View>
-
-        {/* Location Input */}
-        <GooglePlacesAutocomplete
-          placeholder="Search for places"
-          fetchDetails={true}
-          onPress={(data, details = null) => {
-            setRegion({
-              latitude: details.geometry.location.lat,
-              longitude: details.geometry.location.lng,
-              latitudeDelta: 0.005,
-              longitudeDelta: 0.005,
-            });
-          }}
-          query={{
-            key: GOOGLE_API_KEY,
-            language: "en",
-          }}
-          styles={{
-            textInput: styles.input,
-          }}
+      {/* Task Name Input */}
+      <View style={styles.inputContainer}>
+        <Icon name="title" size={20} style={styles.icon} />
+        <TextInput
+          style={styles.input}
+          placeholder="Task Name"
+          value={taskName}
+          onChangeText={setTaskName}
         />
+      </View>
 
-        {/* Map View */}
-        <View style={styles.mapContainer}>
-          {region && (
-            <MapView
-              style={styles.map}
-              region={region}
-              onRegionChangeComplete={setRegion}
-              showsUserLocation={true}
-            >
-              <Marker coordinate={region} />
-            </MapView>
-          )}
-        </View>
+      {/* Description Input */}
+      <View style={styles.inputContainer}>
+        <Icon name="description" size={20} style={styles.icon} />
+        <TextInput
+          style={[styles.input, styles.multilineInput]}
+          placeholder="Description"
+          multiline
+          value={description}
+          onChangeText={setDescription}
+        />
+      </View>
 
-        {/* Document View/Update */}
-        <View style={styles.selectedDocumentContainer}>
-          {documentUrl ? (
-            <>
-              <TouchableOpacity onPress={openDocument}>
-                <Text>View Document</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={updateDocument}>
-                <Text>Update Document</Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <TouchableOpacity onPress={updateDocument}>
-              <Text>Add Document</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+      {/* Location Input with GooglePlacesAutocomplete */}
+      <GooglePlacesAutocomplete
+        placeholder="Update Location"
+        fetchDetails={true}
+        onPress={(data, details = null) => {
+          setRegion({
+            latitude: details.geometry.location.lat,
+            longitude: details.geometry.location.lng,
+            latitudeDelta: 0.005,
+            longitudeDelta: 0.005,
+          });
+        }}
+        query={{
+          key: GOOGLE_API_KEY,
+          language: "en",
+        }}
+        styles={{
+          textInput: styles.input,
+          // Additional styles if needed
+        }}
+      />
 
-        {/* Deadline Picker */}
-        <View style={styles.centeredView}>
-          <Text style={styles.headerText}>Deadline</Text>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => setShowDatePicker(true)}
+      {/* Map View */}
+      <View style={styles.mapContainer}>
+        {region && (
+          <MapView
+            style={styles.map}
+            region={region}
+            onRegionChangeComplete={setRegion}
+            showsUserLocation={true}
           >
-            <Icon name="calendar-today" size={30} color="#0782F9" />
-          </TouchableOpacity>
+            <Marker coordinate={region} />
+          </MapView>
+        )}
+      </View>
 
-          {showDatePicker && (
-            <DateTimePicker
-              value={deadline}
-              mode="date"
-              display="default"
-              onChange={onChangeDate}
-            />
-          )}
-        </View>
-
-        {/* Save and Cancel Buttons */}
-        <TouchableOpacity style={styles.button} onPress={handleSave}>
-          <Text style={styles.buttonText}>Save Task</Text>
+      {/* Document Handling */}
+      <View style={styles.selectedDocumentContainer}>
+        {documentUrls.map((doc, index) => (
+          <View key={index} style={styles.documentRow}>
+            <TouchableOpacity onPress={() => Linking.openURL(doc.url)}>
+              <Text>{doc.name}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => deleteDocument(index)}>
+              <Text style={styles.deleteText}>x</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+        <TouchableOpacity onPress={handleDocumentUpload}>
+          <Text>Add/Update Document</Text>
         </TouchableOpacity>
+      </View>
+
+      {/* Deadline Picker */}
+      <View style={styles.centeredView}>
+        <Text style={styles.headerText}>Deadline</Text>
         <TouchableOpacity
-          style={styles.cancelButton}
-          onPress={() => navigation.goBack()}
+          style={styles.iconButton}
+          onPress={() => setShowDatePicker(true)}
         >
-          <Text style={styles.cancelButtonText}>Cancel</Text>
+          <Icon name="calendar-today" size={30} color="#0782F9" />
         </TouchableOpacity>
-      </ScrollView>
+
+        {showDatePicker && (
+          <DateTimePicker
+            value={deadline}
+            mode="date"
+            display="default"
+            onChange={(event, selectedDate) => {
+              const currentDate = selectedDate || deadline;
+              setShowDatePicker(Platform.OS === "ios");
+              setDeadline(currentDate);
+            }}
+          />
+        )}
+      </View>
+
+      {/* Save and Cancel Buttons */}
+      <TouchableOpacity style={styles.button} onPress={handleSave}>
+        <Text style={styles.buttonText}>Save Task</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.cancelButton}
+        onPress={() => navigation.goBack()}
+      >
+        <Text style={styles.cancelButtonText}>Cancel</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 };
@@ -256,6 +250,7 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: "#f4f4f4",
   },
+
   headerText: {
     fontSize: 18,
     fontWeight: "bold",
@@ -281,6 +276,25 @@ const styles = StyleSheet.create({
   },
   multilineInput: {
     height: 120,
+  },
+  documentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between", // Adjust for spacing
+    marginBottom: 5,
+    padding: 5, // Add padding for better touch area
+    // ... [Other styling as needed]
+  },
+  deleteIcon: {
+    marginLeft: 10,
+    // Add more styling as needed
+  },
+  deleteText: {
+    color: "red",
+    fontWeight: "bold",
+    fontSize: 20, // Increase font size
+    paddingHorizontal: 10, // Add horizontal padding for easier touch
+    // ... [Other styling as needed]
   },
   button: {
     flexDirection: "row",
@@ -318,14 +332,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   mapContainer: {
-    height: 300,
+    height: 300, // Adjust the height as needed
     width: "100%",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 10, // Reduce the margin
   },
   map: {
     ...StyleSheet.absoluteFillObject,
+  },
+  textInputContainer: {
+    backgroundColor: "grey",
+    marginBottom: 10, // Reduce the margin
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10, // Reduce the margin
   },
 });
 

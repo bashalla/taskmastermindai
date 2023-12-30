@@ -148,9 +148,11 @@ const CreateTask = ({ navigation, route }) => {
 
       if (result.cancelled) {
         console.log("Document selection was cancelled");
-        setDocuments([]); // Ensuring documents is always an array
       } else {
-        setDocuments(result.assets || []); // Fallback to empty array if undefined
+        setDocuments((currentDocuments) => [
+          ...currentDocuments,
+          ...(result.assets || []),
+        ]);
       }
     } catch (err) {
       console.error("Error picking documents:", err);
@@ -167,9 +169,20 @@ const CreateTask = ({ navigation, route }) => {
     navigation.goBack();
   };
 
-  const deleteDocument = (docIndex) => {
-    setDocuments((prevDocuments) =>
-      prevDocuments.filter((_, index) => index !== docIndex)
+  const deleteDocument = (index) => {
+    setDocuments((currentDocuments) =>
+      currentDocuments.filter((_, i) => i !== index)
+    );
+  };
+
+  const adjustDeadline = (date) => {
+    return new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      23,
+      59,
+      59
     );
   };
 
@@ -250,12 +263,8 @@ const CreateTask = ({ navigation, route }) => {
         {documents.map((doc, index) => (
           <View key={index} style={styles.documentRow}>
             <Text>{doc.name}</Text>
-            <TouchableOpacity
-              onPress={() => deleteDocument(index)}
-              style={styles.deleteIcon}
-            >
+            <TouchableOpacity onPress={() => deleteDocument(index)}>
               <Text style={styles.deleteText}>x</Text>
-              <Text> </Text> {/* If you intended to have a space here */}
             </TouchableOpacity>
           </View>
         ))}
@@ -276,8 +285,12 @@ const CreateTask = ({ navigation, route }) => {
             value={deadline}
             mode="date"
             display="default"
-            minimumDate={new Date()}
-            onChange={onChangeDate}
+            onChange={(event, selectedDate) => {
+              setShowDatePicker(Platform.OS === "ios");
+              if (selectedDate) {
+                setDeadline(adjustDeadline(selectedDate));
+              }
+            }}
           />
         )}
       </View>
@@ -329,17 +342,21 @@ const styles = StyleSheet.create({
   documentRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "space-between", // Adjust for spacing
     marginBottom: 5,
-    // Add more styling as needed
+    padding: 5, // Add padding for better touch area
+    // ... [Other styling as needed]
   },
   deleteIcon: {
     marginLeft: 10,
     // Add more styling as needed
   },
   deleteText: {
-    color: "red", // Example color
-    // Add more styling as needed
+    color: "red",
+    fontWeight: "bold",
+    fontSize: 20, // Increase font size
+    paddingHorizontal: 10, // Add horizontal padding for easier touch
+    // ... [Other styling as needed]
   },
   button: {
     flexDirection: "row",
