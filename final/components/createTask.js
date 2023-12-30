@@ -37,14 +37,15 @@ const CreateTask = ({ navigation, route }) => {
   const [description, setDescription] = useState("");
   const [deadline, setDeadline] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [document, setDocument] = useState(null);
+  const [documents, setDocuments] = useState([]);
   const [location, setLocation] = useState("");
+  const [region, setRegion] = useState(null);
   const [selectedFileName, setSelectedFileName] = useState(""); // Added state for selected file name
 
-  const uploadDocumentToFirebase = async (document) => {
-    if (!document) return null;
+  const uploadDocumentsToFirebase = async (documents) => {
+    const urls = [];
 
-    try {
+    for (const document of documents) {
       const storage = getStorage();
       const storageRef = ref(storage, `taskDocuments/${document.name}`);
       const response = await fetch(document.uri);
@@ -52,34 +53,28 @@ const CreateTask = ({ navigation, route }) => {
 
       const uploadTask = uploadBytesResumable(storageRef, blob);
 
-      return new Promise((resolve, reject) => {
+      const url = await new Promise((resolve, reject) => {
         uploadTask.on(
           "state_changed",
           (snapshot) => {
-            // Observe state change events such as progress, pause, and resume
-            // You can use this to show upload progress to the user
+            /* ... */
           },
           (error) => {
-            // Handle unsuccessful uploads
-            console.error("Error during upload: ", error);
             reject(error);
           },
           () => {
-            // Handle successful uploads on complete
             getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-              console.log("File available at", downloadURL);
               resolve(downloadURL);
             });
           }
         );
       });
-    } catch (error) {
-      console.error("Error preparing document for upload: ", error);
-      throw error;
-    }
-  };
 
-  const [region, setRegion] = useState(null);
+      urls.push({ name: document.name, url });
+    }
+
+    return urls;
+  };
 
   useEffect(() => {
     (async () => {
@@ -119,10 +114,13 @@ const CreateTask = ({ navigation, route }) => {
     };
 
     try {
-      // Upload document to Firebase Storage and get the URL (if a document is selected)
-      if (document) {
-        const documentUrl = await uploadDocumentToFirebase(document);
-        taskData.documentUrl = documentUrl;
+      // Upload documents to Firebase Storage and get their URLs (if documents are selected)
+      if (documents.length > 0) {
+        const uploadedDocuments = await uploadDocumentsToFirebase(documents);
+        taskData.documentUrls = uploadedDocuments.map((doc) => ({
+          name: doc.name,
+          url: doc.url,
+        }));
       }
 
       // Save the task to Firestore
@@ -143,19 +141,19 @@ const CreateTask = ({ navigation, route }) => {
 
   const selectDocument = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({ type: "*/*" });
-      console.log("Document Picker Result:", result); // Log the entire result
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "*/*",
+        multiple: true,
+      });
 
-      if (!result.cancelled && result.assets) {
-        console.log("Selected document name:", result.assets[0].name); // Log the file name
-        setDocument(result.assets[0]);
-        setSelectedFileName(result.assets[0].name); // Update selected file name
-      } else {
+      if (result.cancelled) {
         console.log("Document selection was cancelled");
-        setSelectedFileName(""); // Reset file name on cancel
+        setDocuments([]); // Ensuring documents is always an array
+      } else {
+        setDocuments(result.assets || []); // Fallback to empty array if undefined
       }
     } catch (err) {
-      console.error("Error picking a document:", err);
+      console.error("Error picking documents:", err);
     }
   };
 
@@ -167,6 +165,12 @@ const CreateTask = ({ navigation, route }) => {
 
   const handleCancel = () => {
     navigation.goBack();
+  };
+
+  const deleteDocument = (docIndex) => {
+    setDocuments((prevDocuments) =>
+      prevDocuments.filter((_, index) => index !== docIndex)
+    );
   };
 
   return (
@@ -243,7 +247,18 @@ const CreateTask = ({ navigation, route }) => {
         <Text style={styles.buttonText}>Select Document</Text>
       </TouchableOpacity>
       <View style={styles.selectedDocumentContainer}>
-        <Text>Selected Document: {selectedFileName || "None"}</Text>
+        {documents.map((doc, index) => (
+          <View key={index} style={styles.documentRow}>
+            <Text>{doc.name}</Text>
+            <TouchableOpacity
+              onPress={() => deleteDocument(index)}
+              style={styles.deleteIcon}
+            >
+              <Text style={styles.deleteText}>x</Text>
+              <Text> </Text> {/* If you intended to have a space here */}
+            </TouchableOpacity>
+          </View>
+        ))}
       </View>
 
       {/* Deadline Picker */}
@@ -310,6 +325,21 @@ const styles = StyleSheet.create({
   },
   multilineInput: {
     height: 120,
+  },
+  documentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 5,
+    // Add more styling as needed
+  },
+  deleteIcon: {
+    marginLeft: 10,
+    // Add more styling as needed
+  },
+  deleteText: {
+    color: "red", // Example color
+    // Add more styling as needed
   },
   button: {
     flexDirection: "row",

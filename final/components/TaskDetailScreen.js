@@ -9,10 +9,19 @@ import {
   Alert,
   Platform,
   Linking,
+  ScrollView,
 } from "react-native";
-import { updateDoc, doc } from "firebase/firestore";
+import {
+  updateDoc,
+  doc,
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from "firebase/firestore";
 import { db } from "../firebase";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import * as DocumentPicker from "expo-document-picker";
 import * as Location from "expo-location";
 import MapView, { Marker } from "react-native-maps";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -72,88 +81,171 @@ const TaskDetailsScreen = ({ navigation, route }) => {
     }
   };
 
-  const onChangeDate = (event, selectedDate) => {
-    const currentDate = selectedDate || deadline;
-    setShowDatePicker(Platform.OS === "ios");
-    setDeadline(currentDate);
+  const updateDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({ type: "*/*" });
+
+      if (result.cancelled) return;
+
+      const storage = getStorage();
+      const storageRef = ref(storage, `taskDocuments/${result.name}`);
+      const response = await fetch(result.uri);
+      const blob = await response.blob();
+
+      const uploadTask = uploadBytesResumable(storageRef, blob);
+
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          // Handle upload progress here
+        },
+        (error) => {
+          // Handle unsuccessful uploads
+          console.error("Error during document upload: ", error);
+          Alert.alert(
+            "Upload Error",
+            "There was an error uploading the document."
+          );
+        },
+        () => {
+          // Handle successful uploads on complete
+          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            console.log("Document uploaded! URL:", downloadURL);
+            setDocumentUrl(downloadURL); // Update state with new URL
+            // Here, also update the task's document URL in your database
+          });
+        }
+      );
+    } catch (error) {
+      console.error("Error picking a document:", error);
+      Alert.alert("Error", "There was an error picking a document.");
+    }
   };
 
+  // Function to open the current document
   const openDocument = () => {
     if (documentUrl) {
       Linking.openURL(documentUrl);
     }
   };
 
+  // Function to handle date change
+  const onChangeDate = (event, selectedDate) => {
+    const currentDate = selectedDate || deadline;
+    setShowDatePicker(Platform.OS === "ios");
+    setDeadline(currentDate);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.inputContainer}>
-        <Icon name="title" size={20} style={styles.icon} />
-        <TextInput
-          style={styles.input}
-          placeholder="Task Name"
-          value={taskName}
-          onChangeText={setTaskName}
-        />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Icon name="description" size={20} style={styles.icon} />
-        <TextInput
-          style={[styles.input, styles.multilineInput]}
-          placeholder="Description"
-          multiline
-          value={description}
-          onChangeText={setDescription}
-        />
-      </View>
-
-      <View style={styles.centeredView}>
-        <Text style={styles.headerText}>Deadline</Text>
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={() => setShowDatePicker(true)}
-        >
-          <Icon name="calendar-today" size={30} color="#0782F9" />
-        </TouchableOpacity>
-        {showDatePicker && (
-          <DateTimePicker
-            value={deadline}
-            mode="date"
-            display="default"
-            onChange={onChangeDate}
+      <ScrollView>
+        {/* Task Name Input */}
+        <View style={styles.inputContainer}>
+          <Icon name="title" size={20} style={styles.icon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Task Name"
+            value={taskName}
+            onChangeText={setTaskName}
           />
-        )}
-      </View>
+        </View>
 
-      <View style={styles.selectedDocumentContainer}>
-        <TouchableOpacity onPress={openDocument}>
-          <Text>View Document: {documentUrl ? "Available" : "None"}</Text>
-        </TouchableOpacity>
-      </View>
+        {/* Description Input */}
+        <View style={styles.inputContainer}>
+          <Icon name="description" size={20} style={styles.icon} />
+          <TextInput
+            style={[styles.input, styles.multilineInput]}
+            placeholder="Description"
+            multiline
+            value={description}
+            onChangeText={setDescription}
+          />
+        </View>
 
-      <View style={styles.mapContainer}>
-        {region && (
-          <MapView
-            style={styles.map}
-            region={region}
-            onRegionChangeComplete={setRegion}
-            showsUserLocation={true}
+        {/* Location Input */}
+        <GooglePlacesAutocomplete
+          placeholder="Search for places"
+          fetchDetails={true}
+          onPress={(data, details = null) => {
+            setRegion({
+              latitude: details.geometry.location.lat,
+              longitude: details.geometry.location.lng,
+              latitudeDelta: 0.005,
+              longitudeDelta: 0.005,
+            });
+          }}
+          query={{
+            key: GOOGLE_API_KEY,
+            language: "en",
+          }}
+          styles={{
+            textInput: styles.input,
+          }}
+        />
+
+        {/* Map View */}
+        <View style={styles.mapContainer}>
+          {region && (
+            <MapView
+              style={styles.map}
+              region={region}
+              onRegionChangeComplete={setRegion}
+              showsUserLocation={true}
+            >
+              <Marker coordinate={region} />
+            </MapView>
+          )}
+        </View>
+
+        {/* Document View/Update */}
+        <View style={styles.selectedDocumentContainer}>
+          {documentUrl ? (
+            <>
+              <TouchableOpacity onPress={openDocument}>
+                <Text>View Document</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={updateDocument}>
+                <Text>Update Document</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity onPress={updateDocument}>
+              <Text>Add Document</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Deadline Picker */}
+        <View style={styles.centeredView}>
+          <Text style={styles.headerText}>Deadline</Text>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => setShowDatePicker(true)}
           >
-            <Marker coordinate={region} />
-          </MapView>
-        )}
-      </View>
+            <Icon name="calendar-today" size={30} color="#0782F9" />
+          </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={handleSave}>
-        <Text style={styles.buttonText}>Save Task</Text>
-      </TouchableOpacity>
+          {showDatePicker && (
+            <DateTimePicker
+              value={deadline}
+              mode="date"
+              display="default"
+              onChange={onChangeDate}
+            />
+          )}
+        </View>
 
-      <TouchableOpacity
-        style={styles.cancelButton}
-        onPress={() => navigation.goBack()}
-      >
-        <Text style={styles.cancelButtonText}>Cancel</Text>
-      </TouchableOpacity>
+        {/* Save and Cancel Buttons */}
+        <TouchableOpacity style={styles.button} onPress={handleSave}>
+          <Text style={styles.buttonText}>Save Task</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.cancelButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.cancelButtonText}>Cancel</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   );
 };
