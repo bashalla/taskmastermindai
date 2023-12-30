@@ -57,6 +57,7 @@ function HomeScreen({ navigation }) {
       const apiKey = OPEN_WEATHER; // Use your OpenWeather API key
       const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&appid=${apiKey}`;
 
+      console.log("Fetching weather from: ", url);
       const response = await axios.get(url);
       const currentWeather = response.data.current.weather[0].main;
       return currentWeather;
