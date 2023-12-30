@@ -8,9 +8,19 @@ import {
   StyleSheet,
   FlatList,
   View,
+  Alert,
 } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons"; // Import Material Icons or any other icon library
 import { auth, db } from "../firebase";
-import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  where,
+  writeBatch,
+  doc,
+} from "firebase/firestore";
 
 const CategoryScreen = ({ navigation }) => {
   const [categoryName, setCategoryName] = useState("");
@@ -18,13 +28,11 @@ const CategoryScreen = ({ navigation }) => {
   const [selectedColor, setSelectedColor] = useState("");
   const [categories, setCategories] = useState([]);
 
-  // Add this function to navigate to the TaskScreen with category information.
   const handleCategoryClick = (categoryId, categoryName) => {
     navigation.navigate("TaskScreen", { categoryId, categoryName });
   };
 
-  // Predefined colors
-  const colors = ["#ff6347", "#4682b4", "#32cd32", "#ff69b4", "#ffa500"]; // Add more colors as needed
+  const colors = ["#ff6347", "#4682b4", "#32cd32", "#ff69b4", "#ffa500"];
 
   useEffect(() => {
     fetchCategories();
@@ -33,7 +41,7 @@ const CategoryScreen = ({ navigation }) => {
   const fetchCategories = async () => {
     const q = query(
       collection(db, "categories"),
-      where("userId", "==", auth.currentUser.uid) // Filter by the current user's ID
+      where("userId", "==", auth.currentUser.uid)
     );
     const querySnapshot = await getDocs(q);
     const fetchedCategories = [];
@@ -59,6 +67,49 @@ const CategoryScreen = ({ navigation }) => {
     setLabelName("");
     setSelectedColor("");
     fetchCategories();
+  };
+
+  const handleDeleteCategory = async (categoryId) => {
+    Alert.alert(
+      "Confirm Delete",
+      "Do you really want to delete this category and all associated tasks?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Yes", onPress: () => deleteCategoryAndTasks(categoryId) },
+      ]
+    );
+  };
+
+  const deleteCategoryAndTasks = async (categoryId) => {
+    const batch = writeBatch(db);
+
+    const categoryRef = doc(db, "categories", categoryId);
+    batch.delete(categoryRef);
+
+    const tasksQuery = query(
+      collection(db, "tasks"),
+      where("categoryId", "==", categoryId)
+    );
+
+    try {
+      const tasksSnapshot = await getDocs(tasksQuery);
+      tasksSnapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+
+      await batch.commit();
+      fetchCategories();
+    } catch (error) {
+      console.error("Error deleting category and tasks: ", error);
+      Alert.alert(
+        "Error",
+        "There was a problem deleting the category and tasks."
+      );
+    }
+  };
+
+  const handleEditCategory = (category) => {
+    navigation.navigate("EditCategoryScreen", { category });
   };
 
   return (
@@ -103,14 +154,31 @@ const CategoryScreen = ({ navigation }) => {
         data={categories}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[styles.category, { backgroundColor: item.color }]}
-            onPress={() => handleCategoryClick(item.id, item.name)}
-          >
-            <Text style={styles.categoryText}>
-              {item.name} - {item.label}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.categoryContainer}>
+            <TouchableOpacity
+              style={[styles.category, { backgroundColor: item.color }]}
+              onPress={() => handleCategoryClick(item.id, item.name)}
+              onLongPress={() => handleDeleteCategory(item.id)}
+            >
+              <Text style={styles.categoryText}>
+                {item.name} - {item.label}
+              </Text>
+            </TouchableOpacity>
+            <View style={styles.iconContainer}>
+              <TouchableOpacity
+                onPress={() => handleEditCategory(item)}
+                style={styles.iconButton}
+              >
+                <MaterialIcons name="edit" size={24} color="blue" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => handleDeleteCategory(item.id)}
+                style={styles.iconButton}
+              >
+                <MaterialIcons name="delete" size={24} color="red" />
+              </TouchableOpacity>
+            </View>
+          </View>
         )}
       />
     </SafeAreaView>
@@ -126,7 +194,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   inputContainer: {
-    marginTop: 100, // Adjust the marginTop value to move input fields further down
+    marginTop: 100,
   },
   input: {
     borderWidth: 1,
@@ -173,16 +241,28 @@ const styles = StyleSheet.create({
   flatList: {
     flex: 1,
   },
+  categoryContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
   category: {
+    flex: 1,
     padding: 20,
     marginVertical: 5,
-    width: "90%",
     borderRadius: 5,
     alignSelf: "center",
   },
   categoryText: {
     color: "white",
     fontWeight: "bold",
+  },
+  iconContainer: {
+    flexDirection: "row",
+  },
+  iconButton: {
+    padding: 5,
+    marginLeft: 10,
   },
 });
 

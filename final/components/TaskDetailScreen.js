@@ -221,6 +221,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
             value={deadline}
             mode="date"
             display="default"
+            minimumDate={new Date()} // Set the minimum date to the current date
             onChange={(event, selectedDate) => {
               const currentDate = selectedDate || deadline;
               setShowDatePicker(Platform.OS === "ios");
@@ -272,9 +273,12 @@ const styles = StyleSheet.create({
   },
   centeredView: {
     alignItems: "center",
+    justifyContent: "center", // Add this line if it's not already there
     marginVertical: 15,
   },
   iconButton: {
+    alignItems: "center", // Center the icon vertically in the button
+    justifyContent: "center", // Center the icon horizontally in the button
     marginBottom: 10,
   },
   input: {

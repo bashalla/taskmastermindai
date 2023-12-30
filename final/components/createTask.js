@@ -285,6 +285,7 @@ const CreateTask = ({ navigation, route }) => {
             value={deadline}
             mode="date"
             display="default"
+            minimumDate={new Date()} // Set the minimum date to the current date
             onChange={(event, selectedDate) => {
               setShowDatePicker(Platform.OS === "ios");
               if (selectedDate) {
