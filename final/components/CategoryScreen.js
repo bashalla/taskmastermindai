@@ -35,8 +35,11 @@ const CategoryScreen = ({ navigation }) => {
   const colors = ["#ff6347", "#4682b4", "#32cd32", "#ff69b4", "#ffa500"];
 
   useEffect(() => {
-    fetchCategories();
-  }, []);
+    const unsubscribe = navigation.addListener("focus", () => {
+      fetchCategories(); // Fetch categories again when the screen is focused
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const fetchCategories = async () => {
     const q = query(

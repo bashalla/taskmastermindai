@@ -7,8 +7,12 @@ import {
   TouchableOpacity,
   View,
   Alert,
+  Modal,
+  ScrollView,
   Platform,
 } from "react-native";
+import CountryPicker from "react-native-country-picker-modal";
+import { Picker } from "@react-native-picker/picker";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useNavigation } from "@react-navigation/native";
 import { auth, db } from "../firebase";
@@ -23,6 +27,10 @@ const RegisterScreen = () => {
   const [nationality, setNationality] = useState("");
   const [gender, setGender] = useState("");
   const [age, setAge] = useState("");
+  const [countryPickerVisible, setCountryPickerVisible] = useState(false);
+  const [agePickerVisible, setAgePickerVisible] = useState(false);
+  const genderPlaceholder = gender || "Select Gender";
+
   const navigation = useNavigation();
 
   const handleSignUp = () => {
@@ -71,147 +79,230 @@ const RegisterScreen = () => {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      // behavior={Platform.OS === "ios" ? "padding" : null}
-      // keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 30}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={styles.backButton}
-      >
-        <Text style={styles.backButtonText}>Back</Text>
-      </TouchableOpacity>
-      <View style={styles.inputContainer}>
-        <TextInput
-          placeholder="Email"
-          value={email}
-          onChangeText={(text) => setEmail(text.toLowerCase())}
-          style={styles.input}
-        />
-        <TextInput
-          placeholder="Password"
-          value={password}
-          onChangeText={(text) => setPassword(text)}
-          style={styles.input}
-          secureTextEntry
-        />
-        <TextInput
-          placeholder="Confirm Password"
-          value={confirmPassword}
-          onChangeText={(text) => setConfirmPassword(text)}
-          style={styles.input}
-          secureTextEntry
-        />
-        <TextInput
-          placeholder="First Name"
-          value={firstName}
-          onChangeText={(text) => setFirstName(text)}
-          style={styles.input}
-        />
-        <TextInput
-          placeholder="Last Name"
-          value={name}
-          onChangeText={(text) => setName(text)}
-          style={styles.input}
-        />
-        <TextInput
-          placeholder="Nationality"
-          value={nationality}
-          onChangeText={(text) => setNationality(text)}
-          style={[styles.input, { marginBottom: 10 }]}
-        />
-        <Text>Gender:</Text>
-        <View style={styles.radioContainer}>
+      <ScrollView contentContainerStyle={styles.scrollViewContainer}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <Text style={styles.backButtonText}>Back</Text>
+        </TouchableOpacity>
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            style={styles.input}
+          />
+          <TextInput
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            style={styles.input}
+            secureTextEntry
+          />
+          <TextInput
+            placeholder="Confirm Password"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            style={styles.input}
+            secureTextEntry
+          />
+          <TextInput
+            placeholder="First Name"
+            value={firstName}
+            onChangeText={setFirstName}
+            style={styles.input}
+          />
+          <TextInput
+            placeholder="Name"
+            value={name}
+            onChangeText={setName}
+            style={styles.input}
+          />
+
           <TouchableOpacity
-            style={styles.radioButton}
-            onPress={() => setGender("male")}
+            onPress={() => setCountryPickerVisible(true)}
+            style={styles.input}
           >
-            <Text>Male</Text>
-            {gender === "male" && <View style={styles.radioDot} />}
+            <Text style={styles.inputText}>
+              {nationality || "Select Nationality"}
+            </Text>
           </TouchableOpacity>
+          <CountryPicker
+            visible={countryPickerVisible}
+            onSelect={(country) => {
+              setNationality(country.name);
+              setCountryPickerVisible(false);
+            }}
+            onClose={() => setCountryPickerVisible(false)}
+            containerButtonStyle={{ display: "none" }}
+          />
+
+          <View style={styles.genderContainer}>
+            <TouchableOpacity
+              onPress={() => setGender("male")}
+              style={[
+                styles.genderButton,
+                gender === "male" ? styles.genderButtonSelected : {},
+              ]}
+            >
+              <Text style={styles.genderText}>Male</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setGender("female")}
+              style={[
+                styles.genderButton,
+                gender === "female" ? styles.genderButtonSelected : {},
+              ]}
+            >
+              <Text style={styles.genderText}>Female</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setGender("other")}
+              style={[
+                styles.genderButton,
+                gender === "other" ? styles.genderButtonSelected : {},
+              ]}
+            >
+              <Text style={styles.genderText}>Other</Text>
+            </TouchableOpacity>
+          </View>
+
           <TouchableOpacity
-            style={styles.radioButton}
-            onPress={() => setGender("female")}
+            onPress={() => setAgePickerVisible(true)}
+            style={styles.input}
           >
-            <Text>Female</Text>
-            {gender === "female" && <View style={styles.radioDot} />}
+            <Text style={styles.inputText}>
+              {age ? `Age: ${age}` : "Select Age"}
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.radioButton}
-            onPress={() => setGender("other")}
+          <Modal
+            transparent={true}
+            visible={agePickerVisible}
+            onRequestClose={() => setAgePickerVisible(false)}
           >
-            <Text>Other</Text>
-            {gender === "other" && <View style={styles.radioDot} />}
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                <Picker
+                  selectedValue={age}
+                  onValueChange={(itemValue) => setAge(itemValue)}
+                  style={styles.picker}
+                >
+                  {Array.from({ length: 100 }, (_, i) => i + 1).map((age) => (
+                    <Picker.Item key={age} label={`${age}`} value={age} />
+                  ))}
+                </Picker>
+                <TouchableOpacity
+                  style={styles.modalButton}
+                  onPress={() => setAgePickerVisible(false)}
+                >
+                  <Text style={styles.modalButtonText}>Done</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+
+          <TouchableOpacity onPress={handleSignUp} style={styles.button}>
+            <Text style={styles.buttonText}>Register</Text>
           </TouchableOpacity>
         </View>
-        <TextInput
-          style={styles.input}
-          value={age}
-          onChangeText={(text) => setAge(text)}
-          placeholder="Enter your age"
-          keyboardType="numeric"
-        />
-      </View>
-      <TouchableOpacity onPress={handleSignUp} style={styles.button}>
-        <Text style={styles.buttonText}>Register</Text>
-      </TouchableOpacity>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    marginTop: 50,
     flex: 1,
-    justifyContent: "center",
+    backgroundColor: "#f5f5f5",
+  },
+  scrollViewContainer: {
+    padding: 20,
     alignItems: "center",
+    justifyContent: "center",
   },
   backButton: {
-    position: "absolute",
-    top: 80,
-    left: 20,
+    alignSelf: "flex-start",
+    marginVertical: 20,
   },
   backButtonText: {
     color: "#0782F9",
     fontSize: 16,
   },
   inputContainer: {
-    width: "80%",
+    width: "90%",
   },
   input: {
     backgroundColor: "white",
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 15,
     borderRadius: 10,
-    marginTop: 10,
+    marginVertical: 10,
+    fontSize: 18,
+    width: "100%",
   },
   button: {
     backgroundColor: "#0782F9",
-    width: "100%",
     padding: 15,
     borderRadius: 10,
     alignItems: "center",
     marginTop: 20,
+    width: "100%",
   },
   buttonText: {
     color: "white",
+    fontSize: 18,
     fontWeight: "700",
-    fontSize: 16,
   },
-  radioContainer: {
+  genderContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
+    justifyContent: "center",
+    marginVertical: 10,
   },
-  radioButton: {
-    flexDirection: "row",
+  genderButton: {
+    padding: 10,
+    borderRadius: 5,
+    marginHorizontal: 10,
+  },
+  genderText: {
+    fontSize: 18,
+  },
+  genderButtonSelected: {
+    backgroundColor: "#0782F9",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 20,
     alignItems: "center",
   },
-  radioDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: "#0782F9",
-    marginLeft: 5,
+  picker: {
+    width: "100%",
+    height: 150,
   },
+  modalButton: {
+    backgroundColor: "#0782F9",
+    marginTop: 10,
+    padding: 10,
+    borderRadius: 5,
+    width: "100%",
+    alignItems: "center",
+  },
+  modalButtonText: {
+    color: "white",
+    fontSize: 16,
+  },
+  inputText: {
+    fontSize: 16,
+  },
+  // Additional styles for other UI components
 });
 
 export default RegisterScreen;
