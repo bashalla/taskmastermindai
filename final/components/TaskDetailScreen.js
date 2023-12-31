@@ -87,8 +87,13 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         type: "*/*",
         multiple: true,
       });
-      if (result.cancelled) return;
 
+      // Check if the document picker was cancelled or if no files were selected
+      if (result.cancelled || !result.assets) {
+        return;
+      }
+
+      // Upload each selected document and get their download URLs
       const newDocumentUrls = await Promise.all(
         result.assets.map(async (document) => {
           const storage = getStorage();
@@ -102,7 +107,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
             uploadTask.on(
               "state_changed",
               (snapshot) => {
-                /* Handle upload progress */
+                // Optional: Handle upload progress
               },
               (error) => {
                 reject(error);
@@ -117,6 +122,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         })
       );
 
+      // Update the state to include the URLs of the newly uploaded documents
       setDocumentUrls([...documentUrls, ...newDocumentUrls]);
     } catch (error) {
       console.error("Error during document upload:", error);

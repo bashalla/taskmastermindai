@@ -18,9 +18,10 @@ import * as ImageManipulator from "expo-image-manipulator";
 
 const resizeImage = async (imageUri) => {
   try {
+    // Resize the image to a square while maintaining quality
     const result = await ImageManipulator.manipulateAsync(
       imageUri,
-      [{ resize: { width: 800, height: 600 } }], // Adjust size as needed
+      [{ resize: { width: 800, height: 800 } }], // Square dimensions
       { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
     );
     return result.uri;
@@ -86,9 +87,10 @@ function ProfileScreen() {
       try {
         const resizedImage = await ImageManipulator.manipulateAsync(
           imageUri,
-          [{ resize: { width: 800, height: 600 } }],
+          [{ resize: { width: 800, height: 800 } }], // Square dimensions
           { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
         );
+
         const resizedImageUri = resizedImage.uri;
 
         // Prepare the image for upload
@@ -150,8 +152,10 @@ function ProfileScreen() {
         <Image
           source={profileImage ? { uri: profileImage } : placeholderImage}
           style={styles.profileImage}
+          resizeMode="cover"
         />
       </TouchableOpacity>
+
       <TextInput
         style={styles.input}
         value={userData.firstName}
@@ -207,9 +211,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 150, // Circle diameter
+    height: 150, // Same as width for a perfect circle
+    borderRadius: 75, // Half of width/height
     marginBottom: 20,
   },
   input: {
@@ -221,6 +225,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   button: {
+    marginBottom: 20,
     backgroundColor: "#0782F9",
     padding: 15,
     borderRadius: 10,

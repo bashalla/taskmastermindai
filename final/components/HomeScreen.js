@@ -149,16 +149,33 @@ function HomeScreen({ navigation }) {
       })
       .catch((error) => alert(error.message));
   };
-  const getWeatherIconName = (weatherCode) => {
-    switch (weatherCode) {
-      case "Clear":
+
+  const getWeatherIconName = (description) => {
+    switch (description.toLowerCase()) {
+      case "clear sky":
         return "wb-sunny";
-      case "Rain":
-        return "umbrella";
-      case "Clouds":
+      case "few clouds":
+      case "scattered clouds":
         return "cloud";
+      case "broken clouds":
+      case "overcast clouds":
+        return "cloud-queue";
+      case "shower rain":
+      case "rain":
+        return "grain";
+      case "thunderstorm":
+        return "flash-on";
+      case "snow":
+        return "ac-unit";
+      case "mist":
+      case "haze":
+      case "fog":
+        return "cloud-circle";
+      case "drizzle":
+        return "invert-colors";
+      // Add more cases as needed
       default:
-        return null; // Return null if no weather code is available
+        return "wb-cloudy"; // Default icon for unknown conditions
     }
   };
 
