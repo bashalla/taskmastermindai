@@ -21,6 +21,7 @@ import {
 } from "firebase/firestore";
 import axios from "axios";
 import { OPEN_WEATHER } from "@env";
+import CategoryScreen from "./CategoryScreen";
 
 function HomeScreen({ navigation }) {
   const [userName, setUserName] = useState("");
@@ -34,7 +35,7 @@ function HomeScreen({ navigation }) {
     const querySnapshot = await getDocs(categoriesRef);
     const fetchedCategories = {};
     querySnapshot.forEach((doc) => {
-      fetchedCategories[doc.id] = doc.data().color; // Assuming the color is stored directly in the category document
+      fetchedCategories[doc.id] = doc.data().color;
     });
     setCategories(fetchedCategories);
   };
@@ -254,6 +255,7 @@ function HomeScreen({ navigation }) {
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
