@@ -17,6 +17,7 @@ import {
   getDocs,
   doc,
   getDoc,
+  updateDoc,
 } from "firebase/firestore";
 import axios from "axios";
 import { OPEN_WEATHER } from "@env";
@@ -25,6 +26,22 @@ function HomeScreen({ navigation }) {
   const [userName, setUserName] = useState("");
   const [tasks, setTasks] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [categories, setCategories] = useState({});
+  const [completedTasks, setCompletedTasks] = useState({});
+
+  const fetchCategories = async () => {
+    const categoriesRef = collection(db, "categories");
+    const querySnapshot = await getDocs(categoriesRef);
+    const fetchedCategories = {};
+    querySnapshot.forEach((doc) => {
+      fetchedCategories[doc.id] = doc.data().color; // Assuming the color is stored directly in the category document
+    });
+    setCategories(fetchedCategories);
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   const CustomHeader = ({ onSignOut }) => {
     return (
@@ -66,7 +83,6 @@ function HomeScreen({ navigation }) {
       return null;
     }
   };
-
   const fetchTasksDueToday = async () => {
     try {
       const today = new Date();
@@ -80,17 +96,26 @@ function HomeScreen({ navigation }) {
       querySnapshot.forEach((doc) => {
         const task = doc.data();
         const taskDate = task.deadline.split("T")[0];
-        if (taskDate === dateStringToday && !task.isCompleted) {
-          fetchedTasks.push({ ...task, id: doc.id });
+        if (!task.isCompleted && taskDate <= dateStringToday) {
+          const isOverdue = taskDate < dateStringToday;
+          fetchedTasks.push({ ...task, id: doc.id, isOverdue });
         }
       });
 
+      // Fetch weather data for each task only if location data is available
       const fetchedTasksWithWeather = await Promise.all(
         fetchedTasks.map(async (task) => {
-          const weatherCode = await fetchWeather(
-            task.location.latitude,
+          let weatherCode = null;
+          if (
+            task.location &&
+            task.location.latitude &&
             task.location.longitude
-          );
+          ) {
+            weatherCode = await fetchWeather(
+              task.location.latitude,
+              task.location.longitude
+            );
+          }
           return { ...task, weatherCode };
         })
       );
@@ -123,7 +148,6 @@ function HomeScreen({ navigation }) {
       })
       .catch((error) => alert(error.message));
   };
-
   const getWeatherIconName = (weatherCode) => {
     switch (weatherCode) {
       case "Clear":
@@ -133,7 +157,40 @@ function HomeScreen({ navigation }) {
       case "Clouds":
         return "cloud";
       default:
-        return "error";
+        return null; // Return null if no weather code is available
+    }
+  };
+
+  const markTaskComplete = async (taskId) => {
+    try {
+      // Reference to the specific task in Firestore
+      const taskRef = doc(db, "tasks", taskId);
+
+      // Get current task data
+      const taskSnap = await getDoc(taskRef);
+
+      if (taskSnap.exists()) {
+        const task = taskSnap.data();
+        const deadline = new Date(task.deadline);
+        const now = new Date();
+
+        // Check if the task is completed before the deadline
+        const pointsAwarded = now <= deadline ? 10 : 0;
+
+        // Update the task in Firestore
+        await updateDoc(taskRef, {
+          isCompleted: true,
+          points: task.points ? task.points + pointsAwarded : pointsAwarded,
+        });
+
+        // Update the local state to reflect the task's completion
+        setCompletedTasks((prev) => ({ ...prev, [taskId]: true }));
+
+        // Optionally, refresh the list of tasks
+        fetchTasksDueToday();
+      }
+    } catch (error) {
+      console.error("Error marking task as complete: ", error);
     }
   };
 
@@ -141,18 +198,53 @@ function HomeScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <CustomHeader onSignOut={handleSignOut} />
       <Text style={styles.headerText}>Hello, {userName}</Text>
-      <Text style={styles.headerText}>Today's Tasks</Text>
+      <Text style={styles.dateText}>{new Date().toLocaleDateString()}</Text>
+      <Text style={styles.subHeaderText}>Today's Tasks</Text>
       <FlatList
         data={tasks}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={styles.taskItem}>
-            <Icon
-              name={getWeatherIconName(item.weatherCode)}
-              size={24}
-              color="#000"
+          <View
+            style={item.isOverdue ? styles.overdueTaskItem : styles.taskItem}
+          >
+            {/* Category Color Circle */}
+            <View
+              style={[
+                styles.categoryCircle,
+                { backgroundColor: categories[item.categoryId] || "#000" }, // Default color if not found
+              ]}
             />
+
+            {/* Weather Icon and Task Name */}
+            {item.weatherCode && (
+              <Icon
+                name={getWeatherIconName(item.weatherCode)}
+                size={30}
+                color={item.weatherCode === "Clear" ? "#FFD700" : "#4F8EF7"}
+              />
+            )}
             <Text style={styles.taskText}>{item.name}</Text>
+
+            {/* Complete Task Button */}
+            {!item.isCompleted && (
+              <TouchableOpacity
+                onPress={() => markTaskComplete(item.id)}
+                style={styles.completeButton}
+              >
+                {completedTasks[item.id] ? (
+                  <Icon name="check-circle" size={30} color="#4CAF50" /> // Green check for completed tasks
+                ) : (
+                  <Icon
+                    name="radio-button-unchecked"
+                    size={30}
+                    color="#CCCCCC"
+                  /> // Grey circle for incomplete tasks
+                )}
+              </TouchableOpacity>
+            )}
+
+            {/* Overdue Text */}
+            {item.isOverdue && <Text style={styles.overdueText}>Overdue</Text>}
           </View>
         )}
         refreshControl={
@@ -162,39 +254,88 @@ function HomeScreen({ navigation }) {
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#E8EAED", // Background color for the entire screen
   },
   headerText: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "bold",
     textAlign: "center",
     padding: 20,
+    color: "#333", // Font color for the header text
+  },
+  dateText: {
+    marginBottom: 10,
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "center",
+    color: "#555", // Style for the date display
+  },
+  subHeaderText: {
+    fontSize: 22,
+    fontWeight: "bold",
+    textAlign: "center",
+    color: "#444",
+    paddingBottom: 10, // Style for the sub-header text
   },
   taskItem: {
-    backgroundColor: "#f9c2ff",
+    backgroundColor: "#FFFFFF", // Light background for task items
     padding: 20,
     marginVertical: 8,
     marginHorizontal: 16,
     borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center", // Styling for regular task items
+  },
+  overdueTaskItem: {
+    backgroundColor: "#FFE0E0", // Light red for overdue tasks
+    padding: 20,
+    marginVertical: 8,
+    marginHorizontal: 16,
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center", // Styling for overdue task items
   },
   taskText: {
     fontSize: 18,
+    marginLeft: 10,
+    flex: 1, // Styling for the task text
+  },
+  overdueText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#D32F2F", // Style for the overdue indicator text
   },
   customHeader: {
     flexDirection: "row",
     justifyContent: "flex-end",
     alignItems: "center",
     padding: 10,
-    paddingTop: 20,
-    backgroundColor: "#fff",
+    paddingTop: 20, // Style for the custom header
   },
   signOutButton: {
-    marginRight: 15,
+    marginRight: 15, // Style for the sign-out button
   },
+  categoryCircle: {
+    width: 15,
+    height: 15,
+    borderRadius: 7.5,
+    marginRight: 10, // Style for the category color circle
+  },
+  completeButton: {
+    // Styles for the complete task button
+    padding: 8,
+    borderRadius: 5,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  completeButtonText: {
+    color: "white",
+    fontWeight: "bold", // Text style for the 'Complete' button
+  },
+  // Add any additional styles you might have
 });
 
 export default HomeScreen;

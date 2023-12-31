@@ -1,192 +1,201 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
-  SafeAreaView,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
-  FlatList,
+  Text,
+  TouchableOpacity,
   View,
+  FlatList,
+  SafeAreaView,
+  RefreshControl,
   Alert,
 } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons"; // Import Material Icons or any other icon library
+import Icon from "react-native-vector-icons/MaterialIcons";
 import { auth, db } from "../firebase";
 import {
   collection,
-  addDoc,
-  getDocs,
   query,
   where,
-  writeBatch,
+  getDocs,
   doc,
+  getDoc,
+  updateDoc,
 } from "firebase/firestore";
+import axios from "axios";
+import { OPEN_WEATHER } from "@env";
 
-const CategoryScreen = ({ navigation }) => {
-  const [categoryName, setCategoryName] = useState("");
-  const [labelName, setLabelName] = useState("");
-  const [selectedColor, setSelectedColor] = useState("");
-  const [categories, setCategories] = useState([]);
+function HomeScreen({ navigation }) {
+  const [userName, setUserName] = useState("");
+  const [tasks, setTasks] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const handleCategoryClick = (categoryId, categoryName) => {
-    navigation.navigate("TaskScreen", { categoryId, categoryName });
+  const CustomHeader = ({ onSignOut }) => {
+    return (
+      <View style={styles.customHeader}>
+        <TouchableOpacity onPress={onSignOut} style={styles.signOutButton}>
+          <Icon name="exit-to-app" size={40} color="#0782F9" />
+        </TouchableOpacity>
+      </View>
+    );
   };
 
-  const colors = ["#ff6347", "#4682b4", "#32cd32", "#ff69b4", "#ffa500"];
+  const fetchUserInfo = async () => {
+    try {
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      const docSnap = await getDoc(userRef);
+
+      if (docSnap.exists()) {
+        const userData = docSnap.data();
+        setUserName(`${userData.firstName}`);
+      } else {
+        console.log("No such document!");
+      }
+    } catch (error) {
+      console.error("Error fetching user info: ", error);
+    }
+  };
+
+  const fetchWeather = async (latitude, longitude) => {
+    try {
+      const apiKey = OPEN_WEATHER;
+      const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&appid=${apiKey}`;
+      const response = await axios.get(url);
+      const currentWeather = response.data.current.weather[0].main;
+      return currentWeather;
+    } catch (error) {
+      console.error("Error fetching weather:", error);
+      return null;
+    }
+  };
+
+  const markTaskComplete = async (task) => {
+    try {
+      const today = new Date();
+      const deadlineDate = new Date(task.deadline);
+      const isBeforeDeadline = today <= deadlineDate;
+      const pointsAwarded = isBeforeDeadline ? 10 : 0;
+
+      const taskRef = doc(db, "tasks", task.id);
+      await updateDoc(taskRef, {
+        isCompleted: true,
+        pointsAwarded: pointsAwarded,
+      });
+
+      fetchTasksDueToday(); // Refresh tasks
+    } catch (error) {
+      console.error("Error marking task as complete: ", error);
+    }
+  };
+
+  const fetchTasksDueToday = async () => {
+    try {
+      const today = new Date();
+      const dateStringToday = today.toISOString().split("T")[0];
+
+      const categoriesRef = collection(db, "categories");
+      const categoriesSnapshot = await getDocs(categoriesRef);
+      const categoryColors = {};
+      categoriesSnapshot.forEach((doc) => {
+        const categoryData = doc.data();
+        categoryColors[doc.id] = categoryData.color;
+      });
+
+      const tasksRef = collection(db, "tasks");
+      const q = query(tasksRef, where("userId", "==", auth.currentUser.uid));
+      const querySnapshot = await getDocs(q);
+
+      let fetchedTasks = [];
+      querySnapshot.forEach((doc) => {
+        const task = doc.data();
+        const taskDate = task.deadline.split("T")[0];
+        if (!task.isCompleted && taskDate <= dateStringToday) {
+          fetchedTasks.push({
+            ...task,
+            id: doc.id,
+            categoryColor: categoryColors[task.categoryId] || "#000",
+          });
+        }
+      });
+
+      setTasks(fetchedTasks);
+    } catch (error) {
+      console.error("Error fetching tasks: ", error);
+    }
+  };
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchTasksDueToday().then(() => setRefreshing(false));
+  }, []);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
-      fetchCategories(); // Fetch categories again when the screen is focused
+      fetchUserInfo();
+      fetchTasksDueToday();
     });
+
     return unsubscribe;
   }, [navigation]);
 
-  const fetchCategories = async () => {
-    const q = query(
-      collection(db, "categories"),
-      where("userId", "==", auth.currentUser.uid)
-    );
-    const querySnapshot = await getDocs(q);
-    const fetchedCategories = [];
-    querySnapshot.forEach((doc) => {
-      fetchedCategories.push({ ...doc.data(), id: doc.id });
-    });
-    setCategories(fetchedCategories);
+  const handleSignOut = () => {
+    auth
+      .signOut()
+      .then(() => {
+        navigation.replace("Login");
+      })
+      .catch((error) => alert(error.message));
   };
 
-  const handleCreateCategory = async () => {
-    if (!categoryName.trim() || !labelName.trim() || !selectedColor) {
-      alert("Please fill in all fields.");
-      return;
+  const getWeatherIconName = (weatherCode) => {
+    switch (weatherCode) {
+      case "Clear":
+        return "wb-sunny";
+      case "Rain":
+        return "umbrella";
+      case "Clouds":
+        return "cloud";
+      default:
+        return null;
     }
-
-    await addDoc(collection(db, "categories"), {
-      name: categoryName,
-      label: labelName,
-      color: selectedColor,
-      userId: auth.currentUser.uid,
-    });
-    setCategoryName("");
-    setLabelName("");
-    setSelectedColor("");
-    fetchCategories();
-  };
-
-  const handleDeleteCategory = async (categoryId) => {
-    Alert.alert(
-      "Confirm Delete",
-      "Do you really want to delete this category and all associated tasks?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Yes", onPress: () => deleteCategoryAndTasks(categoryId) },
-      ]
-    );
-  };
-
-  const deleteCategoryAndTasks = async (categoryId) => {
-    const batch = writeBatch(db);
-
-    const categoryRef = doc(db, "categories", categoryId);
-    batch.delete(categoryRef);
-
-    const tasksQuery = query(
-      collection(db, "tasks"),
-      where("categoryId", "==", categoryId)
-    );
-
-    try {
-      const tasksSnapshot = await getDocs(tasksQuery);
-      tasksSnapshot.forEach((doc) => {
-        batch.delete(doc.ref);
-      });
-
-      await batch.commit();
-      fetchCategories();
-    } catch (error) {
-      console.error("Error deleting category and tasks: ", error);
-      Alert.alert(
-        "Error",
-        "There was a problem deleting the category and tasks."
-      );
-    }
-  };
-
-  const handleEditCategory = (category) => {
-    navigation.navigate("EditCategoryScreen", { category });
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Category Name"
-            value={categoryName}
-            onChangeText={setCategoryName}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Label Name"
-            value={labelName}
-            onChangeText={setLabelName}
-          />
-        </View>
-
-        <Text style={styles.colorSelectionText}>Select a Color:</Text>
-        <View style={styles.colorContainer}>
-          {colors.map((color, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.colorOption,
-                { backgroundColor: color },
-                selectedColor === color && styles.selectedColor,
-              ]}
-              onPress={() => setSelectedColor(color)}
-            />
-          ))}
-        </View>
-
-        <TouchableOpacity style={styles.button} onPress={handleCreateCategory}>
-          <Text style={styles.buttonText}>+ Add Category</Text>
-        </TouchableOpacity>
-      </ScrollView>
+      <CustomHeader onSignOut={handleSignOut} />
+      <Text style={styles.headerText}>Hello, {userName}</Text>
       <FlatList
-        style={styles.flatList}
-        data={categories}
+        data={tasks}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={styles.categoryContainer}>
+          <View style={styles.taskItem}>
+            <View
+              style={[
+                styles.categoryCircle,
+                { backgroundColor: item.categoryColor },
+              ]}
+            />
+            <Text style={styles.taskText}>{item.name}</Text>
+            {item.weatherCode && (
+              <Icon
+                name={getWeatherIconName(item.weatherCode)}
+                size={24}
+                color="#4F8EF7"
+              />
+            )}
             <TouchableOpacity
-              style={[styles.category, { backgroundColor: item.color }]}
-              onPress={() => handleCategoryClick(item.id, item.name)}
-              onLongPress={() => handleDeleteCategory(item.id)}
+              style={styles.completeButton}
+              onPress={() => markTaskComplete(item)}
             >
-              <Text style={styles.categoryText}>
-                {item.name} - {item.label}
-              </Text>
+              <Text style={styles.completeButtonText}>Complete</Text>
             </TouchableOpacity>
-            <View style={styles.iconContainer}>
-              <TouchableOpacity
-                onPress={() => handleEditCategory(item)}
-                style={styles.iconButton}
-              >
-                <MaterialIcons name="edit" size={24} color="blue" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => handleDeleteCategory(item.id)}
-                style={styles.iconButton}
-              >
-                <MaterialIcons name="delete" size={24} color="red" />
-              </TouchableOpacity>
-            </View>
           </View>
         )}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       />
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
