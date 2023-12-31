@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   View,
   Alert,
+  Image,
+  ScrollView,
 } from "react-native";
 import {
   createUserWithEmailAndPassword,
@@ -72,64 +74,83 @@ const LoginScreen = () => {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior="padding">
-      <View style={styles.inputContainer}>
-        <TextInput
-          placeholder="Email"
-          value={email}
-          onChangeText={(text) => setEmail(text.toLowerCase())}
-          style={styles.input}
-        />
-        <TextInput
-          placeholder="Password"
-          value={password}
-          onChangeText={(text) => setPassword(text)}
-          style={styles.input}
-          secureTextEntry
-        />
-      </View>
+    <ScrollView contentContainerStyle={styles.container}>
+      <KeyboardAvoidingView style={styles.keyboardAvoiding} behavior="padding">
+        <View style={styles.logoContainer}>
+          <Image source={require("../assets/logo.png")} style={styles.logo} />
+        </View>
 
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={handleLogin} style={styles.button}>
-          <Text style={styles.buttonText}>Login</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => navigation.navigate("Register")}
-          style={[styles.button, styles.buttonOutline]}
-        >
-          <Text style={styles.buttonOutlineText}>Register</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handlePasswordReset}
-          style={[styles.button, styles.buttonOutline]}
-        >
-          <Text style={styles.buttonOutlineText}>Reset Password</Text>
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+        <View style={styles.inputContainer}>
+          <TextInput
+            placeholder="Email"
+            value={email}
+            onChangeText={(text) => setEmail(text.toLowerCase())}
+            style={styles.input}
+          />
+          <TextInput
+            placeholder="Password"
+            value={password}
+            onChangeText={(text) => setPassword(text)}
+            style={styles.input}
+            secureTextEntry
+          />
+        </View>
+
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity onPress={handleLogin} style={styles.button}>
+            <Text style={styles.buttonText}>Login</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Register")}
+            style={[styles.button, styles.buttonOutline]}
+          >
+            <Text style={styles.buttonOutlineText}>Register</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handlePasswordReset}
+            style={[styles.button, styles.buttonOutline]}
+          >
+            <Text style={styles.buttonOutlineText}>Reset Password</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    marginTop: 160,
     flex: 1,
-    justifyContent: "center",
+  },
+  keyboardAvoiding: {
+    flex: 1,
+  },
+  logoContainer: {
     alignItems: "center",
+    marginTop: 40, // Adjust the margin as needed
+  },
+  logo: {
+    width: 150,
+    height: 150,
+    resizeMode: "contain",
   },
   inputContainer: {
     width: "80%",
+    alignSelf: "center",
+    marginTop: 20, // Adjust the margin as needed
   },
   input: {
     backgroundColor: "white",
     paddingHorizontal: 15,
     paddingVertical: 10,
     borderRadius: 10,
-    marginTop: 5,
+    marginTop: 10,
+    fontSize: 16,
   },
   buttonContainer: {
     width: "60%",
-    justifyContent: "center",
-    alignItems: "center",
+    alignSelf: "center",
     marginTop: 40,
   },
   button: {
@@ -138,10 +159,10 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     alignItems: "center",
+    marginBottom: 10,
   },
   buttonOutline: {
     backgroundColor: "white",
-    marginTop: 5,
     borderColor: "#0782F9",
     borderWidth: 2,
   },
