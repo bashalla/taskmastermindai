@@ -27,6 +27,7 @@ import MapView, { Marker } from "react-native-maps";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import { GOOGLE_API_KEY } from "@env";
+import * as Calendar from "expo-calendar";
 
 const TaskDetailsScreen = ({ navigation, route }) => {
   const { task } = route.params;
@@ -52,6 +53,50 @@ const TaskDetailsScreen = ({ navigation, route }) => {
     })();
   }, []);
 
+  const updateTaskAndCalendarEvent = async (
+    taskId,
+    newDeadline,
+    calendarEventId
+  ) => {
+    try {
+      // Update the task in Firestore
+      const taskRef = doc(db, "tasks", taskId);
+      await updateDoc(taskRef, { deadline: newDeadline.toISOString() });
+
+      // Update the calendar event if an ID is provided
+      if (calendarEventId) {
+        await updateCalendarEvent(calendarEventId, newDeadline);
+      }
+
+      console.log("Task and calendar event updated successfully");
+      // Additional code to handle the successful update (e.g., user feedback)
+    } catch (error) {
+      console.error("Error updating task and calendar event:", error);
+      // Additional code to handle the error (e.g., user feedback)
+    }
+  };
+
+  const updateCalendarEvent = async (eventId, newDeadline) => {
+    try {
+      let startDate = new Date(newDeadline);
+      startDate.setMinutes(
+        startDate.getMinutes() + startDate.getTimezoneOffset()
+      );
+      startDate.setHours(0, 0, 0, 0);
+
+      await Calendar.updateEventAsync(eventId, {
+        startDate: startDate,
+        endDate: startDate,
+        allDay: true,
+      });
+
+      console.log("Calendar event updated successfully");
+    } catch (error) {
+      console.error("Error updating calendar event:", error);
+      throw error; // Rethrow the error to be caught by the calling function
+    }
+  };
+
   const handleSave = async () => {
     try {
       if (!taskName || !description) {
@@ -59,6 +104,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         return;
       }
 
+      // Prepare updated task data
       const updatedTask = {
         name: taskName,
         description,
@@ -67,8 +113,18 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         location: region,
       };
 
-      const taskRef = doc(db, "tasks", task.id);
-      await updateDoc(taskRef, updatedTask);
+      // Update task in Firestore and the associated calendar event
+      if (task.calendarEventId) {
+        await updateTaskAndCalendarEvent(
+          task.id,
+          deadline,
+          task.calendarEventId
+        );
+      } else {
+        // Update task in Firestore
+        const taskRef = doc(db, "tasks", task.id);
+        await updateDoc(taskRef, updatedTask);
+      }
 
       Alert.alert("Task Updated", "Your task has been updated successfully.");
       if (route.params?.onTaskUpdate) {
