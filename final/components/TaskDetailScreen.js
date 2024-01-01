@@ -11,7 +11,7 @@ import {
   Linking,
   ScrollView,
 } from "react-native";
-import { updateDoc, doc } from "firebase/firestore";
+import { updateDoc, doc, getDoc } from "firebase/firestore";
 import {
   getStorage,
   ref,
@@ -59,17 +59,30 @@ const TaskDetailsScreen = ({ navigation, route }) => {
     calendarEventId
   ) => {
     try {
-      // Update the task in Firestore
+      // Retrieve the current task data
       const taskRef = doc(db, "tasks", taskId);
-      await updateDoc(taskRef, { deadline: newDeadline.toISOString() });
+      const taskDoc = await getDoc(taskRef);
+      const taskData = taskDoc.data();
 
-      // Update the calendar event if an ID is provided
-      if (calendarEventId) {
-        await updateCalendarEvent(calendarEventId, newDeadline);
+      // Check if the deadline has actually changed
+      if (taskData.deadline !== newDeadline.toISOString()) {
+        // Increment deadlineChangeCount
+        const newCount = (taskData.deadlineChangeCount || 0) + 1;
+
+        // Update the task in Firestore
+        await updateDoc(taskRef, {
+          deadline: newDeadline.toISOString(),
+          deadlineChangeCount: newCount,
+        });
+
+        // Update the calendar event if an ID is provided
+        if (calendarEventId) {
+          await updateCalendarEvent(calendarEventId, newDeadline);
+        }
+
+        console.log("Task and calendar event updated successfully");
+        // Additional code to handle the successful update (e.g., user feedback)
       }
-
-      console.log("Task and calendar event updated successfully");
-      // Additional code to handle the successful update (e.g., user feedback)
     } catch (error) {
       console.error("Error updating task and calendar event:", error);
       // Additional code to handle the error (e.g., user feedback)

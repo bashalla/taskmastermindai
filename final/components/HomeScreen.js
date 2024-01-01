@@ -186,27 +186,53 @@ function HomeScreen({ navigation }) {
 
       // Get current task data
       const taskSnap = await getDoc(taskRef);
-
-      if (taskSnap.exists()) {
-        const task = taskSnap.data();
-        const deadline = new Date(task.deadline);
-        const now = new Date();
-
-        // Check if the task is completed before the deadline
-        const pointsAwarded = now <= deadline ? 10 : 0;
-
-        // Update the task in Firestore
-        await updateDoc(taskRef, {
-          isCompleted: true,
-          points: task.points ? task.points + pointsAwarded : pointsAwarded,
-        });
-
-        // Update the local state to reflect the task's completion
-        setCompletedTasks((prev) => ({ ...prev, [taskId]: true }));
-
-        // Optionally, refresh the list of tasks
-        fetchTasksDueToday();
+      if (!taskSnap.exists()) {
+        console.log("No such task!");
+        return;
       }
+      const task = taskSnap.data();
+      const deadline = new Date(task.deadline);
+      const now = new Date();
+
+      // Check if the task is completed before the deadline and deadline change count is less than 3
+      const isOnTime = now <= deadline;
+      const isChangeLimitNotExceeded = (task.deadlineChangeCount || 0) < 3;
+
+      if (isOnTime && isChangeLimitNotExceeded) {
+        // Get current user data
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) {
+          console.log("No such user!");
+          return;
+        }
+        const userData = userSnap.data();
+
+        // Update the user's points
+        const newPoints = (userData.points || 0) + 10;
+        await updateDoc(userRef, {
+          points: newPoints,
+        });
+      } else if (!isOnTime || !isChangeLimitNotExceeded) {
+        // Optionally, handle the case where the task is overdue or deadline change limit is exceeded
+        if (!isChangeLimitNotExceeded) {
+          // Display an alert if the deadline has been changed 3 or more times
+          alert(
+            "You will not get any points as you extended the deadline 3 or more times"
+          );
+        }
+      }
+
+      // Update the task in Firestore as completed
+      await updateDoc(taskRef, {
+        isCompleted: true,
+      });
+
+      // Update the local state to reflect the task's completion
+      setCompletedTasks((prev) => ({ ...prev, [taskId]: true }));
+
+      // Optionally, refresh the list of tasks
+      fetchTasksDueToday();
     } catch (error) {
       console.error("Error marking task as complete: ", error);
     }
