@@ -131,6 +131,26 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         location: region,
       };
 
+      const now = new Date();
+      const isOverdue = now > deadline;
+      const isChangeLimitExceeded = task.deadlineChangeCount >= 3;
+
+      if (isOverdue || isChangeLimitExceeded) {
+        let alertMessage = "Task update failed. ";
+
+        if (isOverdue) {
+          alertMessage += "The task is overdue. ";
+        }
+
+        if (isChangeLimitExceeded) {
+          alertMessage += "Deadline has been changed 3 or more times. ";
+        }
+
+        alertMessage += "No points will be awarded.";
+        Alert.alert("Alert", alertMessage);
+        return; // Stop the save operation if the task is overdue or change limit exceeded
+      }
+
       // Update task in Firestore and the associated calendar event
       if (task.calendarEventId) {
         await updateTaskAndCalendarEvent(
