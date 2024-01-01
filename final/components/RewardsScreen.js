@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { StyleSheet, Text, View, ScrollView, Image } from "react-native";
 import { auth, db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
+import { useFocusEffect } from "@react-navigation/native";
 
 const userTypes = [
   { name: "Starter", minPoints: 0, maxPoints: 99 },
@@ -10,18 +11,34 @@ const userTypes = [
   { name: "Advanced", minPoints: 1000, maxPoints: 2499 },
   { name: "Expert", minPoints: 2500, maxPoints: 4999 },
   { name: "Master", minPoints: 5000, maxPoints: 7499 },
-  { name: "Legend", minPoints: 7500, maxPoints: 10000 },
+  { name: "Legend Task Solver", minPoints: 7500, maxPoints: 100000000 },
 ];
 
 // Placeholder for badge data
 const badges = [
-  { name: "Bronze", points: 0, imageUrl: "../assets/badges/bronze.png" },
-  { name: "Silver", points: 500, imageUrl: "../assets/badges/silver.png" },
-  { name: "Gold", points: 1000, imageUrl: "../assets/badges/gold.png" },
-  { name: "Platinum", points: 2500, imageUrl: "../assets/badges/platinum.png" },
-  { name: "Diamond", points: 5000, imageUrl: "../assets/badges/diamond.png" },
-  { name: "Emerald", points: 5000, imageUrl: "../assets/badges/emerald.png" },
-  { name: "Ruby", points: 7500, imageUrl: "../assets/badges/ruby.png" },
+  { name: "Bronze", points: 0, image: require("../assets/badges/bronze.png") },
+  {
+    name: "Silver",
+    points: 500,
+    image: require("../assets/badges/silver.png"),
+  },
+  { name: "Gold", points: 1000, image: require("../assets/badges/gold.png") },
+  {
+    name: "Platinum",
+    points: 2500,
+    image: require("../assets/badges/platinum.png"),
+  },
+  {
+    name: "Diamond",
+    points: 5000,
+    image: require("../assets/badges/diamond.png"),
+  },
+  {
+    name: "Emerald",
+    points: 5000,
+    image: require("../assets/badges/emerald.png"),
+  },
+  { name: "Ruby", points: 7500, image: require("../assets/badges/ruby.png") },
 ];
 
 function RewardsScreen() {
@@ -57,11 +74,10 @@ function RewardsScreen() {
   };
 
   const getEarnedBadge = (points) => {
-    // Assuming badges are sorted in ascending order of points
     return badges
       .slice()
       .reverse()
-      .find((badge) => userPoints >= badge.points);
+      .find((badge) => points >= badge.points);
   };
 
   return (
@@ -81,10 +97,7 @@ function RewardsScreen() {
       {earnedBadge && (
         <View style={styles.badgeContainer}>
           <Text style={styles.badgeText}>Earned Badge: {earnedBadge.name}</Text>
-          <Image
-            source={{ uri: earnedBadge.imageUrl }}
-            style={styles.badgeImage}
-          />
+          <Image source={earnedBadge.image} style={styles.badgeImage} />
         </View>
       )}
 
@@ -95,7 +108,7 @@ function RewardsScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 55,
+    marginTop: 65,
     flex: 1,
     backgroundColor: "#f4f4f4",
     padding: 20,
@@ -149,7 +162,6 @@ const styles = StyleSheet.create({
     height: 100,
     resizeMode: "contain",
   },
-  // ... (any additional styles)
 });
 
 export default RewardsScreen;
