@@ -64,20 +64,25 @@ const TaskDetailsScreen = ({ navigation, route }) => {
       const taskDoc = await getDoc(taskRef);
       const taskData = taskDoc.data();
 
+      // Convert deadlines to Date objects for accurate comparison
+      const oldDeadline = new Date(taskData.deadline);
+      const newDeadlineDate = new Date(newDeadline);
+
       // Check if the deadline has actually changed
-      if (taskData.deadline !== newDeadline.toISOString()) {
+      // Compare the time values of the dates
+      if (oldDeadline.getTime() !== newDeadlineDate.getTime()) {
         // Increment deadlineChangeCount
         const newCount = (taskData.deadlineChangeCount || 0) + 1;
 
         // Update the task in Firestore
         await updateDoc(taskRef, {
-          deadline: newDeadline.toISOString(),
+          deadline: newDeadlineDate.toISOString(),
           deadlineChangeCount: newCount,
         });
 
         // Update the calendar event if an ID is provided
         if (calendarEventId) {
-          await updateCalendarEvent(calendarEventId, newDeadline);
+          await updateCalendarEvent(calendarEventId, newDeadlineDate);
         }
 
         console.log("Task and calendar event updated successfully");

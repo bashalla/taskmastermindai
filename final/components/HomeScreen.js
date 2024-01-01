@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
+  Alert,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -194,11 +195,23 @@ function HomeScreen({ navigation }) {
       const deadline = new Date(task.deadline);
       const now = new Date();
 
-      // Check if the task is completed before the deadline and deadline change count is less than 3
-      const isOnTime = now <= deadline;
+      // Check if the task is overdue
+      const isOverdue = now > deadline;
+
+      // Check if deadline change count is less than 3
       const isChangeLimitNotExceeded = (task.deadlineChangeCount || 0) < 3;
 
-      if (isOnTime && isChangeLimitNotExceeded) {
+      if (isOverdue) {
+        // Display an alert if the task is overdue
+        Alert.alert("Task Overdue", "This task is overdue. No points awarded.");
+      } else if (!isChangeLimitNotExceeded) {
+        // Display an alert if the deadline has been changed 3 or more times
+        Alert.alert(
+          "Deadline Changed",
+          "You will not get any points as you extended the deadline 3 or more times."
+        );
+      } else {
+        // Task is on time and change limit not exceeded
         // Get current user data
         const userRef = doc(db, "users", auth.currentUser.uid);
         const userSnap = await getDoc(userRef);
@@ -213,14 +226,6 @@ function HomeScreen({ navigation }) {
         await updateDoc(userRef, {
           points: newPoints,
         });
-      } else if (!isOnTime || !isChangeLimitNotExceeded) {
-        // Optionally, handle the case where the task is overdue or deadline change limit is exceeded
-        if (!isChangeLimitNotExceeded) {
-          // Display an alert if the deadline has been changed 3 or more times
-          alert(
-            "You will not get any points as you extended the deadline 3 or more times"
-          );
-        }
       }
 
       // Update the task in Firestore as completed

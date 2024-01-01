@@ -16,10 +16,11 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  getDoc,
 } from "firebase/firestore";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { useFocusEffect } from "@react-navigation/native";
-import { db } from "../firebase";
+import { auth, db } from "../firebase";
 import * as Calendar from "expo-calendar";
 
 const TaskScreen = ({ navigation, route }) => {
@@ -68,19 +69,47 @@ const TaskScreen = ({ navigation, route }) => {
   );
 
   const markTaskAsDone = async (task) => {
-    const now = new Date();
-    let points = 0;
-    if (now <= new Date(task.deadline)) {
-      points = 10; // Example points
+    try {
+      const now = new Date();
+      const isOnTime = now <= new Date(task.deadline);
+      const isChangeLimitNotExceeded = (task.deadlineChangeCount || 0) < 3;
+
+      // Update the task as completed in Firestore
+      const taskRef = doc(db, "tasks", task.id);
+      await updateDoc(taskRef, {
+        isCompleted: true,
+      });
+
+      // Check conditions and update user points or show alert
+      if (isOnTime && isChangeLimitNotExceeded) {
+        // Award points to the user
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          const newPoints = (userData.points || 0) + 10;
+          await updateDoc(userRef, {
+            points: newPoints,
+          });
+        }
+      } else {
+        // Display alert if task is overdue or deadline change limit exceeded
+        let alertMessage = "";
+        if (!isOnTime) {
+          alertMessage += "Task is overdue. ";
+        }
+        if (!isChangeLimitNotExceeded) {
+          alertMessage += "Deadline has been changed 3 or more times. ";
+        }
+        alertMessage += "No points awarded.";
+        Alert.alert("Task Update", alertMessage);
+      }
+
+      fetchTasks();
+    } catch (error) {
+      console.error("Error marking task as done: ", error);
+      Alert.alert("Error", "Unable to mark task as done.");
     }
-
-    const taskRef = doc(db, "tasks", task.id);
-    await updateDoc(taskRef, {
-      isCompleted: true,
-      points: points,
-    });
-
-    fetchTasks();
   };
 
   const deleteTask = async (task) => {
