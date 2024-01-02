@@ -11,7 +11,7 @@ import {
   Linking,
   ScrollView,
 } from "react-native";
-import { updateDoc, doc } from "firebase/firestore";
+import { updateDoc, doc, getDoc } from "firebase/firestore";
 import {
   getStorage,
   ref,
@@ -27,6 +27,7 @@ import MapView, { Marker } from "react-native-maps";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import { GOOGLE_API_KEY } from "@env";
+import * as Calendar from "expo-calendar";
 
 const TaskDetailsScreen = ({ navigation, route }) => {
   const { task } = route.params;
@@ -52,6 +53,68 @@ const TaskDetailsScreen = ({ navigation, route }) => {
     })();
   }, []);
 
+  const updateTaskAndCalendarEvent = async (
+    taskId,
+    newDeadline,
+    calendarEventId
+  ) => {
+    try {
+      // Retrieve the current task data
+      const taskRef = doc(db, "tasks", taskId);
+      const taskDoc = await getDoc(taskRef);
+      const taskData = taskDoc.data();
+
+      // Convert deadlines to Date objects for accurate comparison
+      const oldDeadline = new Date(taskData.deadline);
+      const newDeadlineDate = new Date(newDeadline);
+
+      // Check if the deadline has actually changed
+      // Compare the time values of the dates
+      if (oldDeadline.getTime() !== newDeadlineDate.getTime()) {
+        // Increment deadlineChangeCount
+        const newCount = (taskData.deadlineChangeCount || 0) + 1;
+
+        // Update the task in Firestore
+        await updateDoc(taskRef, {
+          deadline: newDeadlineDate.toISOString(),
+          deadlineChangeCount: newCount,
+        });
+
+        // Update the calendar event if an ID is provided
+        if (calendarEventId) {
+          await updateCalendarEvent(calendarEventId, newDeadlineDate);
+        }
+
+        console.log("Task and calendar event updated successfully");
+        // Additional code to handle the successful update (e.g., user feedback)
+      }
+    } catch (error) {
+      console.error("Error updating task and calendar event:", error);
+      // Additional code to handle the error (e.g., user feedback)
+    }
+  };
+
+  const updateCalendarEvent = async (eventId, newDeadline) => {
+    try {
+      let startDate = new Date(newDeadline);
+      startDate.setMinutes(
+        startDate.getMinutes() + startDate.getTimezoneOffset()
+      );
+      startDate.setHours(0, 0, 0, 0);
+
+      await Calendar.updateEventAsync(eventId, {
+        startDate: startDate,
+        endDate: startDate,
+        allDay: true,
+      });
+
+      console.log("Calendar event updated successfully");
+    } catch (error) {
+      console.error("Error updating calendar event:", error);
+      throw error; // Rethrow the error to be caught by the calling function
+    }
+  };
+
   const handleSave = async () => {
     try {
       if (!taskName || !description) {
@@ -59,6 +122,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         return;
       }
 
+      // Prepare updated task data
       const updatedTask = {
         name: taskName,
         description,
@@ -67,8 +131,38 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         location: region,
       };
 
-      const taskRef = doc(db, "tasks", task.id);
-      await updateDoc(taskRef, updatedTask);
+      const now = new Date();
+      const isOverdue = now > deadline;
+      const isChangeLimitExceeded = task.deadlineChangeCount >= 3;
+
+      if (isOverdue || isChangeLimitExceeded) {
+        let alertMessage = "Task update failed. ";
+
+        if (isOverdue) {
+          alertMessage += "The task is overdue. ";
+        }
+
+        if (isChangeLimitExceeded) {
+          alertMessage += "Deadline has been changed 3 or more times. ";
+        }
+
+        alertMessage += "No points will be awarded.";
+        Alert.alert("Alert", alertMessage);
+        return; // Stop the save operation if the task is overdue or change limit exceeded
+      }
+
+      // Update task in Firestore and the associated calendar event
+      if (task.calendarEventId) {
+        await updateTaskAndCalendarEvent(
+          task.id,
+          deadline,
+          task.calendarEventId
+        );
+      } else {
+        // Update task in Firestore
+        const taskRef = doc(db, "tasks", task.id);
+        await updateDoc(taskRef, updatedTask);
+      }
 
       Alert.alert("Task Updated", "Your task has been updated successfully.");
       if (route.params?.onTaskUpdate) {

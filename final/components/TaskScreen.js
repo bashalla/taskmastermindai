@@ -16,10 +16,11 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  getDoc,
 } from "firebase/firestore";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { useFocusEffect } from "@react-navigation/native";
-import { db } from "../firebase";
+import { auth, db } from "../firebase";
 import * as Calendar from "expo-calendar";
 
 const TaskScreen = ({ navigation, route }) => {
@@ -68,19 +69,47 @@ const TaskScreen = ({ navigation, route }) => {
   );
 
   const markTaskAsDone = async (task) => {
-    const now = new Date();
-    let points = 0;
-    if (now <= new Date(task.deadline)) {
-      points = 10; // Example points
+    try {
+      const now = new Date();
+      const isOnTime = now <= new Date(task.deadline);
+      const isChangeLimitNotExceeded = (task.deadlineChangeCount || 0) < 3;
+
+      // Update the task as completed in Firestore
+      const taskRef = doc(db, "tasks", task.id);
+      await updateDoc(taskRef, {
+        isCompleted: true,
+      });
+
+      // Check conditions and update user points or show alert
+      if (isOnTime && isChangeLimitNotExceeded) {
+        // Award points to the user
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          const newPoints = (userData.points || 0) + 10;
+          await updateDoc(userRef, {
+            points: newPoints,
+          });
+        }
+      } else {
+        // Display alert if task is overdue or deadline change limit exceeded
+        let alertMessage = "";
+        if (!isOnTime) {
+          alertMessage += "Task is overdue. ";
+        }
+        if (!isChangeLimitNotExceeded) {
+          alertMessage += "Deadline has been changed 3 or more times. ";
+        }
+        alertMessage += "No points awarded.";
+        Alert.alert("Task Update", alertMessage);
+      }
+
+      fetchTasks();
+    } catch (error) {
+      console.error("Error marking task as done: ", error);
+      Alert.alert("Error", "Unable to mark task as done.");
     }
-
-    const taskRef = doc(db, "tasks", task.id);
-    await updateDoc(taskRef, {
-      isCompleted: true,
-      points: points,
-    });
-
-    fetchTasks();
   };
 
   const deleteTask = async (task) => {
@@ -108,12 +137,46 @@ const TaskScreen = ({ navigation, route }) => {
 
   const addTaskToCalendar = async (task) => {
     try {
+      const calendarId = await findOrCreateCalendar();
+
+      let deadlineDate = new Date(task.deadline);
+      deadlineDate.setMinutes(
+        deadlineDate.getMinutes() + deadlineDate.getTimezoneOffset()
+      );
+
+      const eventId = await Calendar.createEventAsync(calendarId, {
+        title: task.name,
+        startDate: deadlineDate,
+        endDate: deadlineDate, // same as startDate for a single day event
+        allDay: true,
+        timeZone: Calendar.DEFAULT_TIMEZONE,
+      });
+
+      const taskRef = doc(db, "tasks", task.id);
+      await updateDoc(taskRef, { calendarEventId: eventId });
+
+      Alert.alert("Success", "Task added to calendar");
+    } catch (error) {
+      console.error("Error adding to calendar: ", error);
+      Alert.alert("Error", "Unable to add task to calendar.");
+    }
+  };
+
+  const findOrCreateCalendar = async () => {
+    const calendars = await Calendar.getCalendarsAsync(
+      Calendar.EntityTypes.EVENT
+    );
+    const expoCalendar = calendars.find((c) => c.title === "Expo Calendar");
+
+    if (expoCalendar) {
+      return expoCalendar.id;
+    } else {
       const defaultCalendarSource =
         Platform.OS === "ios"
           ? await getDefaultCalendarSource()
           : { isLocalAccount: true, name: "Expo Calendar" };
 
-      const newCalendarID = await Calendar.createCalendarAsync({
+      return await Calendar.createCalendarAsync({
         title: "Expo Calendar",
         color: "blue",
         entityType: Calendar.EntityTypes.EVENT,
@@ -123,27 +186,42 @@ const TaskScreen = ({ navigation, route }) => {
         ownerAccount: "personal",
         accessLevel: Calendar.CalendarAccessLevel.OWNER,
       });
-
-      const eventId = await Calendar.createEventAsync(newCalendarID, {
-        title: task.name,
-        startDate: new Date(task.deadline),
-        endDate: new Date(new Date(task.deadline).getTime() + 60 * 60 * 1000), // For example, 1 hour later
-        timeZone: "GMT",
-      });
-
-      Alert.alert("Success", "Task added to calendar");
-    } catch (error) {
-      console.error("Error adding to calendar: ", error);
-      Alert.alert("Error", "Unable to add task to calendar.");
     }
   };
 
   const getDefaultCalendarSource = async () => {
-    const calendars = await Calendar.getCalendarsAsync();
-    const defaultCalendars = calendars.filter(
-      (each) => each.source.name === "Default"
-    );
-    return defaultCalendars.length > 0 ? defaultCalendars[0].source : {};
+    try {
+      const calendars = await Calendar.getCalendarsAsync(
+        Calendar.EntityTypes.EVENT
+      );
+      console.log("Available Calendars:", calendars);
+
+      let defaultSource = null;
+      if (Platform.OS === "ios") {
+        // Find a default source
+        defaultSource = calendars.find(
+          (calendar) => calendar.source && calendar.source.isLocalAccount
+        );
+
+        // If no default source is found, create one or choose a fallback
+        if (!defaultSource) {
+          console.log(
+            "No suitable default calendar source found on iOS. Creating or choosing a fallback."
+          );
+          // Here, you can create a new calendar source or choose a suitable fallback
+          // This is a simplified example, adjust according to your app's requirements
+          defaultSource = { isLocalAccount: true, name: "Expo Calendar" };
+        }
+      } else {
+        defaultSource = { isLocalAccount: true, name: "Expo Calendar" };
+      }
+
+      console.log("Selected Default Source:", defaultSource);
+      return defaultSource ? defaultSource : null;
+    } catch (error) {
+      console.error("Error getting default calendar source:", error);
+      return null; // Fallback if there's an error
+    }
   };
 
   return (
