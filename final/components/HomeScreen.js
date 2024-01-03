@@ -50,6 +50,7 @@ function HomeScreen({ navigation }) {
       <View style={styles.customHeader}>
         <TouchableOpacity onPress={onSignOut} style={styles.signOutButton}>
           <Icon name="exit-to-app" size={40} color="#0782F9" />
+          <Text style={styles.invisibleText}>Sign Out</Text>
         </TouchableOpacity>
       </View>
     );
@@ -315,6 +316,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
     padding: 20,
     color: "#333", // Font color for the header text
+  },
+  invisibleText: {
+    height: 0,
+    width: 0,
+    opacity: 0,
   },
   dateText: {
     marginBottom: 10,
