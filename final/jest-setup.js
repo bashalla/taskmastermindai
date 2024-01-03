@@ -6,3 +6,5 @@ module.exports = {
   ],
 };
 console.error = jest.fn();
+// Mock global alert
+global.alert = jest.fn();

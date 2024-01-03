@@ -52,7 +52,7 @@
   "jest": {
     "preset": "jest-expo",
     "transformIgnorePatterns": [
-      "node_modules/(?!(react-native|@react-native|react-navigation|@react-navigation/.*|firebase|@firebase/.*))"
+      "node_modules/(?!(react-native|@react-native|react-navigation|@react-navigation/.*|expo|@expo/.*|react-native-vector-icons|firebase|@firebase/.*))"
     ],
     "setupFilesAfterEnv": [
       "./jest-setup.js"
