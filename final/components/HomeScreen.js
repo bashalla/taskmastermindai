@@ -136,6 +136,8 @@ function HomeScreen({ navigation }) {
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
+      fetchCategories(); // Fetch categories before fetching tasks
+
       fetchUserInfo();
       fetchTasksDueToday();
     });
