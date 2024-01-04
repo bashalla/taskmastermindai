@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, Text, View, ScrollView, Image } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  Image,
+  RefreshControl,
+} from "react-native";
 import { auth, db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { useFocusEffect } from "@react-navigation/native";
@@ -46,9 +53,11 @@ function RewardsScreen() {
   const [userName, setUserName] = useState("");
   const [userType, setUserType] = useState("");
   const [earnedBadge, setEarnedBadge] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
+  const fetchUserData = async () => {
+    setIsRefreshing(true); // Start the refresh animation
+    try {
       const userRef = doc(db, "users", auth.currentUser.uid);
       const docSnap = await getDoc(userRef);
 
@@ -61,8 +70,14 @@ function RewardsScreen() {
       } else {
         console.log("No such document!");
       }
-    };
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    } finally {
+      setIsRefreshing(false); // End the refresh animation
+    }
+  };
 
+  useEffect(() => {
     fetchUserData();
   }, []);
 
@@ -81,8 +96,14 @@ function RewardsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={isRefreshing} onRefresh={fetchUserData} />
+      }
+    >
       <Text style={styles.headerText}>Rewards Dashboard</Text>
+
       <Text style={styles.subHeaderText}>
         Your progress and achievements, {userName}
       </Text>
