@@ -79,13 +79,14 @@ function HomeScreen({ navigation }) {
 
       console.log("Fetching weather from: ", url);
       const response = await axios.get(url);
-      const currentWeather = response.data.current.weather[0].main;
-      return currentWeather;
+      const weatherDescription = response.data.current.weather[0].description; // Changed to description
+      return weatherDescription;
     } catch (error) {
       console.error("Error fetching weather:", error);
       return null;
     }
   };
+
   const fetchTasksDueToday = async () => {
     try {
       const today = new Date();
@@ -158,28 +159,54 @@ function HomeScreen({ navigation }) {
     switch (description.toLowerCase()) {
       case "clear sky":
         return "wb-sunny";
-      case "few clouds":
       case "scattered clouds":
-        return "cloud";
       case "broken clouds":
       case "overcast clouds":
-        return "cloud-queue";
+      case "few clouds":
+        return "wb-cloudy";
       case "shower rain":
+      case "light intensity shower rain":
+      case "shower rain":
+      case "heavy intensity shower rain":
+      case "ragged shower rain":
       case "rain":
-        return "grain";
+      case "light rain":
+      case "moderate rain":
+      case "heavy intensity rain":
+      case "very heavy rain":
+      case "extreme rain":
+      case "freezing rain":
+        return "umbrella"; // This icon is a close approximation
       case "thunderstorm":
-        return "flash-on";
+      case "thunderstorm with light rain":
+      case "thunderstorm with rain":
+        return "thunderstorm";
       case "snow":
+      case "light snow":
+      case "heavy snow":
         return "ac-unit";
       case "mist":
+      case "smoke":
       case "haze":
+      case "sand/dust whirls":
       case "fog":
-        return "cloud-circle";
-      case "drizzle":
-        return "invert-colors";
-      // Add more cases as needed
+      case "sand":
+      case "dust":
+      case "volcanic ash":
+      case "squalls":
+      case "tornado":
+        return "visibility";
+      // ... include any other conditions
       default:
         return "wb-cloudy"; // Default icon for unknown conditions
+    }
+  };
+
+  const getWeatherIconColor = (description) => {
+    if (description.toLowerCase() === "clear sky") {
+      return "#FFD700"; // Yellow for clear sky
+    } else {
+      return "#4F8EF7"; // Default blue for other conditions
     }
   };
 
@@ -272,7 +299,7 @@ function HomeScreen({ navigation }) {
               <Icon
                 name={getWeatherIconName(item.weatherCode)}
                 size={30}
-                color={item.weatherCode === "Clear" ? "#FFD700" : "#4F8EF7"}
+                color={getWeatherIconColor(item.weatherCode)}
               />
             )}
             <Text style={styles.taskText}>{item.name}</Text>
