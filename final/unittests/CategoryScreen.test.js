@@ -1,9 +1,8 @@
-// CategoryScreen.test.js
 import React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 import CategoryScreen from "../components/CategoryScreen";
 
-// Mock Firebase Initialization
+// Mocking Firebase Initialization
 jest.mock("../firebase", () => {
   const mockFirestore = {
     collection: jest.fn((_, collectionName) => ({ collectionName })),
@@ -20,7 +19,6 @@ jest.mock("../firebase", () => {
               userId: "user-id",
             }),
           },
-          // ... more mock docs
         ],
       })
     ),
@@ -33,8 +31,10 @@ jest.mock("../firebase", () => {
     doc: jest.fn(),
   };
 
+  // Mock the getFirestore function
   const mockGetFirestore = jest.fn(() => mockFirestore);
 
+  // Return the mock functions if needed
   return {
     __esModule: true,
     auth: {
@@ -77,7 +77,6 @@ jest.mock("firebase/firestore", () => {
                 userId: "user-id",
               }),
             },
-            // Add more mock documents as needed
           ];
           docs.forEach(callback);
         }),
@@ -95,6 +94,7 @@ jest.mock("firebase/firestore", () => {
   };
 });
 
+// Mock the useNavigation hook
 jest.mock("@react-navigation/native", () => {
   const actualNav = jest.requireActual("@react-navigation/native");
   return {
@@ -105,6 +105,7 @@ jest.mock("@react-navigation/native", () => {
   };
 });
 
+// Mock the useFocusEffect hook
 jest.mock("@react-native-async-storage/async-storage", () => ({
   setItem: jest.fn(),
   getItem: jest.fn(),
@@ -112,9 +113,9 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
   clear: jest.fn(),
 }));
 
+// Mock the useFocusEffect hook
 jest.mock("@expo/vector-icons", () => ({
   MaterialIcons: "MaterialIcons",
-  // Add other icons you use
 }));
 
 // Mock for the navigation prop
@@ -125,17 +126,16 @@ const mockNavigation = {
 
 describe("CategoryScreen", () => {
   it("renders correctly", () => {
-    // Pass the mockNavigation to your component
+    // Passing the mockNavigation to my component
     const { getByText, getByPlaceholderText } = render(
       <CategoryScreen navigation={mockNavigation} />
     );
     expect(getByText("Select a Color:")).toBeTruthy();
     expect(getByPlaceholderText("Category Name")).toBeTruthy();
-    // Other checks...
   });
 
   it("allows category creation", () => {
-    // Pass the mockNavigation to your component
+    // Passing the mockNavigation to my component
     const { getByText, getByPlaceholderText } = render(
       <CategoryScreen navigation={mockNavigation} />
     );
@@ -143,8 +143,5 @@ describe("CategoryScreen", () => {
     fireEvent.changeText(categoryNameInput, "New Category");
     const addButton = getByText("+ Add Category");
     fireEvent.press(addButton);
-    // Test assertions...
   });
-
-  // Other tests...
 });

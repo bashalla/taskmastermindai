@@ -21,12 +21,13 @@ import * as ImageManipulator from "expo-image-manipulator";
 import CountryPicker from "react-native-country-picker-modal";
 import { Picker } from "@react-native-picker/picker";
 
+// This component will be used to edit the users profiles
 const resizeImage = async (imageUri) => {
   try {
-    // Resize the image to a square while maintaining quality
+    // Resizing the image to a square while maintaining quality
     const result = await ImageManipulator.manipulateAsync(
       imageUri,
-      [{ resize: { width: 800, height: 800 } }], // Square dimensions
+      [{ resize: { width: 800, height: 800 } }], // Square dimensions here
       { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
     );
     return result.uri;
@@ -35,6 +36,7 @@ const resizeImage = async (imageUri) => {
   }
 };
 
+// This component will be used to edit the users profiles
 function ProfileScreen() {
   const [userData, setUserData] = useState({
     firstName: "",
@@ -48,11 +50,13 @@ function ProfileScreen() {
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
   const [agePickerVisible, setAgePickerVisible] = useState(false);
 
+  // Handle country selection
   const handleCountrySelect = (country) => {
     setUserData({ ...userData, nationality: country.name });
     setCountryPickerVisible(false);
   };
 
+  // Fetch user data when the screen loads
   useEffect(() => {
     const fetchData = async () => {
       const docRef = doc(db, "users", auth.currentUser.uid);
@@ -69,6 +73,7 @@ function ProfileScreen() {
     fetchData();
   }, []);
 
+  // Select an image from the device library
   const handleSelectImage = async () => {
     // Request media library permissions
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -95,7 +100,7 @@ function ProfileScreen() {
       const asset = result.assets[0];
       const imageUri = asset.uri;
 
-      // Resize the image using expo-image-manipulator
+      // Resizing the image using expo-image-manipulator
       try {
         const resizedImage = await ImageManipulator.manipulateAsync(
           imageUri,
@@ -105,7 +110,7 @@ function ProfileScreen() {
 
         const resizedImageUri = resizedImage.uri;
 
-        // Prepare the image for upload
+        // Preparing the image for upload
         const response = await fetch(resizedImageUri);
         const blob = await response.blob();
         const storageRef = ref(
@@ -113,7 +118,7 @@ function ProfileScreen() {
           `profileImages/${auth.currentUser.uid}`
         );
 
-        // Upload the image
+        // Uploading the image
         try {
           const snapshot = await uploadBytes(storageRef, blob);
           const downloadURL = await getDownloadURL(snapshot.ref);
@@ -128,6 +133,7 @@ function ProfileScreen() {
     }
   };
 
+  // Update the profile image in Firestore
   const updateProfileImage = async (url) => {
     const userDoc = doc(db, "users", auth.currentUser.uid);
     await updateDoc(userDoc, {
@@ -135,6 +141,7 @@ function ProfileScreen() {
     });
   };
 
+  //
   const handleUpdateProfile = async () => {
     const userDoc = doc(db, "users", auth.currentUser.uid);
     await updateDoc(userDoc, userData);
@@ -144,6 +151,7 @@ function ProfileScreen() {
     );
   };
 
+  // Change the users password
   const handleChangePassword = async () => {
     if (newPassword.length < 6) {
       Alert.alert("Password Error", "Password should be at least 6 characters");
@@ -279,7 +287,7 @@ function ProfileScreen() {
           onChangeText={setNewPassword}
           placeholder="New Password"
           secureTextEntry // This keeps the text hidden for password privacy
-          placeholderTextColor="gray" // Optionally set placeholder text color
+          placeholderTextColor="gray"
         />
         <TouchableOpacity style={styles.button} onPress={handleChangePassword}>
           <Text style={styles.buttonText}>Change Password</Text>
@@ -301,22 +309,22 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   profileImage: {
-    width: 150, // Circle diameter
-    height: 150, // Same as width for a perfect circle
-    borderRadius: 75, // Half of width/height
+    width: 150,
+    height: 150,
+    borderRadius: 75,
     marginBottom: 20,
   },
   input: {
-    backgroundColor: "white", // Ensures a white background
+    backgroundColor: "white",
     paddingHorizontal: 20,
     paddingVertical: 8,
     borderRadius: 10,
     marginVertical: 10,
-    fontSize: 14, // Makes text larger and more visible
-    width: "100%", // Adjust width as per your layout
+    fontSize: 14,
+    width: "100%",
     borderWidth: 1,
     borderColor: "gray",
-    color: "black", // Ensures text color is black for visibility
+    color: "black",
   },
   button: {
     marginBottom: 20,
@@ -330,16 +338,16 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    justifyContent: "center", // Center the modal vertically
-    alignItems: "center", // Center the modal horizontally
-    backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background here
   },
   modalContent: {
     backgroundColor: "white",
     padding: 20,
     borderRadius: 10,
-    width: "80%", // Adjust the width as needed
-    alignItems: "center", // Center the contents
+    width: "80%",
+    alignItems: "center",
   },
   picker: {
     width: "100%",
@@ -350,7 +358,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     padding: 10,
     borderRadius: 5,
-    width: "50%", // Adjust the width as needed
+    width: "50%",
     alignItems: "center",
   },
   modalButtonText: {

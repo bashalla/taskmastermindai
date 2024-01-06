@@ -43,22 +43,18 @@ jest.mock("firebase/firestore", () => ({
     forEach: jest.fn((callback) => {
       callback({
         data: () => ({
-          /* Mock Task Data */
+          /* Mock Task Data here */
         }),
         id: "1",
       });
-      // Add more mock data as needed
     }),
   })),
-  // ... other mocked functions
 }));
 // Mocking Firebase Firestore
 jest.mock("firebase/firestore", () => ({
-  getFirestore: jest.fn(() => ({
-    // Add dummy methods as needed, e.g., collection, doc, etc.
-  })),
+  getFirestore: jest.fn(() => ({})),
   collection: jest.fn(() => ({
-    // Add dummy methods or values as needed
+    // Adding dummy methods to mock Firestore collection
   })),
   getDocs: jest.fn(),
   query: jest.fn(),
@@ -67,7 +63,6 @@ jest.mock("firebase/firestore", () => ({
   updateDoc: jest.fn(),
   deleteDoc: jest.fn(),
   getDoc: jest.fn(),
-  // ... add other Firestore functions you use if needed
 }));
 
 // Mock component test
@@ -90,8 +85,5 @@ describe("CreateTask", () => {
     const { getByText } = render(<CreateTask route={route} />);
     const selectDocumentButton = getByText("Select Document");
     fireEvent.press(selectDocumentButton);
-    // Assert if 'getDocumentAsync' from expo-document-picker is called
   });
-
-  // Add more tests as needed...
 });

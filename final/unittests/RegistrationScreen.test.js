@@ -2,6 +2,7 @@ import React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 import RegisterScreen from "../components/RegisterScreen";
 
+// Mock implementation
 jest.mock("@react-navigation/native", () => ({
   ...jest.requireActual("@react-navigation/native"),
   useNavigation: () => ({
@@ -10,6 +11,7 @@ jest.mock("@react-navigation/native", () => ({
   }),
 }));
 
+// Mock external dependencies
 jest.mock("@react-native-async-storage/async-storage", () => ({
   setItem: jest.fn(),
   getItem: jest.fn(),

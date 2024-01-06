@@ -11,6 +11,7 @@ jest.mock("@react-navigation/core", () => ({
   }),
 }));
 
+// Mock external dependencies
 jest.mock("@react-native-async-storage/async-storage", () => ({
   setItem: jest.fn(),
   getItem: jest.fn(),

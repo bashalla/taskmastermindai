@@ -1,4 +1,3 @@
-// TaskScreen.test.js
 import React from "react";
 import { render } from "@testing-library/react-native";
 import TaskScreen from "../components/TaskScreen";
@@ -23,12 +22,11 @@ jest.mock("@react-navigation/native", () => {
     useRoute: () => ({
       params: { categoryId: "1", categoryName: "Work" },
     }),
-    useFocusEffect: jest.fn(), // Mock useFocusEffect
+    useFocusEffect: jest.fn(),
   };
 });
 
-// Mocking expo-calendar and Firestore if necessary
-// Mocking expo-calendar
+// Mocking expo-calendar and Firestore
 jest.mock("expo-calendar", () => ({
   requestCalendarPermissionsAsync: jest.fn(() =>
     Promise.resolve({ status: "granted" })
@@ -42,12 +40,8 @@ jest.mock("expo-calendar", () => ({
 
 // Mocking Firebase Firestore
 jest.mock("firebase/firestore", () => ({
-  getFirestore: jest.fn(() => ({
-    // Add dummy methods as needed, e.g., collection, doc, etc.
-  })),
-  collection: jest.fn(() => ({
-    // Add dummy methods or values as needed
-  })),
+  getFirestore: jest.fn(() => ({})),
+  collection: jest.fn(() => ({})),
   getDocs: jest.fn(),
   query: jest.fn(),
   where: jest.fn(),
@@ -55,9 +49,9 @@ jest.mock("firebase/firestore", () => ({
   updateDoc: jest.fn(),
   deleteDoc: jest.fn(),
   getDoc: jest.fn(),
-  // ... add other Firestore functions you use if needed
 }));
 
+// Mocking Firebase Auth
 describe("TaskScreen", () => {
   const route = {
     params: {

@@ -48,6 +48,7 @@ const badges = [
   { name: "Ruby", points: 7500, image: require("../assets/badges/ruby.png") },
 ];
 
+// Rewards screen component
 function RewardsScreen() {
   const [userPoints, setUserPoints] = useState(0);
   const [userName, setUserName] = useState("");
@@ -55,12 +56,14 @@ function RewardsScreen() {
   const [earnedBadge, setEarnedBadge] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Fetch user data from Firestore
   const fetchUserData = async () => {
-    setIsRefreshing(true); // Start the refresh animation
+    setIsRefreshing(true);
     try {
       const userRef = doc(db, "users", auth.currentUser.uid);
       const docSnap = await getDoc(userRef);
 
+      // Update the state variables
       if (docSnap.exists()) {
         const userData = docSnap.data();
         setUserPoints(userData.points);
@@ -77,10 +80,12 @@ function RewardsScreen() {
     }
   };
 
+  // Fetch user data when the screen loads
   useEffect(() => {
     fetchUserData();
   }, []);
 
+  // Fetch user data when the screen is focused
   const getUserType = (points) => {
     const type = userTypes.find(
       (type) => points >= type.minPoints && points <= type.maxPoints
@@ -88,6 +93,7 @@ function RewardsScreen() {
     return type ? type.name : "Unknown";
   };
 
+  // Get the earned badge based on the users points
   const getEarnedBadge = (points) => {
     return badges
       .slice()

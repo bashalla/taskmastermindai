@@ -18,6 +18,7 @@ import { useNavigation } from "@react-navigation/native";
 import { auth, db } from "../firebase";
 import { doc, setDoc } from "firebase/firestore";
 
+// Register screen component
 const RegisterScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,6 +34,7 @@ const RegisterScreen = () => {
 
   const navigation = useNavigation();
 
+  // Registering with email and password
   const handleSignUp = () => {
     if (
       !email ||
@@ -53,11 +55,13 @@ const RegisterScreen = () => {
       return;
     }
 
+    // Register with email and password
     createUserWithEmailAndPassword(auth, email, password)
       .then((userCredentials) => {
         const user = userCredentials.user;
         console.log("Registered with:", user.email);
 
+        // Create a new user document in Firestore
         const userRef = doc(db, "users", user.uid);
         setDoc(userRef, {
           name: name,
@@ -76,6 +80,7 @@ const RegisterScreen = () => {
       .catch((error) => Alert.alert("Registration Error", error.message));
   };
 
+  // Render the Register screen
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -302,7 +307,6 @@ const styles = StyleSheet.create({
   inputText: {
     fontSize: 16,
   },
-  // Additional styles for other UI components
 });
 
 export default RegisterScreen;

@@ -28,7 +28,7 @@ jest.mock("../firebase", () => {
   };
 });
 
-// In your Jest setup file or at the top of your test file
+// Mock external dependencies
 jest.mock("@react-native-async-storage/async-storage", () => {
   return {
     setItem: jest.fn(),
@@ -68,9 +68,10 @@ describe("EditCategoryScreen", () => {
     fireEvent.press(getByText("Update Category"));
 
     // Check if updateDoc was called correctly
-    expect(updateDoc).toHaveBeenCalledWith(
-      expect.anything(), // Ensure this matches the mock document reference
-      { name: "Updated Category Name", label: "Test Label", color: "#ff6347" }
-    );
+    expect(updateDoc).toHaveBeenCalledWith(expect.anything(), {
+      name: "Updated Category Name",
+      label: "Test Label",
+      color: "#ff6347",
+    });
   });
 });

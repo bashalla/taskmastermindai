@@ -31,6 +31,7 @@ import MapView, { Marker } from "react-native-maps";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import { GOOGLE_API_KEY } from "@env";
 
+// This component will be used to create a new task
 const CreateTask = ({ navigation, route }) => {
   const { categoryId } = route.params;
   const [taskName, setTaskName] = useState("");
@@ -43,9 +44,11 @@ const CreateTask = ({ navigation, route }) => {
   const [selectedFileName, setSelectedFileName] = useState(""); // Added state for selected file name
   const [tempDate, setTempDate] = useState(new Date());
 
+  // Function to upload documents to Firebase Storage
   const uploadDocumentsToFirebase = async (documents) => {
     const urls = [];
 
+    // Upload each document to Firebase Storage
     for (const document of documents) {
       const storage = getStorage();
       const storageRef = ref(storage, `taskDocuments/${document.name}`);
@@ -64,6 +67,7 @@ const CreateTask = ({ navigation, route }) => {
             reject(error);
           },
           () => {
+            // Upload completed successfully, now we can get the download URL
             getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
               resolve(downloadURL);
             });
@@ -77,6 +81,7 @@ const CreateTask = ({ navigation, route }) => {
     return urls;
   };
 
+  // Fetch location when the screen loads
   useEffect(() => {
     // Function to get the end of the current day
     const getEndOfToday = () => {
@@ -92,7 +97,7 @@ const CreateTask = ({ navigation, route }) => {
       );
     };
 
-    // Set the deadline to the end of the current day
+    // Setting the deadline to the end of the current day
     setDeadline(getEndOfToday());
 
     // Function to request and fetch location
@@ -117,18 +122,18 @@ const CreateTask = ({ navigation, route }) => {
       }
     };
 
-    // Fetch location
+    // Fetching location
     fetchLocation();
   }, []);
 
   const handleSaveTask = async () => {
-    // Validate input fields
+    // Validating input fields
     if (!taskName || !description) {
       Alert.alert("Error", "Please fill in all the required fields.");
       return;
     }
 
-    // Prepare task data with timestamp and location
+    // Preparing task data with timestamp and location
     const taskData = {
       name: taskName,
       description,
@@ -136,9 +141,9 @@ const CreateTask = ({ navigation, route }) => {
       location: region
         ? { latitude: region.latitude, longitude: region.longitude }
         : null,
-      createdAt: serverTimestamp(), // Adds a timestamp
+      createdAt: serverTimestamp(),
       categoryId,
-      userId: auth.currentUser.uid, // Add the user ID
+      userId: auth.currentUser.uid,
     };
 
     try {
@@ -167,6 +172,7 @@ const CreateTask = ({ navigation, route }) => {
     }
   };
 
+  // Function to select documents
   const selectDocument = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -187,13 +193,14 @@ const CreateTask = ({ navigation, route }) => {
     }
   };
 
+  // Function to handle date change
   const onChangeDate = (event, selectedDate) => {
     const currentDate = selectedDate || deadline;
-    setTempDate(currentDate); // Update the temporary date
+    setTempDate(currentDate); // Updating  the temporary date
     setShowDatePicker(Platform.OS === "ios");
   };
 
-  // Call this function when the user confirms the date selection
+  // Calling this function when the user confirms the date selection
   const confirmDateSelection = () => {
     const endOfDay = new Date(
       tempDate.getFullYear(),
@@ -204,8 +211,8 @@ const CreateTask = ({ navigation, route }) => {
       59,
       999
     );
-    setDeadline(endOfDay); // Update the actual deadline
-    setShowDatePicker(false); // Close the date picker
+    setDeadline(endOfDay); // Updating here the actual deadline
+    setShowDatePicker(false); // Closing the date picker
   };
 
   const handleCancel = () => {
@@ -218,6 +225,7 @@ const CreateTask = ({ navigation, route }) => {
     );
   };
 
+  // Function to adjust the deadline to the end of the day
   const adjustDeadline = (date) => {
     return new Date(
       date.getFullYear(),
@@ -259,7 +267,7 @@ const CreateTask = ({ navigation, route }) => {
         placeholder="Search for places"
         fetchDetails={true}
         onPress={(data, details = null) => {
-          // 'details' is provided when fetchDetails is true
+          // 'details provided when fetchDetails is true
           setRegion({
             latitude: details.geometry.location.lat,
             longitude: details.geometry.location.lng,
@@ -386,21 +394,18 @@ const styles = StyleSheet.create({
   documentRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between", // Adjust for spacing
+    justifyContent: "space-between",
     marginBottom: 5,
-    padding: 5, // Add padding for better touch area
-    // ... [Other styling as needed]
+    padding: 5,
   },
   deleteIcon: {
     marginLeft: 10,
-    // Add more styling as needed
   },
   deleteText: {
     color: "red",
     fontWeight: "bold",
-    fontSize: 20, // Increase font size
-    paddingHorizontal: 10, // Add horizontal padding for easier touch
-    // ... [Other styling as needed]
+    fontSize: 20,
+    paddingHorizontal: 10,
   },
   button: {
     flexDirection: "row",
@@ -438,23 +443,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   mapContainer: {
-    height: 300, // Adjust the height as needed
+    height: 300,
     width: "100%",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 10, // Reduce the margin
+    marginBottom: 10,
   },
   map: {
     ...StyleSheet.absoluteFillObject,
   },
   textInputContainer: {
     backgroundColor: "grey",
-    marginBottom: 10, // Reduce the margin
+    marginBottom: 10,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10, // Reduce the margin
+    marginBottom: 10,
   },
 });
 

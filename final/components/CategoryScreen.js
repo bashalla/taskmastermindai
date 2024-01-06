@@ -22,6 +22,7 @@ import {
   doc,
 } from "firebase/firestore";
 
+// This component will be used to create a new category
 const CategoryScreen = ({ navigation }) => {
   const [categoryName, setCategoryName] = useState("");
   const [labelName, setLabelName] = useState("");
@@ -34,6 +35,7 @@ const CategoryScreen = ({ navigation }) => {
 
   const colors = ["#ff6347", "#4682b4", "#32cd32", "#ff69b4", "#ffa500"];
 
+  // Fetch categories when the screen loads
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
       fetchCategories(); // Fetch categories again when the screen is focused
@@ -41,6 +43,7 @@ const CategoryScreen = ({ navigation }) => {
     return unsubscribe;
   }, [navigation]);
 
+  // Fetch categories from Firestore
   const fetchCategories = async () => {
     const q = query(
       collection(db, "categories"),
@@ -54,12 +57,14 @@ const CategoryScreen = ({ navigation }) => {
     setCategories(fetchedCategories);
   };
 
+  // Create a new category in Firestore
   const handleCreateCategory = async () => {
     if (!categoryName.trim() || !labelName.trim() || !selectedColor) {
       alert("Please fill in all fields.");
       return;
     }
 
+    // Add a new document with a generated id.
     await addDoc(collection(db, "categories"), {
       name: categoryName,
       label: labelName,
@@ -72,6 +77,7 @@ const CategoryScreen = ({ navigation }) => {
     fetchCategories();
   };
 
+  // Delete a category and all associated tasks
   const handleDeleteCategory = async (categoryId) => {
     Alert.alert(
       "Confirm Delete",
@@ -86,6 +92,7 @@ const CategoryScreen = ({ navigation }) => {
   const deleteCategoryAndTasks = async (categoryId) => {
     const batch = writeBatch(db);
 
+    // Delete the category
     const categoryRef = doc(db, "categories", categoryId);
     batch.delete(categoryRef);
 
@@ -100,6 +107,7 @@ const CategoryScreen = ({ navigation }) => {
         batch.delete(doc.ref);
       });
 
+      // Commit the batch
       await batch.commit();
       fetchCategories();
     } catch (error) {
@@ -111,10 +119,12 @@ const CategoryScreen = ({ navigation }) => {
     }
   };
 
+  // Edit a category
   const handleEditCategory = (category) => {
     navigation.navigate("EditCategoryScreen", { category });
   };
 
+  // Render the screen
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>

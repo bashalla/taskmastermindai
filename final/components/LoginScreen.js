@@ -18,6 +18,7 @@ import {
 import { useNavigation } from "@react-navigation/core";
 import { auth } from "../firebase";
 
+// Login screen component
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,6 +35,7 @@ const LoginScreen = () => {
     return unsubscribe;
   }, []);
 
+  // Login with email and password
   const handleLogin = () => {
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredentials) => {
@@ -42,6 +44,7 @@ const LoginScreen = () => {
       })
       .catch((error) => {
         if (
+          // Handle auth errors
           error.code === "auth/invalid-credential" ||
           error.code === "auth/missing-password" ||
           error.code === "auth/invalid-email"
@@ -56,6 +59,7 @@ const LoginScreen = () => {
       });
   };
 
+  // Send password reset email
   const handlePasswordReset = () => {
     if (email) {
       sendPasswordResetEmail(auth, email)
@@ -73,6 +77,7 @@ const LoginScreen = () => {
     }
   };
 
+  // Return the screen content
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <KeyboardAvoidingView style={styles.keyboardAvoiding} behavior="padding">
@@ -128,7 +133,7 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: 40, // Adjust the margin as needed
+    marginTop: 40,
   },
   logo: {
     width: 150,
@@ -138,7 +143,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     width: "80%",
     alignSelf: "center",
-    marginTop: 20, // Adjust the margin as needed
+    marginTop: 20,
   },
   input: {
     backgroundColor: "white",

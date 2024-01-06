@@ -6,14 +6,13 @@ import HomeScreen from "../components/HomeScreen";
 jest.mock("firebase/firestore", () => {
   return {
     collection: jest.fn(() => ({
-      // Mock what collection() should return, like a query or a document reference
+      // Mock  collection() return
     })),
     query: jest.fn(),
     where: jest.fn(),
     getDocs: jest.fn(() =>
       Promise.resolve({
         forEach: jest.fn(), // Mock forEach for getDocs
-        // Add other necessary mock implementations
       })
     ),
     doc: jest.fn(() => ({
@@ -29,7 +28,6 @@ jest.mock("firebase/firestore", () => {
       })
     ),
     updateDoc: jest.fn(() => Promise.resolve()),
-    // Add any other Firestore functions used in HomeScreen
   };
 });
 
@@ -46,18 +44,19 @@ describe("HomeScreen", () => {
   it("renders correctly", () => {
     const navigationMock = { addListener: jest.fn() };
     const { getByText } = render(<HomeScreen navigation={navigationMock} />);
-    expect(getByText("Today's Tasks")).toBeTruthy(); // Replace with an actual text or element from your component
+    expect(getByText("Today's Tasks")).toBeTruthy();
   });
 
   it("handles sign out correctly", () => {
     const navigationMock = { replace: jest.fn(), addListener: jest.fn() };
     const { getByText } = render(<HomeScreen navigation={navigationMock} />);
 
-    // Update the way you locate the sign-out button, use getByText, getByTestId, or other queries based on your actual component
-    const signOutButton = getByText("Sign Out"); // Replace with the actual text or testID of your sign-out button
+    // Mock the signOut function
+    const signOutButton = getByText("Sign Out");
     fireEvent.press(signOutButton);
 
-    const { auth } = require("../firebase"); // Import auth here to get the mocked version
-    expect(auth.signOut).toHaveBeenCalled(); // Check if the mocked signOut function was called
+    //
+    const { auth } = require("../firebase");
+    expect(auth.signOut).toHaveBeenCalled();
   });
 });
