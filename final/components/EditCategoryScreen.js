@@ -21,7 +21,7 @@ const EditCategoryScreen = ({ navigation, route }) => {
 
   const colors = ["#ff6347", "#4682b4", "#32cd32", "#ff69b4", "#ffa500"];
 
-  // Set the header title and make sure the header is shown
+  // Setting the header title and making sure the header is shown
   useEffect(() => {
     navigation.setOptions({
       headerShown: true,
@@ -29,6 +29,7 @@ const EditCategoryScreen = ({ navigation, route }) => {
     });
   }, [navigation]);
 
+  // Update the category in Firestore
   const handleUpdateCategory = async () => {
     if (!categoryName.trim() || !labelName.trim() || !selectedColor) {
       Alert.alert("Error", "Please fill in all fields.");
