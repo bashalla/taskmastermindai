@@ -93,7 +93,7 @@ function RewardsScreen() {
     return type ? type.name : "Unknown";
   };
 
-  // Get the earned badge based on the users points
+  // Getting the earned badge based on the users points
   const getEarnedBadge = (points) => {
     return badges
       .slice()
