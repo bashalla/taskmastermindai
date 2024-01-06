@@ -14,10 +14,11 @@ import CreateTask from "./components/CreateTask";
 import TaskDetailScreen from "./components/TaskDetailScreen";
 import EditCategoryScreen from "./components/EditCategoryScreen";
 
+// Create the Stack Navigator
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Define your Tab Navigator
+// Define the Tab Navigator
 function MyTabs() {
   return (
     <Tab.Navigator
