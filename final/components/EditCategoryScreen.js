@@ -12,6 +12,7 @@ import {
 import { db } from "../firebase";
 import { doc, updateDoc } from "firebase/firestore";
 
+// This component will be used to edit an existing category
 const EditCategoryScreen = ({ navigation, route }) => {
   const { category } = route.params;
   const [categoryName, setCategoryName] = useState(category.name);
@@ -20,6 +21,7 @@ const EditCategoryScreen = ({ navigation, route }) => {
 
   const colors = ["#ff6347", "#4682b4", "#32cd32", "#ff69b4", "#ffa500"];
 
+  // Set the header title and make sure the header is shown
   useEffect(() => {
     navigation.setOptions({
       headerShown: true,

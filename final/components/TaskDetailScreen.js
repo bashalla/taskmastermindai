@@ -29,6 +29,7 @@ import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplet
 import { GOOGLE_API_KEY } from "@env";
 import * as Calendar from "expo-calendar";
 
+// This component will be used to edit an existing task
 const TaskDetailsScreen = ({ navigation, route }) => {
   const { task } = route.params;
   const [taskName, setTaskName] = useState(task.name);
@@ -43,6 +44,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
     longitudeDelta: 0.005,
   });
 
+  // Setting the header title and making sure the header is shown
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -53,47 +55,47 @@ const TaskDetailsScreen = ({ navigation, route }) => {
     })();
   }, []);
 
+  // Update the header title and make sure the header is shown
   const updateTaskAndCalendarEvent = async (
     taskId,
     newDeadline,
     calendarEventId
   ) => {
     try {
-      // Retrieve the current task data
+      // Retrieving the current task data
       const taskRef = doc(db, "tasks", taskId);
       const taskDoc = await getDoc(taskRef);
       const taskData = taskDoc.data();
 
-      // Convert deadlines to Date objects for accurate comparison
+      // Converting deadlines to Date objects for accurate comparison
       const oldDeadline = new Date(taskData.deadline);
       const newDeadlineDate = new Date(newDeadline);
 
-      // Check if the deadline has actually changed
-      // Compare the time values of the dates
+      // Checking if the deadline has actually changed
+      // Comparing the time values of the dates
       if (oldDeadline.getTime() !== newDeadlineDate.getTime()) {
-        // Increment deadlineChangeCount
+        // Incrementing deadlineChangeCount
         const newCount = (taskData.deadlineChangeCount || 0) + 1;
 
-        // Update the task in Firestore
+        // Updating the task in Firestore
         await updateDoc(taskRef, {
           deadline: newDeadlineDate.toISOString(),
           deadlineChangeCount: newCount,
         });
 
-        // Update the calendar event if an ID is provided
+        // Updating the calendar event if an ID is provided
         if (calendarEventId) {
           await updateCalendarEvent(calendarEventId, newDeadlineDate);
         }
 
         console.log("Task and calendar event updated successfully");
-        // Additional code to handle the successful update (e.g., user feedback)
       }
     } catch (error) {
       console.error("Error updating task and calendar event:", error);
-      // Additional code to handle the error (e.g., user feedback)
     }
   };
 
+  // Update the calendar event with the new deadline
   const updateCalendarEvent = async (eventId, newDeadline) => {
     try {
       let startDate = new Date(newDeadline);
@@ -102,6 +104,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
       );
       startDate.setHours(0, 0, 0, 0);
 
+      // Update the calendar event
       await Calendar.updateEventAsync(eventId, {
         startDate: startDate,
         endDate: startDate,
@@ -111,7 +114,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
       console.log("Calendar event updated successfully");
     } catch (error) {
       console.error("Error updating calendar event:", error);
-      throw error; // Rethrow the error to be caught by the calling function
+      throw error; // Rethrowing the error to be caught by the calling function
     }
   };
 
@@ -122,7 +125,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         return;
       }
 
-      // Prepare updated task data
+      // Preparing here the updated task data
       const updatedTask = {
         name: taskName,
         description,
@@ -131,6 +134,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         location: region,
       };
 
+      // Check if the task is overdue or if the deadline has been changed 3 or more times
       const now = new Date();
       const isOverdue = now > deadline;
       const isChangeLimitExceeded = task.deadlineChangeCount >= 3;
@@ -148,10 +152,10 @@ const TaskDetailsScreen = ({ navigation, route }) => {
 
         alertMessage += "No points will be awarded.";
         Alert.alert("Alert", alertMessage);
-        return; // Stop the save operation if the task is overdue or change limit exceeded
+        return; // Stopping the save operation for points if the task is overdue or change limit exceeded
       }
 
-      // Update task in Firestore and the associated calendar event
+      // Updating task in Firestore and the associated calendar event
       if (task.calendarEventId) {
         await updateTaskAndCalendarEvent(
           task.id,
@@ -159,7 +163,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
           task.calendarEventId
         );
       } else {
-        // Update task in Firestore
+        // Updating task in Firestore
         const taskRef = doc(db, "tasks", task.id);
         await updateDoc(taskRef, updatedTask);
       }
@@ -187,7 +191,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         return;
       }
 
-      // Upload each selected document and get their download URLs
+      // Uploading each selected document and getting their download URLs
       const newDocumentUrls = await Promise.all(
         result.assets.map(async (document) => {
           const storage = getStorage();
@@ -201,7 +205,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
             uploadTask.on(
               "state_changed",
               (snapshot) => {
-                // Optional: Handle upload progress
+                // Handling upload progress here if I need it
               },
               (error) => {
                 reject(error);
@@ -216,7 +220,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         })
       );
 
-      // Update the state to include the URLs of the newly uploaded documents
+      // Updating the state to include the URLs of the newly uploaded documents
       setDocumentUrls([...documentUrls, ...newDocumentUrls]);
     } catch (error) {
       console.error("Error during document upload:", error);
@@ -271,7 +275,6 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         }}
         styles={{
           textInput: styles.input,
-          // Additional styles if needed
         }}
       />
 
@@ -321,19 +324,19 @@ const TaskDetailsScreen = ({ navigation, route }) => {
             value={deadline}
             mode="date"
             display="default"
-            minimumDate={new Date()} // Set the minimum date to the current date
+            minimumDate={new Date()} // Setting now the minimum date to the current date
             onChange={(event, selectedDate) => {
               const currentDate = selectedDate || deadline;
               setShowDatePicker(Platform.OS === "ios");
 
-              // Adjust the selected date to the end of the day
+              // Adjusting the selected date to the end of the day
               const adjustedDate = new Date(
                 currentDate.getFullYear(),
                 currentDate.getMonth(),
                 currentDate.getDate(),
                 23,
                 59,
-                59 // Set to the last moment of the day
+                59 // Setting  to the last moment of the day
               );
 
               setDeadline(adjustedDate);
@@ -373,12 +376,12 @@ const styles = StyleSheet.create({
   },
   centeredView: {
     alignItems: "center",
-    justifyContent: "center", // Add this line if it's not already there
+    justifyContent: "center",
     marginVertical: 15,
   },
   iconButton: {
-    alignItems: "center", // Center the icon vertically in the button
-    justifyContent: "center", // Center the icon horizontally in the button
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 10,
   },
   input: {
@@ -395,21 +398,18 @@ const styles = StyleSheet.create({
   documentRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between", // Adjust for spacing
+    justifyContent: "space-between",
     marginBottom: 5,
-    padding: 5, // Add padding for better touch area
-    // ... [Other styling as needed]
+    padding: 5,
   },
   deleteIcon: {
     marginLeft: 10,
-    // Add more styling as needed
   },
   deleteText: {
     color: "red",
     fontWeight: "bold",
-    fontSize: 20, // Increase font size
-    paddingHorizontal: 10, // Add horizontal padding for easier touch
-    // ... [Other styling as needed]
+    fontSize: 20,
+    paddingHorizontal: 10,
   },
   button: {
     flexDirection: "row",
@@ -447,23 +447,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   mapContainer: {
-    height: 300, // Adjust the height as needed
+    height: 300,
     width: "100%",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 10, // Reduce the margin
+    marginBottom: 10,
   },
   map: {
     ...StyleSheet.absoluteFillObject,
   },
   textInputContainer: {
     backgroundColor: "grey",
-    marginBottom: 10, // Reduce the margin
+    marginBottom: 10,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10, // Reduce the margin
+    marginBottom: 10,
   },
 });
 

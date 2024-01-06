@@ -23,12 +23,15 @@ import { useFocusEffect } from "@react-navigation/native";
 import { auth, db } from "../firebase";
 import * as Calendar from "expo-calendar";
 
+// This component will be used to display tasks for a category
 const TaskScreen = ({ navigation, route }) => {
   const { categoryId, categoryName } = route.params;
   const [tasks, setTasks] = useState([]);
 
+  // Fetch tasks from Firestore
   const fetchTasks = async () => {
     try {
+      // Fetch tasks for the selected category
       const tasksRef = collection(db, "tasks");
       const q = query(tasksRef, where("categoryId", "==", categoryId));
       const querySnapshot = await getDocs(q);
@@ -45,6 +48,7 @@ const TaskScreen = ({ navigation, route }) => {
     }
   };
 
+  // Request calendar and reminders permissions
   useEffect(() => {
     (async () => {
       const { status: calendarStatus } =
@@ -62,12 +66,14 @@ const TaskScreen = ({ navigation, route }) => {
     fetchTasks();
   }, [categoryId]);
 
+  // Fetch tasks when the screen is focused
   useFocusEffect(
     React.useCallback(() => {
       fetchTasks();
     }, [categoryId])
   );
 
+  // Mark a task as completed
   const markTaskAsDone = async (task) => {
     try {
       const now = new Date();
@@ -93,7 +99,7 @@ const TaskScreen = ({ navigation, route }) => {
           });
         }
       } else {
-        // Display alert if task is overdue or deadline change limit exceeded
+        // Displaying here the alert if task is overdue or deadline change limit exceeded
         let alertMessage = "";
         if (!isOnTime) {
           alertMessage += "Task is overdue. ";
@@ -112,6 +118,7 @@ const TaskScreen = ({ navigation, route }) => {
     }
   };
 
+  // Delete a task
   const deleteTask = async (task) => {
     if (task.isCompleted) {
       Alert.alert("Task Completed", "Completed tasks cannot be deleted.");
@@ -124,6 +131,7 @@ const TaskScreen = ({ navigation, route }) => {
     fetchTasks();
   };
 
+  // Navigate to the task detail screen
   const navigateToTaskDetail = (item) => {
     if (item.isCompleted) {
       Alert.alert(
@@ -135,10 +143,12 @@ const TaskScreen = ({ navigation, route }) => {
     navigation.navigate("TaskDetailScreen", { task: item });
   };
 
+  // Add a task to the calendar
   const addTaskToCalendar = async (task) => {
     try {
       const calendarId = await findOrCreateCalendar();
 
+      // Convert the deadline to a Date object
       let deadlineDate = new Date(task.deadline);
       deadlineDate.setMinutes(
         deadlineDate.getMinutes() + deadlineDate.getTimezoneOffset()
@@ -147,7 +157,7 @@ const TaskScreen = ({ navigation, route }) => {
       const eventId = await Calendar.createEventAsync(calendarId, {
         title: task.name,
         startDate: deadlineDate,
-        endDate: deadlineDate, // same as startDate for a single day event
+        endDate: deadlineDate, // needs to be same as startDate for a single day event
         allDay: true,
         timeZone: Calendar.DEFAULT_TIMEZONE,
       });
@@ -162,20 +172,24 @@ const TaskScreen = ({ navigation, route }) => {
     }
   };
 
+  // Find or create the calendar
   const findOrCreateCalendar = async () => {
     const calendars = await Calendar.getCalendarsAsync(
       Calendar.EntityTypes.EVENT
     );
+    // console.log("Calendars:", calendars);
     const expoCalendar = calendars.find((c) => c.title === "Expo Calendar");
 
     if (expoCalendar) {
       return expoCalendar.id;
     } else {
+      // Create a new calendar
       const defaultCalendarSource =
         Platform.OS === "ios"
           ? await getDefaultCalendarSource()
           : { isLocalAccount: true, name: "Expo Calendar" };
 
+      // console.log("Creating new calendar with source:", defaultCalendarSource);
       return await Calendar.createCalendarAsync({
         title: "Expo Calendar",
         color: "blue",
@@ -189,6 +203,7 @@ const TaskScreen = ({ navigation, route }) => {
     }
   };
 
+  // Get the default calendar source
   const getDefaultCalendarSource = async () => {
     try {
       const calendars = await Calendar.getCalendarsAsync(
@@ -198,7 +213,7 @@ const TaskScreen = ({ navigation, route }) => {
 
       let defaultSource = null;
       if (Platform.OS === "ios") {
-        // Find a default source
+        // Find inga default source
         defaultSource = calendars.find(
           (calendar) => calendar.source && calendar.source.isLocalAccount
         );
@@ -208,8 +223,7 @@ const TaskScreen = ({ navigation, route }) => {
           console.log(
             "No suitable default calendar source found on iOS. Creating or choosing a fallback."
           );
-          // Here, you can create a new calendar source or choose a suitable fallback
-          // This is a simplified example, adjust according to your app's requirements
+          // Check if there's a source available, create one if not
           defaultSource = { isLocalAccount: true, name: "Expo Calendar" };
         }
       } else {
@@ -350,7 +364,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   actionButton: {
-    marginLeft: 10, // Add some space to the left of each button
+    marginLeft: 10,
   },
   completeTaskText: {
     color: "#0782F9",

@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, Text, View, ScrollView, Image } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  Image,
+  RefreshControl,
+} from "react-native";
 import { auth, db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { useFocusEffect } from "@react-navigation/native";
@@ -41,17 +48,22 @@ const badges = [
   { name: "Ruby", points: 7500, image: require("../assets/badges/ruby.png") },
 ];
 
+// Rewards screen component
 function RewardsScreen() {
   const [userPoints, setUserPoints] = useState(0);
   const [userName, setUserName] = useState("");
   const [userType, setUserType] = useState("");
   const [earnedBadge, setEarnedBadge] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
+  // Fetch user data from Firestore
+  const fetchUserData = async () => {
+    setIsRefreshing(true);
+    try {
       const userRef = doc(db, "users", auth.currentUser.uid);
       const docSnap = await getDoc(userRef);
 
+      // Update the state variables
       if (docSnap.exists()) {
         const userData = docSnap.data();
         setUserPoints(userData.points);
@@ -61,11 +73,19 @@ function RewardsScreen() {
       } else {
         console.log("No such document!");
       }
-    };
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    } finally {
+      setIsRefreshing(false); // End the refresh animation
+    }
+  };
 
+  // Fetch user data when the screen loads
+  useEffect(() => {
     fetchUserData();
   }, []);
 
+  // Fetch user data when the screen is focused
   const getUserType = (points) => {
     const type = userTypes.find(
       (type) => points >= type.minPoints && points <= type.maxPoints
@@ -73,6 +93,7 @@ function RewardsScreen() {
     return type ? type.name : "Unknown";
   };
 
+  // Get the earned badge based on the users points
   const getEarnedBadge = (points) => {
     return badges
       .slice()
@@ -81,8 +102,14 @@ function RewardsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={isRefreshing} onRefresh={fetchUserData} />
+      }
+    >
       <Text style={styles.headerText}>Rewards Dashboard</Text>
+
       <Text style={styles.subHeaderText}>
         Your progress and achievements, {userName}
       </Text>
