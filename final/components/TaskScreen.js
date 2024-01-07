@@ -154,7 +154,17 @@ const TaskScreen = ({ navigation, route }) => {
   // Add a task to the calendar
   const addTaskToCalendar = async (task) => {
     try {
-      const calendarId = await findOrCreateCalendar();
+      // Check if the task already has a calendar event ID
+      if (task.calendarEventId) {
+        Alert.alert(
+          "Duplicate Event",
+          "This task already has a calendar entry in iCal."
+        );
+        return; // Exit the function early
+      }
+
+      // If no calendar event is associated with this task, proceed to add a new calendar event
+      const calendarId = await findOrCreateCalendar(); // Make sure you have defined this function
 
       // Convert the deadline to a Date object
       let deadlineDate = new Date(task.deadline);
@@ -162,19 +172,24 @@ const TaskScreen = ({ navigation, route }) => {
         deadlineDate.getMinutes() + deadlineDate.getTimezoneOffset()
       );
 
+      // Create calendar event
       const eventId = await Calendar.createEventAsync(calendarId, {
         title: task.name,
         startDate: deadlineDate,
-        endDate: deadlineDate, // needs to be same as startDate for a single day event
+        endDate: deadlineDate, // should be the same as startDate for a single-day event
         allDay: true,
         timeZone: Calendar.DEFAULT_TIMEZONE,
       });
 
+      // Update the task with the new calendar event ID
       const taskRef = doc(db, "tasks", task.id);
       await updateDoc(taskRef, { calendarEventId: eventId });
 
+      // Alert user of success
       Alert.alert("Success", "Task added to calendar");
-      fetchTasks(); // Refresh the task list after adding to calendar
+
+      // Optionally refresh tasks to reflect changes
+      fetchTasks(); // Ensure you have a fetchTasks function to refresh the task list
     } catch (error) {
       console.error("Error adding to calendar: ", error);
       Alert.alert("Error", "Unable to add task to calendar.");
