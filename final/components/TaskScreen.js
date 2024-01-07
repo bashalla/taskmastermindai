@@ -74,10 +74,11 @@ const TaskScreen = ({ navigation, route }) => {
   );
 
   // Mark a task as completed
+  // Mark a task as completed
   const markTaskAsDone = async (task) => {
     try {
       const now = new Date();
-      const isOnTime = now <= new Date(task.deadline);
+      const isOverdue = now > new Date(task.deadline);
       const isChangeLimitNotExceeded = (task.deadlineChangeCount || 0) < 3;
 
       // Update the task as completed in Firestore
@@ -86,32 +87,39 @@ const TaskScreen = ({ navigation, route }) => {
         isCompleted: true,
       });
 
-      // Check conditions and update user points or show alert
-      if (isOnTime && isChangeLimitNotExceeded) {
+      let alertMessage = "Task marked as completed.";
+
+      // Initialize the points to be awarded
+      let pointsAwarded = 0;
+
+      // Check conditions and update points or show alert
+      if (!isOverdue && isChangeLimitNotExceeded) {
         // Award points to the user
-        const userRef = doc(db, "users", auth.currentUser.uid);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          const newPoints = (userData.points || 0) + 10;
+        pointsAwarded = 10; // Define how many points should be awarded for a completed task
+        // Fetch and update user's points here...
+        const userRef = doc(db, "users", auth.currentUser.uid); // Assuming you have a users collection
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const newPoints = (userData.points || 0) + pointsAwarded;
           await updateDoc(userRef, {
             points: newPoints,
           });
+          alertMessage += ` You've been awarded ${pointsAwarded} points!`;
         }
       } else {
-        // Displaying here the alert if task is overdue or deadline change limit exceeded
-        let alertMessage = "";
-        if (!isOnTime) {
-          alertMessage += "Task is overdue. ";
+        if (isOverdue) {
+          alertMessage = "Task is overdue. ";
         }
         if (!isChangeLimitNotExceeded) {
           alertMessage += "Deadline has been changed 3 or more times. ";
         }
         alertMessage += "No points awarded.";
-        Alert.alert("Task Update", alertMessage);
       }
 
-      fetchTasks();
+      Alert.alert("Task Update", alertMessage);
+
+      fetchTasks(); // Fetch or refresh the tasks list if needed
     } catch (error) {
       console.error("Error marking task as done: ", error);
       Alert.alert("Error", "Unable to mark task as done.");

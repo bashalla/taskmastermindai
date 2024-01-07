@@ -29,7 +29,6 @@ import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplet
 import { GOOGLE_API_KEY } from "@env";
 import * as Calendar from "expo-calendar";
 
-// This component will be used to edit an existing task
 const TaskDetailsScreen = ({ navigation, route }) => {
   const { task } = route.params;
   const [taskName, setTaskName] = useState(task.name);
@@ -44,7 +43,6 @@ const TaskDetailsScreen = ({ navigation, route }) => {
     longitudeDelta: 0.005,
   });
 
-  // Setting the header title and making sure the header is shown
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -55,47 +53,42 @@ const TaskDetailsScreen = ({ navigation, route }) => {
     })();
   }, []);
 
-  // Update the header title and make sure the header is shown
   const updateTaskAndCalendarEvent = async (
     taskId,
     newDeadline,
     calendarEventId
   ) => {
     try {
-      // Retrieving the current task data
       const taskRef = doc(db, "tasks", taskId);
       const taskDoc = await getDoc(taskRef);
       const taskData = taskDoc.data();
 
-      // Converting deadlines to Date objects for accurate comparison
       const oldDeadline = new Date(taskData.deadline);
       const newDeadlineDate = new Date(newDeadline);
 
-      // Checking if the deadline has actually changed
-      // Comparing the time values of the dates
+      // Check if the deadline has actually changed
       if (oldDeadline.getTime() !== newDeadlineDate.getTime()) {
-        // Incrementing deadlineChangeCount
+        // Increment deadlineChangeCount
         const newCount = (taskData.deadlineChangeCount || 0) + 1;
 
-        // Updating the task in Firestore
         await updateDoc(taskRef, {
           deadline: newDeadlineDate.toISOString(),
           deadlineChangeCount: newCount,
         });
 
-        // Updating the calendar event if an ID is provided
+        console.log("Deadline updated. New count: ", newCount);
+
         if (calendarEventId) {
           await updateCalendarEvent(calendarEventId, newDeadlineDate);
         }
-
-        console.log("Task and calendar event updated successfully");
+      } else {
+        console.log("No change in deadline detected.");
       }
     } catch (error) {
-      console.error("Error updating task and calendar event:", error);
+      console.error("Error updating task:", error);
     }
   };
 
-  // Update the calendar event with the new deadline
   const updateCalendarEvent = async (eventId, newDeadline) => {
     try {
       let startDate = new Date(newDeadline);
@@ -104,7 +97,6 @@ const TaskDetailsScreen = ({ navigation, route }) => {
       );
       startDate.setHours(0, 0, 0, 0);
 
-      // Update the calendar event
       await Calendar.updateEventAsync(eventId, {
         startDate: startDate,
         endDate: startDate,
@@ -114,7 +106,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
       console.log("Calendar event updated successfully");
     } catch (error) {
       console.error("Error updating calendar event:", error);
-      throw error; // Rethrowing the error to be caught by the calling function
+      throw error; // Rethrow the error to be caught by the calling function
     }
   };
 
@@ -125,52 +117,42 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         return;
       }
 
-      // Preparing here the updated task data
+      // Retrieve the current task data to compare deadlines
+      const taskRef = doc(db, "tasks", task.id);
+      const taskDoc = await getDoc(taskRef);
+      const taskData = taskDoc.data();
+
+      const oldDeadline = new Date(taskData.deadline);
+      const newDeadlineDate = new Date(deadline);
+
+      // Prepare the base updated task data
       const updatedTask = {
         name: taskName,
         description,
-        deadline: deadline.toISOString(),
+        deadline: newDeadlineDate.toISOString(),
         documentUrls,
         location: region,
+        // Initially not changing the deadlineChangeCount
       };
 
-      // Check if the task is overdue or if the deadline has been changed 3 or more times
-      const now = new Date();
-      const isOverdue = now > deadline;
-      const isChangeLimitExceeded = task.deadlineChangeCount >= 3;
-
-      if (isOverdue || isChangeLimitExceeded) {
-        let alertMessage = "Task update failed. ";
-
-        if (isOverdue) {
-          alertMessage += "The task is overdue. ";
-        }
-
-        if (isChangeLimitExceeded) {
-          alertMessage += "Deadline has been changed 3 or more times. ";
-        }
-
-        alertMessage += "No points will be awarded.";
-        Alert.alert("Alert", alertMessage);
-        return; // Stopping the save operation for points if the task is overdue or change limit exceeded
+      // Check if the deadline has changed
+      if (oldDeadline.getTime() !== newDeadlineDate.getTime()) {
+        // Increment deadlineChangeCount
+        const newCount = (taskData.deadlineChangeCount || 0) + 1;
+        updatedTask.deadlineChangeCount = newCount; // Update deadlineChangeCount in updated task
       }
 
-      // Updating task in Firestore and the associated calendar event
-      if (task.calendarEventId) {
-        await updateTaskAndCalendarEvent(
-          task.id,
-          deadline,
-          task.calendarEventId
-        );
-      } else {
-        // Updating task in Firestore
-        const taskRef = doc(db, "tasks", task.id);
-        await updateDoc(taskRef, updatedTask);
+      // Update task in Firestore
+      await updateDoc(taskRef, updatedTask);
+
+      // Optionally, update the calendar event if there's an associated ID
+      if (task.calendarEventId && task.calendarEventId !== "") {
+        await updateCalendarEvent(task.calendarEventId, newDeadlineDate);
       }
 
       Alert.alert("Task Updated", "Your task has been updated successfully.");
       if (route.params?.onTaskUpdate) {
-        route.params.onTaskUpdate();
+        route.params.onTaskUpdate(); // Refresh or handle post-update logic if provided
       }
       navigation.goBack();
     } catch (error) {
@@ -191,7 +173,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         return;
       }
 
-      // Uploading each selected document and getting their download URLs
+      // Upload each selected document and get their download URLs
       const newDocumentUrls = await Promise.all(
         result.assets.map(async (document) => {
           const storage = getStorage();
@@ -205,7 +187,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
             uploadTask.on(
               "state_changed",
               (snapshot) => {
-                // Handling upload progress here if I need it
+                // Optional: Handle upload progress
               },
               (error) => {
                 reject(error);
@@ -220,7 +202,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         })
       );
 
-      // Updating the state to include the URLs of the newly uploaded documents
+      // Update the state to include the URLs of the newly uploaded documents
       setDocumentUrls([...documentUrls, ...newDocumentUrls]);
     } catch (error) {
       console.error("Error during document upload:", error);
@@ -275,6 +257,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         }}
         styles={{
           textInput: styles.input,
+          // Additional styles if needed
         }}
       />
 
@@ -324,19 +307,19 @@ const TaskDetailsScreen = ({ navigation, route }) => {
             value={deadline}
             mode="date"
             display="default"
-            minimumDate={new Date()} // Setting now the minimum date to the current date
+            minimumDate={new Date()} // Set the minimum date to the current date
             onChange={(event, selectedDate) => {
               const currentDate = selectedDate || deadline;
               setShowDatePicker(Platform.OS === "ios");
 
-              // Adjusting the selected date to the end of the day
+              // Adjust the selected date to the end of the day
               const adjustedDate = new Date(
                 currentDate.getFullYear(),
                 currentDate.getMonth(),
                 currentDate.getDate(),
                 23,
                 59,
-                59 // Setting  to the last moment of the day
+                59 // Set to the last moment of the day
               );
 
               setDeadline(adjustedDate);
@@ -376,12 +359,12 @@ const styles = StyleSheet.create({
   },
   centeredView: {
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "center", // Add this line if it's not already there
     marginVertical: 15,
   },
   iconButton: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: "center", // Center the icon vertically in the button
+    justifyContent: "center", // Center the icon horizontally in the button
     marginBottom: 10,
   },
   input: {
@@ -398,18 +381,21 @@ const styles = StyleSheet.create({
   documentRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "space-between", // Adjust for spacing
     marginBottom: 5,
-    padding: 5,
+    padding: 5, // Add padding for better touch area
+    // ... [Other styling as needed]
   },
   deleteIcon: {
     marginLeft: 10,
+    // Add more styling as needed
   },
   deleteText: {
     color: "red",
     fontWeight: "bold",
-    fontSize: 20,
-    paddingHorizontal: 10,
+    fontSize: 20, // Increase font size
+    paddingHorizontal: 10, // Add horizontal padding for easier touch
+    // ... [Other styling as needed]
   },
   button: {
     flexDirection: "row",
@@ -447,23 +433,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   mapContainer: {
-    height: 300,
+    height: 300, // Adjust the height as needed
     width: "100%",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 10, // Reduce the margin
   },
   map: {
     ...StyleSheet.absoluteFillObject,
   },
   textInputContainer: {
     backgroundColor: "grey",
-    marginBottom: 10,
+    marginBottom: 10, // Reduce the margin
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 10, // Reduce the margin
   },
 });
 
