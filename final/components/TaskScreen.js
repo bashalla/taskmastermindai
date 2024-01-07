@@ -28,6 +28,7 @@ const TaskScreen = ({ navigation, route }) => {
   const { categoryId, categoryName } = route.params;
   const [tasks, setTasks] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [needsRefresh, setNeedsRefresh] = useState(false);
 
   const fetchTasks = async () => {
     setRefreshing(true);
@@ -68,7 +69,7 @@ const TaskScreen = ({ navigation, route }) => {
   useFocusEffect(
     useCallback(() => {
       fetchTasks();
-    }, [categoryId])
+    }, [])
   );
 
   // Mark a task as completed
@@ -146,6 +147,7 @@ const TaskScreen = ({ navigation, route }) => {
       );
       return;
     }
+    setNeedsRefresh(true); // Indicate that a refresh will be needed
     navigation.navigate("TaskDetailScreen", { task: item });
   };
 
@@ -172,6 +174,7 @@ const TaskScreen = ({ navigation, route }) => {
       await updateDoc(taskRef, { calendarEventId: eventId });
 
       Alert.alert("Success", "Task added to calendar");
+      fetchTasks(); // Refresh the task list after adding to calendar
     } catch (error) {
       console.error("Error adding to calendar: ", error);
       Alert.alert("Error", "Unable to add task to calendar.");

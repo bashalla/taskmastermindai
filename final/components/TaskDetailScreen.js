@@ -214,6 +214,13 @@ const TaskDetailsScreen = ({ navigation, route }) => {
     setDocumentUrls(documentUrls.filter((_, i) => i !== index));
   };
 
+  const navigateToTaskDetail = (item) => {
+    navigation.navigate("TaskDetailScreen", {
+      task: item,
+      onTaskUpdate: fetchTasks, // where fetchTasks is your function to refresh the task list
+    });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Task Name Input */}
