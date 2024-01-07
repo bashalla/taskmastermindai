@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   SafeAreaView,
   Text,
@@ -7,6 +7,7 @@ import {
   FlatList,
   View,
   Alert,
+  RefreshControl,
 } from "react-native";
 import {
   collection,
@@ -23,15 +24,14 @@ import { useFocusEffect } from "@react-navigation/native";
 import { auth, db } from "../firebase";
 import * as Calendar from "expo-calendar";
 
-// This component will be used to display tasks for a category
 const TaskScreen = ({ navigation, route }) => {
   const { categoryId, categoryName } = route.params;
   const [tasks, setTasks] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch tasks from Firestore
   const fetchTasks = async () => {
+    setRefreshing(true);
     try {
-      // Fetch tasks for the selected category
       const tasksRef = collection(db, "tasks");
       const q = query(tasksRef, where("categoryId", "==", categoryId));
       const querySnapshot = await getDocs(q);
@@ -46,9 +46,9 @@ const TaskScreen = ({ navigation, route }) => {
       console.error("Error fetching tasks: ", error);
       Alert.alert("Error", "Unable to fetch tasks.");
     }
+    setRefreshing(false);
   };
 
-  // Request calendar and reminders permissions
   useEffect(() => {
     (async () => {
       const { status: calendarStatus } =
@@ -62,13 +62,11 @@ const TaskScreen = ({ navigation, route }) => {
         );
       }
     })();
-
     fetchTasks();
   }, [categoryId]);
 
-  // Fetch tasks when the screen is focused
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       fetchTasks();
     }, [categoryId])
   );
@@ -306,6 +304,9 @@ const TaskScreen = ({ navigation, route }) => {
             </View>
           </View>
         )}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={fetchTasks} />
+        }
       />
       <TouchableOpacity
         style={styles.addButton}
