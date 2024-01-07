@@ -194,6 +194,7 @@ function HomeScreen({ navigation }) {
       case "thunderstorm with rain":
         return "thunderstorm";
       case "snow":
+      case "light rain and snow":
       case "light snow":
       case "heavy snow":
         return "ac-unit";
