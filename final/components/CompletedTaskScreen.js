@@ -1,5 +1,11 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  SafeAreaView,
+} from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 
 const CompletedTaskScreen = ({ navigation, route }) => {
@@ -11,16 +17,19 @@ const CompletedTaskScreen = ({ navigation, route }) => {
   );
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={styles.backButton}
-      >
-        <Icon name="arrow-back" size={30} color="#007AFF" />
-      </TouchableOpacity>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <Icon name="arrow-back" size={30} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Task Completed</Text>
+      </View>
 
-      <Text style={styles.title}>{task.name}</Text>
       <View style={styles.content}>
+        <Text style={styles.title}>{task.name}</Text>
         <Text style={styles.description}>{task.description}</Text>
         <Text style={styles.detail}>
           Completed: {task.completedDate.split("T")[0]}
@@ -34,7 +43,7 @@ const CompletedTaskScreen = ({ navigation, route }) => {
           </Text>
         )}
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -42,28 +51,33 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f4f4f4",
-    paddingHorizontal: 20,
+  },
+  header: {
+    backgroundColor: "#007AFF",
+    paddingHorizontal: 15,
+    paddingTop: 20,
+    paddingBottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
   },
   backButton: {
-    marginTop: 70,
-    marginBottom: 20,
+    marginRight: 10,
   },
-  title: {
-    fontSize: 28,
+  headerTitle: {
+    color: "#fff",
+    fontSize: 22,
     fontWeight: "bold",
-    color: "#007AFF",
-    alignSelf: "center",
-    marginBottom: 10,
   },
   content: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
+    flex: 1,
+    paddingHorizontal: 15,
+    paddingVertical: 20,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#007AFF",
+    marginBottom: 10,
   },
   description: {
     fontSize: 18,
