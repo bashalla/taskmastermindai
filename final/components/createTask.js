@@ -247,6 +247,10 @@ const CreateTask = ({ navigation, route }) => {
           placeholder="Task Name"
           value={taskName}
           onChangeText={setTaskName}
+          onSubmitEditing={() => {
+            /* Handle the submit action, e.g., close keyboard */
+          }}
+          returnKeyType="done" // for iOS to show "Done" instead of "return"
         />
       </View>
 
@@ -259,6 +263,10 @@ const CreateTask = ({ navigation, route }) => {
           multiline
           value={description}
           onChangeText={setDescription}
+          onSubmitEditing={() => {
+            /* Handle the submit action, e.g., close keyboard */
+          }}
+          blurOnSubmit={true} // this will close the keyboard when the user presses enter
         />
       </View>
 

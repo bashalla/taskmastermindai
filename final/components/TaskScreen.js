@@ -405,9 +405,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     position: "absolute",
-    bottom: 20,
-    right: 20,
+    bottom: 50,
+    right: 50,
   },
+
   addButtonIcon: {
     color: "white",
     fontSize: 24,
