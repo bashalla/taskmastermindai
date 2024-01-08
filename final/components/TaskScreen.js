@@ -73,49 +73,46 @@ const TaskScreen = ({ navigation, route }) => {
   );
 
   // Mark a task as completed
-  // Mark a task as completed
   const markTaskAsDone = async (task) => {
     try {
       const now = new Date();
       const isOverdue = now > new Date(task.deadline);
       const isChangeLimitNotExceeded = (task.deadlineChangeCount || 0) < 3;
 
-      // Update the task as completed in Firestore
-      const taskRef = doc(db, "tasks", task.id);
-      await updateDoc(taskRef, {
-        isCompleted: true,
-      });
-
-      let alertMessage = "Task marked as completed.";
-
-      // Initialize the points to be awarded
-      let pointsAwarded = 0;
-
-      // Check conditions and update points or show alert
+      // Determine if points should be awarded
+      let pointsAwardedFlag = false;
       if (!isOverdue && isChangeLimitNotExceeded) {
-        // Award points to the user
-        pointsAwarded = 10; // Define how many points should be awarded for a completed task
-        // Fetch and update user's points here...
-        const userRef = doc(db, "users", auth.currentUser.uid); // Assuming you have a users collection
+        pointsAwardedFlag = true;
+        const userRef = doc(db, "users", auth.currentUser.uid);
         const userDoc = await getDoc(userRef);
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          const newPoints = (userData.points || 0) + pointsAwarded;
+          const newPoints = (userData.points || 0) + 10; // 10 points for a completed task
           await updateDoc(userRef, {
             points: newPoints,
           });
-          alertMessage += ` You've been awarded ${pointsAwarded} points!`;
         }
-      } else {
-        if (isOverdue) {
-          alertMessage = "Task is overdue. ";
-        }
-        if (!isChangeLimitNotExceeded) {
-          alertMessage += "Deadline has been changed 3 or more times. ";
-        }
-        alertMessage += "No points awarded.";
       }
 
+      // Update the task as completed in Firestore along with completion time and points awarded flag
+      const taskRef = doc(db, "tasks", task.id);
+      await updateDoc(taskRef, {
+        isCompleted: true,
+        completedDate: now.toISOString(), // Storing the completion date
+        pointsAwarded: pointsAwardedFlag, // Storing if points were awarded
+      });
+
+      // Preparing alert message based on task completion status and points awarded
+      let alertMessage = "Task marked as completed.";
+      alertMessage += pointsAwardedFlag
+        ? " You've been awarded 10 points!"
+        : " No points awarded.";
+      if (isOverdue) {
+        alertMessage = "Task is overdue. No points awarded.";
+      } else if (!isChangeLimitNotExceeded) {
+        alertMessage =
+          "Deadline has been changed 3 or more times. No points awarded.";
+      }
       Alert.alert("Task Update", alertMessage);
 
       fetchTasks(); // Fetch or refresh the tasks list if needed
@@ -141,14 +138,14 @@ const TaskScreen = ({ navigation, route }) => {
   // Navigate to the task detail screen
   const navigateToTaskDetail = (item) => {
     if (item.isCompleted) {
-      Alert.alert(
-        "Task Completed",
-        "This task is already completed and cannot be edited."
-      );
-      return;
+      // Navigate to the CompletedTaskScreen for viewing completed tasks
+      navigation.navigate("CompletedTaskScreen", { task: item });
+    } else {
+      // Set the state to indicate a refresh may be needed
+      setNeedsRefresh(true);
+      // Navigate to the TaskDetailScreen for editing incomplete tasks
+      navigation.navigate("TaskDetailScreen", { task: item });
     }
-    setNeedsRefresh(true); // Indicate that a refresh will be needed
-    navigation.navigate("TaskDetailScreen", { task: item });
   };
 
   // Add a task to the calendar
@@ -274,7 +271,6 @@ const TaskScreen = ({ navigation, route }) => {
               <TouchableOpacity
                 style={styles.taskDetails}
                 onPress={() => navigateToTaskDetail(item)}
-                disabled={item.isCompleted}
               >
                 <Text style={styles.taskName}>{item.name}</Text>
                 <Text

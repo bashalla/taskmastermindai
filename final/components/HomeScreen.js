@@ -239,50 +239,52 @@ function HomeScreen({ navigation }) {
       const deadline = new Date(task.deadline);
       const now = new Date();
 
-      // Check if the task is overdue
+      // Check if the task is overdue and deadline change count
       const isOverdue = now > deadline;
-
-      // Check if deadline change count is less than 3
       const isChangeLimitNotExceeded = (task.deadlineChangeCount || 0) < 3;
+      let pointsAwardedFlag = false; // Initialize flag for points awarded
 
-      if (isOverdue) {
-        // Display an alert if the task is overdue
-        Alert.alert("Task Overdue", "This task is overdue. No points awarded.");
-      } else if (!isChangeLimitNotExceeded) {
-        // Display an alert if the deadline has been changed 3 or more times
-        Alert.alert(
-          "Deadline Changed",
-          "You will not get any points as you extended the deadline 3 or more times."
-        );
-      } else {
-        // Task is on time and change limit did not exceeded
-        // Get current user data
+      // Determine if points should be awarded
+      if (!isOverdue && isChangeLimitNotExceeded) {
+        pointsAwardedFlag = true;
         const userRef = doc(db, "users", auth.currentUser.uid);
         const userSnap = await getDoc(userRef);
-        if (!userSnap.exists()) {
-          console.log("No such user!");
-          return;
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          const newPoints = (userData.points || 0) + 10; // 10 points for a completed task
+          await updateDoc(userRef, {
+            points: newPoints,
+          });
         }
-        const userData = userSnap.data();
-
-        // Update the users points
-        const newPoints = (userData.points || 0) + 10;
-        await updateDoc(userRef, {
-          points: newPoints,
-        });
       }
 
-      // Update the task in Firestore as completed
+      // Update the task in Firestore as completed along with completion time and points awarded flag
       await updateDoc(taskRef, {
         isCompleted: true,
+        completedDate: now.toISOString(), // Storing the completion date
+        pointsAwarded: pointsAwardedFlag, // Storing if points were awarded
       });
 
       // Update the local state to reflect the task's completion
       setCompletedTasks((prev) => ({ ...prev, [taskId]: true }));
 
-      fetchTasksDueToday();
+      // Alert user about the task completion and points awarded
+      let alertMessage = "Task marked as completed.";
+      alertMessage += pointsAwardedFlag
+        ? " You've been awarded 10 points!"
+        : " No points awarded.";
+      if (isOverdue) {
+        alertMessage = "Task is overdue. No points awarded.";
+      } else if (!isChangeLimitNotExceeded) {
+        alertMessage =
+          "Deadline has been changed 3 or more times. No points awarded.";
+      }
+      Alert.alert("Task Update", alertMessage);
+
+      fetchTasksDueToday(); // Refresh the tasks list to reflect completion
     } catch (error) {
       console.error("Error marking task as complete: ", error);
+      Alert.alert("Error", "Unable to mark task as complete.");
     }
   };
 
