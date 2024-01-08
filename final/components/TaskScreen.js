@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   SafeAreaView,
   Text,
@@ -7,6 +7,7 @@ import {
   FlatList,
   View,
   Alert,
+  RefreshControl,
 } from "react-native";
 import {
   collection,
@@ -23,15 +24,15 @@ import { useFocusEffect } from "@react-navigation/native";
 import { auth, db } from "../firebase";
 import * as Calendar from "expo-calendar";
 
-// This component will be used to display tasks for a category
 const TaskScreen = ({ navigation, route }) => {
   const { categoryId, categoryName } = route.params;
   const [tasks, setTasks] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [needsRefresh, setNeedsRefresh] = useState(false);
 
-  // Fetch tasks from Firestore
   const fetchTasks = async () => {
+    setRefreshing(true);
     try {
-      // Fetch tasks for the selected category
       const tasksRef = collection(db, "tasks");
       const q = query(tasksRef, where("categoryId", "==", categoryId));
       const querySnapshot = await getDocs(q);
@@ -46,9 +47,9 @@ const TaskScreen = ({ navigation, route }) => {
       console.error("Error fetching tasks: ", error);
       Alert.alert("Error", "Unable to fetch tasks.");
     }
+    setRefreshing(false);
   };
 
-  // Request calendar and reminders permissions
   useEffect(() => {
     (async () => {
       const { status: calendarStatus } =
@@ -62,56 +63,59 @@ const TaskScreen = ({ navigation, route }) => {
         );
       }
     })();
-
     fetchTasks();
   }, [categoryId]);
 
-  // Fetch tasks when the screen is focused
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       fetchTasks();
-    }, [categoryId])
+    }, [])
   );
 
   // Mark a task as completed
   const markTaskAsDone = async (task) => {
     try {
       const now = new Date();
-      const isOnTime = now <= new Date(task.deadline);
+      const isOverdue = now > new Date(task.deadline);
       const isChangeLimitNotExceeded = (task.deadlineChangeCount || 0) < 3;
 
-      // Update the task as completed in Firestore
-      const taskRef = doc(db, "tasks", task.id);
-      await updateDoc(taskRef, {
-        isCompleted: true,
-      });
-
-      // Check conditions and update user points or show alert
-      if (isOnTime && isChangeLimitNotExceeded) {
-        // Award points to the user
+      // Determine if points should be awarded
+      let pointsAwardedFlag = false;
+      if (!isOverdue && isChangeLimitNotExceeded) {
+        pointsAwardedFlag = true;
         const userRef = doc(db, "users", auth.currentUser.uid);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          const newPoints = (userData.points || 0) + 10;
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const newPoints = (userData.points || 0) + 10; // 10 points for a completed task
           await updateDoc(userRef, {
             points: newPoints,
           });
         }
-      } else {
-        // Displaying here the alert if task is overdue or deadline change limit exceeded
-        let alertMessage = "";
-        if (!isOnTime) {
-          alertMessage += "Task is overdue. ";
-        }
-        if (!isChangeLimitNotExceeded) {
-          alertMessage += "Deadline has been changed 3 or more times. ";
-        }
-        alertMessage += "No points awarded.";
-        Alert.alert("Task Update", alertMessage);
       }
 
-      fetchTasks();
+      // Update the task as completed in Firestore along with completion time and points awarded flag
+      const taskRef = doc(db, "tasks", task.id);
+      await updateDoc(taskRef, {
+        isCompleted: true,
+        completedDate: now.toISOString(), // Storing the completion date
+        pointsAwarded: pointsAwardedFlag, // Storing if points were awarded
+      });
+
+      // Preparing alert message based on task completion status and points awarded
+      let alertMessage = "Task marked as completed.";
+      alertMessage += pointsAwardedFlag
+        ? " You've been awarded 10 points!"
+        : " No points awarded.";
+      if (isOverdue) {
+        alertMessage = "Task is overdue. No points awarded.";
+      } else if (!isChangeLimitNotExceeded) {
+        alertMessage =
+          "Deadline has been changed 3 or more times. No points awarded.";
+      }
+      Alert.alert("Task Update", alertMessage);
+
+      fetchTasks(); // Fetch or refresh the tasks list if needed
     } catch (error) {
       console.error("Error marking task as done: ", error);
       Alert.alert("Error", "Unable to mark task as done.");
@@ -134,19 +138,30 @@ const TaskScreen = ({ navigation, route }) => {
   // Navigate to the task detail screen
   const navigateToTaskDetail = (item) => {
     if (item.isCompleted) {
-      Alert.alert(
-        "Task Completed",
-        "This task is already completed and cannot be edited."
-      );
-      return;
+      // Navigate to the CompletedTaskScreen for viewing completed tasks
+      navigation.navigate("CompletedTaskScreen", { task: item });
+    } else {
+      // Set the state to indicate a refresh may be needed
+      setNeedsRefresh(true);
+      // Navigate to the TaskDetailScreen for editing incomplete tasks
+      navigation.navigate("TaskDetailScreen", { task: item });
     }
-    navigation.navigate("TaskDetailScreen", { task: item });
   };
 
   // Add a task to the calendar
   const addTaskToCalendar = async (task) => {
     try {
-      const calendarId = await findOrCreateCalendar();
+      // Check if the task already has a calendar event ID
+      if (task.calendarEventId) {
+        Alert.alert(
+          "Duplicate Event",
+          "This task already has a calendar entry in iCal."
+        );
+        return; // Exit the function early
+      }
+
+      // If no calendar event is associated with this task, proceed to add a new calendar event
+      const calendarId = await findOrCreateCalendar(); // Make sure you have defined this function
 
       // Convert the deadline to a Date object
       let deadlineDate = new Date(task.deadline);
@@ -154,18 +169,24 @@ const TaskScreen = ({ navigation, route }) => {
         deadlineDate.getMinutes() + deadlineDate.getTimezoneOffset()
       );
 
+      // Create calendar event
       const eventId = await Calendar.createEventAsync(calendarId, {
         title: task.name,
         startDate: deadlineDate,
-        endDate: deadlineDate, // needs to be same as startDate for a single day event
+        endDate: deadlineDate, // should be the same as startDate for a single-day event
         allDay: true,
         timeZone: Calendar.DEFAULT_TIMEZONE,
       });
 
+      // Update the task with the new calendar event ID
       const taskRef = doc(db, "tasks", task.id);
       await updateDoc(taskRef, { calendarEventId: eventId });
 
+      // Alert user of success
       Alert.alert("Success", "Task added to calendar");
+
+      // Optionally refresh tasks to reflect changes
+      fetchTasks(); // Ensure you have a fetchTasks function to refresh the task list
     } catch (error) {
       console.error("Error adding to calendar: ", error);
       Alert.alert("Error", "Unable to add task to calendar.");
@@ -250,7 +271,6 @@ const TaskScreen = ({ navigation, route }) => {
               <TouchableOpacity
                 style={styles.taskDetails}
                 onPress={() => navigateToTaskDetail(item)}
-                disabled={item.isCompleted}
               >
                 <Text style={styles.taskName}>{item.name}</Text>
                 <Text
@@ -298,6 +318,9 @@ const TaskScreen = ({ navigation, route }) => {
             </View>
           </View>
         )}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={fetchTasks} />
+        }
       />
       <TouchableOpacity
         style={styles.addButton}
@@ -378,9 +401,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     position: "absolute",
-    bottom: 20,
-    right: 20,
+    bottom: 50,
+    right: 50,
   },
+
   addButtonIcon: {
     color: "white",
     fontSize: 24,

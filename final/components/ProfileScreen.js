@@ -12,8 +12,8 @@ import {
   ScrollView,
 } from "react-native";
 import { auth, db, storage } from "../firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { updatePassword } from "firebase/auth";
+import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { updatePassword, deleteUser } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import * as ImagePicker from "expo-image-picker";
 import placeholderImage from "../assets/adaptive-icon.png";
@@ -37,7 +37,7 @@ const resizeImage = async (imageUri) => {
 };
 
 // This component will be used to edit the users profiles
-function ProfileScreen() {
+function ProfileScreen({ navigation }) {
   const [userData, setUserData] = useState({
     firstName: "",
     name: "",
@@ -166,6 +166,37 @@ function ProfileScreen() {
     }
   };
 
+  // Function to delete the user
+  const handleDeleteUser = async () => {
+    Alert.alert(
+      "Delete Account",
+      "Are you sure you want to delete your account? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // Delete user data from Firestore
+              const userDoc = doc(db, "users", auth.currentUser.uid);
+              await deleteDoc(userDoc);
+
+              // Delete user authentication record
+              await deleteUser(auth.currentUser);
+
+              // Navigate to the login screen
+              navigation.navigate("Login");
+            } catch (error) {
+              console.error("Error deleting user:", error);
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -292,6 +323,11 @@ function ProfileScreen() {
         <TouchableOpacity style={styles.button} onPress={handleChangePassword}>
           <Text style={styles.buttonText}>Change Password</Text>
         </TouchableOpacity>
+
+        {/* Delete Account Button */}
+        <TouchableOpacity style={styles.button} onPress={handleDeleteUser}>
+          <Text style={styles.buttonText}>Delete Account</Text>
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -299,6 +335,7 @@ function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    marginTop: 50,
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
