@@ -20,6 +20,7 @@
     "expo": "~49.0.15",
     "expo-auth-session": "~5.0.2",
     "expo-calendar": "^11.3.2",
+    "expo-camera": "^13.6.0",
     "expo-document-picker": "~11.5.4",
     "expo-image-manipulator": "^11.5.0",
     "expo-image-picker": "~14.3.2",
