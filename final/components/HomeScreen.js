@@ -344,6 +344,13 @@ function HomeScreen({ navigation }) {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        ListEmptyComponent={() => (
+          <View style={styles.noTasksContainer}>
+            <Text style={styles.noTasksText}>
+              You are free no Task, enjoy your day!
+            </Text>
+          </View>
+        )}
       />
     </SafeAreaView>
   );
@@ -353,6 +360,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#E8EAED",
+  },
+  noTasksContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 50,
+  },
+  noTasksText: {
+    fontSize: 20,
+    color: "#333",
   },
   headerText: {
     fontSize: 28,
