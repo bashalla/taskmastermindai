@@ -196,10 +196,14 @@ const CreateTask = ({ navigation, route }) => {
   // Function to handle date change
   const onChangeDate = (event, selectedDate) => {
     const currentDate = selectedDate || deadline;
-    setTempDate(currentDate); // Updating  the temporary date
     setShowDatePicker(Platform.OS === "ios");
+    if (
+      event.type === "set" ||
+      (event.type === "dismissed" && Platform.OS === "android")
+    ) {
+      setDeadline(adjustDeadline(currentDate));
+    }
   };
-
   // Calling this function when the user confirms the date selection
   const confirmDateSelection = () => {
     const endOfDay = new Date(
@@ -347,8 +351,11 @@ const CreateTask = ({ navigation, route }) => {
             minimumDate={new Date()} // Set the minimum date to the current date
             onChange={(event, selectedDate) => {
               setShowDatePicker(Platform.OS === "ios");
-              if (selectedDate) {
-                setDeadline(adjustDeadline(selectedDate));
+              if (
+                event.type === "set" ||
+                (event.type === "dismissed" && Platform.OS === "android")
+              ) {
+                setDeadline(adjustDeadline(selectedDate || deadline));
               }
             }}
           />

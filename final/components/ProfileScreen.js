@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   ActionSheetIOS,
+  Platform,
 } from "react-native";
 import { auth, db, storage } from "../firebase";
 import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
@@ -162,21 +163,36 @@ function ProfileScreen({ navigation }) {
   };
 
   const selectImageSource = () => {
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        options: ["Cancel", "Take Photo", "Choose from Library"],
-        cancelButtonIndex: 0,
-      },
-      (buttonIndex) => {
-        if (buttonIndex === 1) {
-          handleCaptureImage();
-        } else if (buttonIndex === 2) {
-          handleSelectImage();
+    if (Platform.OS === "ios") {
+      // Existing ActionSheetIOS code for iOS
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ["Cancel", "Take Photo", "Choose from Library"],
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) {
+            handleCaptureImage();
+          } else if (buttonIndex === 2) {
+            handleSelectImage();
+          }
         }
-      }
-    );
+      );
+    } else {
+      // Android specific code
+      // You can use a simple Alert with buttons or a custom modal
+      Alert.alert(
+        "Select Image",
+        "",
+        [
+          { text: "Take Photo", onPress: () => handleCaptureImage() },
+          { text: "Choose from Library", onPress: () => handleSelectImage() },
+          { text: "Cancel", onPress: () => {}, style: "cancel" },
+        ],
+        { cancelable: true }
+      );
+    }
   };
-
   //
   const handleUpdateProfile = async () => {
     const userDoc = doc(db, "users", auth.currentUser.uid);
