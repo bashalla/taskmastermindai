@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
   View,
@@ -12,6 +12,7 @@ import {
   ScrollView,
   ActionSheetIOS,
   Platform,
+  RefreshControl,
 } from "react-native";
 import { auth, db, storage } from "../firebase";
 import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
@@ -24,7 +25,7 @@ import CountryPicker from "react-native-country-picker-modal";
 import { Picker } from "@react-native-picker/picker";
 import { Camera } from "expo-camera";
 
-// This component will be used to edit the users profiles
+// Resize image function
 const resizeImage = async (imageUri) => {
   try {
     const result = await ImageManipulator.manipulateAsync(
@@ -50,21 +51,35 @@ function ProfileScreen({ navigation }) {
   const [newPassword, setNewPassword] = useState("");
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
   const [agePickerVisible, setAgePickerVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Function to fetch data
+  const fetchData = async () => {
+    const docRef = doc(db, "users", auth.currentUser.uid);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      setUserData(docSnap.data());
+      setProfileImage(docSnap.data().profileImageUrl);
+    } else {
+      console.log("No such document!");
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      const docRef = doc(db, "users", auth.currentUser.uid);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        setUserData(docSnap.data());
-        setProfileImage(docSnap.data().profileImageUrl);
-      } else {
-        console.log("No such document!");
-      }
-    };
-
     fetchData();
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+
+    try {
+      await fetchData();
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    }
+
+    setRefreshing(false);
   }, []);
 
   const handleCountrySelect = (country) => {
@@ -254,7 +269,13 @@ function ProfileScreen({ navigation }) {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <ScrollView contentContainerStyle={styles.scrollView}>
+      <ScrollView
+        contentContainerStyle={styles.scrollView}
+        contentContainerStyle={styles.scrollView}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <TouchableOpacity onPress={selectImageSource}>
           <Image
             source={profileImage ? { uri: profileImage } : placeholderImage}
