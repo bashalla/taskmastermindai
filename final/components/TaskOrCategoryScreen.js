@@ -66,7 +66,10 @@ function TaskOrCategoryScreen({ navigation }) {
       setSelectedColor("");
 
       // After creating the category, navigate to the "CreateTask" screen with the new category's ID
-      navigation.navigate("CreateTask", { categoryId: docRef.id });
+      navigation.navigate("CreateTask", {
+        categoryId: docRef.id,
+        from: "TaskOrCategoryScreen",
+      });
     } catch (error) {
       console.error("Error creating category:", error);
       Alert.alert("Error", "Failed to create a new category.");
@@ -93,7 +96,10 @@ function TaskOrCategoryScreen({ navigation }) {
           renderItem={({ item }) => (
             <TouchableOpacity
               onPress={() =>
-                navigation.navigate("CreateTask", { categoryId: item.id })
+                navigation.navigate("CreateTask", {
+                  categoryId: item.id,
+                  from: "TaskOrCategoryScreen",
+                })
               }
               style={[styles.category, { backgroundColor: item.color }]}
             >

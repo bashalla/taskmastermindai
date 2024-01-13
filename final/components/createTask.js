@@ -162,10 +162,12 @@ const CreateTask = ({ navigation, route }) => {
       Alert.alert("Task Created", "Your task has been created successfully.");
 
       // Navigation or additional logic after successful task creation
-      if (route.params?.onGoBack) {
-        route.params.onGoBack();
+      // Check if navigated from TaskOrCategoryScreen
+      if (route.params?.from === "TaskOrCategoryScreen") {
+        navigation.navigate("Home", { screen: "Dashboard" }); // Navigate to HomeScreen
+      } else {
+        navigation.goBack(); // Go back to the previous screen
       }
-      navigation.goBack();
     } catch (error) {
       console.error("Error saving task:", error);
       Alert.alert("Error", "There was an error saving the task.");
