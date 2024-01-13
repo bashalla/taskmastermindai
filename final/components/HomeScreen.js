@@ -288,9 +288,14 @@ function HomeScreen({ navigation }) {
     }
   };
 
+  const onAddTaskPress = () => {
+    navigation.navigate("TaskOrCategoryScreen");
+  };
+
   const navigateToTaskDetail = (task) => {
     navigation.navigate("TaskDetailScreen", { task: task });
   };
+
   return (
     <SafeAreaView style={styles.container}>
       <CustomHeader onSignOut={handleSignOut} />
@@ -352,6 +357,10 @@ function HomeScreen({ navigation }) {
           </View>
         )}
       />
+      {/* "+" Icon for adding new tasks */}
+      <TouchableOpacity style={styles.addButton} onPress={onAddTaskPress}>
+        <Icon name="add-circle-outline" size={50} color="#0782F9" />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -450,6 +459,11 @@ const styles = StyleSheet.create({
   completeButtonText: {
     color: "white",
     fontWeight: "bold",
+  },
+  addButton: {
+    position: "absolute",
+    right: 20,
+    bottom: 20,
   },
 });
 

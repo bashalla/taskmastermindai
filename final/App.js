@@ -14,6 +14,7 @@ import CreateTask from "./components/CreateTask";
 import TaskDetailScreen from "./components/TaskDetailScreen";
 import EditCategoryScreen from "./components/EditCategoryScreen";
 import CompletedTaskScreen from "./components/CompletedTaskScreen";
+import TaskOrCategoryScreen from "./components/TaskOrCategoryScreen";
 
 // Create the Stack Navigator
 const Stack = createNativeStackNavigator();
@@ -83,6 +84,11 @@ export default function App() {
         <Stack.Screen
           name="CompletedTaskScreen"
           component={CompletedTaskScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="TaskOrCategoryScreen"
+          component={TaskOrCategoryScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
