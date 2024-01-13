@@ -8,6 +8,7 @@ import {
   View,
   Alert,
   RefreshControl,
+  Platform,
 } from "react-native";
 import {
   collection,
@@ -54,12 +55,21 @@ const TaskScreen = ({ navigation, route }) => {
     (async () => {
       const { status: calendarStatus } =
         await Calendar.requestCalendarPermissionsAsync();
-      const { status: remindersStatus } =
-        await Calendar.requestRemindersPermissionsAsync();
-      if (calendarStatus !== "granted" || remindersStatus !== "granted") {
+
+      // Check if the platform is iOS before requesting reminders permissions
+      if (Platform.OS === "ios") {
+        const { status: remindersStatus } =
+          await Calendar.requestRemindersPermissionsAsync();
+        if (calendarStatus !== "granted" || remindersStatus !== "granted") {
+          Alert.alert(
+            "Permissions required",
+            "Calendar and reminders access is needed to add events"
+          );
+        }
+      } else if (calendarStatus !== "granted") {
         Alert.alert(
           "Permissions required",
-          "Calendar and reminders access is needed to add events"
+          "Calendar access is needed to add events"
         );
       }
     })();

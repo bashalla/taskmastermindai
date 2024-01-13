@@ -34,7 +34,7 @@ const CompletedTaskScreen = ({ navigation, route }) => {
         <Text style={styles.detail}>
           Completed: {task.completedDate.split("T")[0]}
         </Text>
-        <Text style={styles.detail}>Duration: {durationDays} days</Text>
+        <Text style={styles.detail}>Duration: {durationDays} day(s)</Text>
         {task.pointsAwarded ? (
           <Text style={styles.points}>You received 10 points!</Text>
         ) : (
@@ -67,6 +67,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 22,
     fontWeight: "bold",
+    marginBottom: 5,
   },
   content: {
     flex: 1,
@@ -77,17 +78,17 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "bold",
     color: "#007AFF",
-    marginBottom: 10,
+    marginBottom: 26,
   },
   description: {
     fontSize: 18,
     color: "#333",
-    marginBottom: 10,
+    marginBottom: 18,
   },
   detail: {
     fontSize: 16,
     color: "#666",
-    marginBottom: 5,
+    marginBottom: 8,
   },
   points: {
     fontSize: 16,

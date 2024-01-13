@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
   View,
@@ -10,6 +10,9 @@ import {
   Modal,
   KeyboardAvoidingView,
   ScrollView,
+  ActionSheetIOS,
+  Platform,
+  RefreshControl,
 } from "react-native";
 import { auth, db, storage } from "../firebase";
 import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
@@ -20,14 +23,14 @@ import placeholderImage from "../assets/adaptive-icon.png";
 import * as ImageManipulator from "expo-image-manipulator";
 import CountryPicker from "react-native-country-picker-modal";
 import { Picker } from "@react-native-picker/picker";
+import { Camera } from "expo-camera";
 
-// This component will be used to edit the users profiles
+// Resize image function
 const resizeImage = async (imageUri) => {
   try {
-    // Resizing the image to a square while maintaining quality
     const result = await ImageManipulator.manipulateAsync(
       imageUri,
-      [{ resize: { width: 800, height: 800 } }], // Square dimensions here
+      [{ resize: { width: 800, height: 800 } }],
       { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
     );
     return result.uri;
@@ -36,7 +39,6 @@ const resizeImage = async (imageUri) => {
   }
 };
 
-// This component will be used to edit the users profiles
 function ProfileScreen({ navigation }) {
   const [userData, setUserData] = useState({
     firstName: "",
@@ -49,40 +51,87 @@ function ProfileScreen({ navigation }) {
   const [newPassword, setNewPassword] = useState("");
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
   const [agePickerVisible, setAgePickerVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Handle country selection
+  // Function to fetch data
+  const fetchData = async () => {
+    const docRef = doc(db, "users", auth.currentUser.uid);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      setUserData(docSnap.data());
+      setProfileImage(docSnap.data().profileImageUrl);
+    } else {
+      console.log("No such document!");
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+
+    try {
+      await fetchData();
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    }
+
+    setRefreshing(false);
+  }, []);
+
   const handleCountrySelect = (country) => {
     setUserData({ ...userData, nationality: country.name });
     setCountryPickerVisible(false);
   };
 
-  // Fetch user data when the screen loads
-  useEffect(() => {
-    const fetchData = async () => {
-      const docRef = doc(db, "users", auth.currentUser.uid);
-      const docSnap = await getDoc(docRef);
+  const handleCaptureImage = async () => {
+    const { status } = await Camera.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      alert("Sorry, we need camera permissions to make this work!");
+      return;
+    }
 
-      if (docSnap.exists()) {
-        setUserData(docSnap.data());
-        setProfileImage(docSnap.data().profileImageUrl);
-      } else {
-        console.log("No such document!");
+    let result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (result.canceled) {
+      return;
+    }
+
+    const imageUri = result.assets[0].uri; // Use assets array
+    const resizedImage = await resizeImage(imageUri);
+
+    try {
+      const response = await fetch(resizedImage);
+      const blob = await response.blob();
+      const storageRef = ref(storage, `profileImages/${auth.currentUser.uid}`);
+
+      try {
+        const snapshot = await uploadBytes(storageRef, blob);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        setProfileImage(downloadURL);
+        updateProfileImage(downloadURL);
+      } catch (uploadError) {
+        console.error("Error uploading image:", uploadError);
       }
-    };
+    } catch (resizeError) {
+      console.error("Error resizing image:", resizeError);
+    }
+  };
 
-    fetchData();
-  }, []);
-
-  // Select an image from the device library
   const handleSelectImage = async () => {
-    // Request media library permissions
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       alert("Sorry, we need camera roll permissions to make this work!");
       return;
     }
 
-    // Launch image library to select an image
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -90,35 +139,23 @@ function ProfileScreen({ navigation }) {
       quality: 1,
     });
 
-    // Exit if selection is canceled
     if (result.canceled) {
       return;
     }
 
-    // Proceed if an image is selected
     if (result.assets && result.assets.length > 0) {
       const asset = result.assets[0];
       const imageUri = asset.uri;
 
-      // Resizing the image using expo-image-manipulator
       try {
-        const resizedImage = await ImageManipulator.manipulateAsync(
-          imageUri,
-          [{ resize: { width: 800, height: 800 } }], // Square dimensions
-          { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
-        );
-
-        const resizedImageUri = resizedImage.uri;
-
-        // Preparing the image for upload
-        const response = await fetch(resizedImageUri);
+        const resizedImage = await resizeImage(imageUri);
+        const response = await fetch(resizedImage);
         const blob = await response.blob();
         const storageRef = ref(
           storage,
           `profileImages/${auth.currentUser.uid}`
         );
 
-        // Uploading the image
         try {
           const snapshot = await uploadBytes(storageRef, blob);
           const downloadURL = await getDownloadURL(snapshot.ref);
@@ -133,7 +170,6 @@ function ProfileScreen({ navigation }) {
     }
   };
 
-  // Update the profile image in Firestore
   const updateProfileImage = async (url) => {
     const userDoc = doc(db, "users", auth.currentUser.uid);
     await updateDoc(userDoc, {
@@ -141,6 +177,37 @@ function ProfileScreen({ navigation }) {
     });
   };
 
+  const selectImageSource = () => {
+    if (Platform.OS === "ios") {
+      // Existing ActionSheetIOS code for iOS
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ["Cancel", "Take Photo", "Choose from Library"],
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) {
+            handleCaptureImage();
+          } else if (buttonIndex === 2) {
+            handleSelectImage();
+          }
+        }
+      );
+    } else {
+      // Android specific code
+      // You can use a simple Alert with buttons or a custom modal
+      Alert.alert(
+        "Select Image",
+        "",
+        [
+          { text: "Take Photo", onPress: () => handleCaptureImage() },
+          { text: "Choose from Library", onPress: () => handleSelectImage() },
+          { text: "Cancel", onPress: () => {}, style: "cancel" },
+        ],
+        { cancelable: true }
+      );
+    }
+  };
   //
   const handleUpdateProfile = async () => {
     const userDoc = doc(db, "users", auth.currentUser.uid);
@@ -202,8 +269,14 @@ function ProfileScreen({ navigation }) {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <ScrollView contentContainerStyle={styles.scrollView}>
-        <TouchableOpacity onPress={handleSelectImage}>
+      <ScrollView
+        contentContainerStyle={styles.scrollView}
+        contentContainerStyle={styles.scrollView}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        <TouchableOpacity onPress={selectImageSource}>
           <Image
             source={profileImage ? { uri: profileImage } : placeholderImage}
             style={styles.profileImage}

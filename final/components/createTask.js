@@ -162,10 +162,12 @@ const CreateTask = ({ navigation, route }) => {
       Alert.alert("Task Created", "Your task has been created successfully.");
 
       // Navigation or additional logic after successful task creation
-      if (route.params?.onGoBack) {
-        route.params.onGoBack();
+      // Check if navigated from TaskOrCategoryScreen
+      if (route.params?.from === "TaskOrCategoryScreen") {
+        navigation.navigate("Home", { screen: "Dashboard" }); // Navigate to HomeScreen
+      } else {
+        navigation.goBack(); // Go back to the previous screen
       }
-      navigation.goBack();
     } catch (error) {
       console.error("Error saving task:", error);
       Alert.alert("Error", "There was an error saving the task.");
@@ -196,10 +198,14 @@ const CreateTask = ({ navigation, route }) => {
   // Function to handle date change
   const onChangeDate = (event, selectedDate) => {
     const currentDate = selectedDate || deadline;
-    setTempDate(currentDate); // Updating  the temporary date
     setShowDatePicker(Platform.OS === "ios");
+    if (
+      event.type === "set" ||
+      (event.type === "dismissed" && Platform.OS === "android")
+    ) {
+      setDeadline(adjustDeadline(currentDate));
+    }
   };
-
   // Calling this function when the user confirms the date selection
   const confirmDateSelection = () => {
     const endOfDay = new Date(
@@ -347,8 +353,11 @@ const CreateTask = ({ navigation, route }) => {
             minimumDate={new Date()} // Set the minimum date to the current date
             onChange={(event, selectedDate) => {
               setShowDatePicker(Platform.OS === "ios");
-              if (selectedDate) {
-                setDeadline(adjustDeadline(selectedDate));
+              if (
+                event.type === "set" ||
+                (event.type === "dismissed" && Platform.OS === "android")
+              ) {
+                setDeadline(adjustDeadline(selectedDate || deadline));
               }
             }}
           />

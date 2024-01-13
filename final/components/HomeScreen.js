@@ -288,6 +288,14 @@ function HomeScreen({ navigation }) {
     }
   };
 
+  const onAddTaskPress = () => {
+    navigation.navigate("TaskOrCategoryScreen");
+  };
+
+  const navigateToTaskDetail = (task) => {
+    navigation.navigate("TaskDetailScreen", { task: task });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <CustomHeader onSignOut={handleSignOut} />
@@ -298,53 +306,61 @@ function HomeScreen({ navigation }) {
         data={tasks}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View
-            style={item.isOverdue ? styles.overdueTaskItem : styles.taskItem}
-          >
-            {/* Category Color Circle */}
+          <TouchableOpacity onPress={() => navigateToTaskDetail(item)}>
             <View
-              style={[
-                styles.categoryCircle,
-                { backgroundColor: categories[item.categoryId] || "#000" }, // Default color if not found
-              ]}
-            />
-
-            {/* Weather Icon and Task Name */}
-            {item.weatherCode && (
-              <Icon
-                name={getWeatherIconName(item.weatherCode)}
-                size={30}
-                color={getWeatherIconColor(item.weatherCode)}
+              style={item.isOverdue ? styles.overdueTaskItem : styles.taskItem}
+            >
+              <View
+                style={[
+                  styles.categoryCircle,
+                  { backgroundColor: categories[item.categoryId] || "#000" },
+                ]}
               />
-            )}
-            <Text style={styles.taskText}>{item.name}</Text>
-
-            {/* Complete Task Button */}
-            {!item.isCompleted && (
-              <TouchableOpacity
-                onPress={() => markTaskComplete(item.id)}
-                style={styles.completeButton}
-              >
-                {completedTasks[item.id] ? (
-                  <Icon name="check-circle" size={30} color="#4CAF50" /> // Green check for completed tasks
-                ) : (
-                  <Icon
-                    name="radio-button-unchecked"
-                    size={30}
-                    color="#CCCCCC"
-                  /> // Grey circle for incomplete tasks
-                )}
-              </TouchableOpacity>
-            )}
-
-            {/* Overdue Text */}
-            {item.isOverdue && <Text style={styles.overdueText}>Overdue</Text>}
-          </View>
+              {item.weatherCode && (
+                <Icon
+                  name={getWeatherIconName(item.weatherCode)}
+                  size={30}
+                  color={getWeatherIconColor(item.weatherCode)}
+                />
+              )}
+              <Text style={styles.taskText}>{item.name}</Text>
+              {!item.isCompleted && (
+                <TouchableOpacity
+                  onPress={() => markTaskComplete(item.id)}
+                  style={styles.completeButton}
+                >
+                  {completedTasks[item.id] ? (
+                    <Icon name="check-circle" size={30} color="#4CAF50" />
+                  ) : (
+                    <Icon
+                      name="radio-button-unchecked"
+                      size={30}
+                      color="#CCCCCC"
+                    />
+                  )}
+                </TouchableOpacity>
+              )}
+              {item.isOverdue && (
+                <Text style={styles.overdueText}>Overdue</Text>
+              )}
+            </View>
+          </TouchableOpacity>
         )}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        ListEmptyComponent={() => (
+          <View style={styles.noTasksContainer}>
+            <Text style={styles.noTasksText}>
+              You are free no Task, enjoy your day!
+            </Text>
+          </View>
+        )}
       />
+      {/* "+" Icon for adding new tasks */}
+      <TouchableOpacity style={styles.addButton} onPress={onAddTaskPress}>
+        <Icon name="add-circle-outline" size={50} color="#0782F9" />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -353,6 +369,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#E8EAED",
+  },
+  noTasksContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 50,
+  },
+  noTasksText: {
+    fontSize: 20,
+    color: "#333",
   },
   headerText: {
     fontSize: 28,
@@ -433,6 +459,11 @@ const styles = StyleSheet.create({
   completeButtonText: {
     color: "white",
     fontWeight: "bold",
+  },
+  addButton: {
+    position: "absolute",
+    right: 20,
+    bottom: 20,
   },
 });
 

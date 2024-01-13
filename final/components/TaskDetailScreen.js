@@ -92,21 +92,25 @@ const TaskDetailsScreen = ({ navigation, route }) => {
   const updateCalendarEvent = async (eventId, newDeadline) => {
     try {
       let startDate = new Date(newDeadline);
-      startDate.setMinutes(
-        startDate.getMinutes() + startDate.getTimezoneOffset()
+      // Create a UTC date at the start of the day
+      let utcStartDate = new Date(
+        Date.UTC(
+          startDate.getFullYear(),
+          startDate.getMonth(),
+          startDate.getDate()
+        )
       );
-      startDate.setHours(0, 0, 0, 0);
 
       await Calendar.updateEventAsync(eventId, {
-        startDate: startDate,
-        endDate: startDate,
+        startDate: utcStartDate,
+        endDate: utcStartDate,
         allDay: true,
       });
 
       console.log("Calendar event updated successfully");
     } catch (error) {
       console.error("Error updating calendar event:", error);
-      throw error; // Rethrow the error to be caught by the calling function
+      throw error;
     }
   };
 
