@@ -8,13 +8,13 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import axios from "axios";
-import { GOOGLE_API_KEY } from "@env";
+import { GOOGLE_CLOUD_API_KEY } from "@env";
 
 // Function to analyze text using Google Cloud Natural Language API
 const analyzeText = async (text) => {
   try {
     const response = await axios.post(
-      `https://language.googleapis.com/v1/documents:analyzeEntities?key=${GOOGLE_API_KEY}`,
+      `https://language.googleapis.com/v1/documents:analyzeEntities?key=${GOOGLE_CLOUD_API_KEY}`,
       { document: { content: text, type: "PLAIN_TEXT" } }
     );
     console.log("API Response:", response.data); // Console log the response
