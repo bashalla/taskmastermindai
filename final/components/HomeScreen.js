@@ -23,6 +23,7 @@ import {
 import axios from "axios";
 import { OPEN_WEATHER } from "@env";
 import CategoryScreen from "./CategoryScreen";
+import { getPredictiveSuggestions } from "./predictionAlgorithm.js";
 
 // This component will be used to display the user's tasks due today
 function HomeScreen({ navigation }) {
@@ -31,6 +32,7 @@ function HomeScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [categories, setCategories] = useState({});
   const [completedTasks, setCompletedTasks] = useState({});
+  const [suggestions, setSuggestions] = useState([]);
 
   const fetchCategories = async () => {
     const categoriesRef = collection(db, "categories");
@@ -296,12 +298,38 @@ function HomeScreen({ navigation }) {
     navigation.navigate("TaskDetailScreen", { task: task });
   };
 
+  const handleLampClick = async () => {
+    console.log("Lamp clicked"); // Debug log
+    const userId = auth.currentUser.uid;
+    console.log("User ID: ", userId); // Debug log
+    try {
+      const newSuggestions = await getPredictiveSuggestions(userId);
+      console.log("Suggestions: ", newSuggestions); // Debug log
+      setSuggestions(newSuggestions);
+    } catch (error) {
+      console.error("Error fetching suggestions:", error);
+      Alert.alert("Error", "Unable to fetch suggestions.");
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <CustomHeader onSignOut={handleSignOut} />
       <Text style={styles.headerText}>Hello, {userName}</Text>
       <Text style={styles.dateText}>{new Date().toLocaleDateString()}</Text>
       <Text style={styles.subHeaderText}>Today's Tasks</Text>
+
+      {/* Lamp Icon for Predictive Suggestions */}
+      <TouchableOpacity onPress={handleLampClick} style={styles.lampButton}>
+        <Icon name="lightbulb-outline" size={30} color="#F0AD4E" />
+      </TouchableOpacity>
+
+      {/* Display suggestions (Example) */}
+      {suggestions.map((suggestion, index) => (
+        <Text key={index} style={styles.suggestionText}>
+          {suggestion}
+        </Text>
+      ))}
       <FlatList
         data={tasks}
         keyExtractor={(item) => item.id}
@@ -464,6 +492,17 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 20,
     bottom: 20,
+  },
+  lampButton: {
+    position: "absolute",
+    left: 20, // Position the lamp icon on the left side
+    top: 20,
+    marginTop: 60,
+  },
+  suggestionText: {
+    fontSize: 16,
+    color: "#333",
+    padding: 10,
   },
 });
 
