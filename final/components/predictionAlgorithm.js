@@ -43,41 +43,41 @@ const markTaskAsAnalyzed = async (taskId, category) => {
 };
 
 // Main function to get predictive suggestions
+
 export const getPredictiveSuggestions = async (userId) => {
   const tasks = await fetchUserTasks(userId);
   const categoryCounts = {};
 
   for (const task of tasks) {
-    if (!task.analyzed) {
-      const classification = await classifyContent(
-        task.name + " " + (task.description || "")
-      );
-      const categories = classification.categories.sort(
-        (a, b) => b.confidence - a.confidence
-      );
-      const mostLikelyCategory =
-        categories.length > 0 ? categories[0].name : null;
-      await markTaskAsAnalyzed(task.id, mostLikelyCategory);
-      task.category = mostLikelyCategory; // Update task with analyzed category
-    }
+    // Classify each task
+    const classification = await classifyContent(
+      task.name + " " + (task.description || "")
+    );
+    const categories = classification.categories.sort(
+      (a, b) => b.confidence - a.confidence
+    );
+    const mostLikelyCategory =
+      categories.length > 0 ? categories[0].name : null;
+    task.category = mostLikelyCategory; // Update task with analyzed category
 
-    if (task.category) {
-      const category = task.category.toLowerCase();
+    // Count the frequency of each category
+    if (mostLikelyCategory) {
+      const category = mostLikelyCategory.toLowerCase();
       categoryCounts[category] = (categoryCounts[category] || 0) + 1;
     }
   }
 
-  // Sort categories and pick top two
+  // Determine top two categories
   const topCategories = Object.entries(categoryCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 2)
     .map((entry) => entry[0]);
 
   const suggestions = topCategories.map(
-    (category) => `Consider adding tasks related to ${category}`
+    (category) => `Consider focusing on tasks related to: ${category}`
   );
 
-  // Include a sentence for zero tasks
+  // Include a generic message if no tasks are present
   if (tasks.length === 0) {
     suggestions.push("You currently have no tasks. Consider adding some.");
   }

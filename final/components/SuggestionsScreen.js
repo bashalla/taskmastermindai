@@ -11,18 +11,14 @@ import {
 
 const SuggestionsPage = ({ route, navigation }) => {
   const { suggestions } = route.params;
-
   const [refreshing, setRefreshing] = useState(false);
 
-  // Function to refresh the suggestions
   const refreshSuggestions = async () => {
     setRefreshing(true);
-    // Implement the logic to refresh suggestions
-    // Once the refresh is complete, set refreshing to false
+    // Implement the logic to refresh suggestions here
     setRefreshing(false);
   };
 
-  // Use useEffect to refresh the suggestions when the page is focused
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
       refreshSuggestions();
