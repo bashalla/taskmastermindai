@@ -23,6 +23,7 @@ import {
 import axios from "axios";
 import { OPEN_WEATHER } from "@env";
 import CategoryScreen from "./CategoryScreen";
+
 import { getPredictiveSuggestions } from "./predictionAlgorithm.js";
 
 // This component will be used to display the user's tasks due today
@@ -305,7 +306,7 @@ function HomeScreen({ navigation }) {
     try {
       const newSuggestions = await getPredictiveSuggestions(userId);
       console.log("Suggestions: ", newSuggestions); // Debug log
-      setSuggestions(newSuggestions);
+      navigation.navigate("SuggestionsScreen", { suggestions: newSuggestions });
     } catch (error) {
       console.error("Error fetching suggestions:", error);
       Alert.alert("Error", "Unable to fetch suggestions.");
