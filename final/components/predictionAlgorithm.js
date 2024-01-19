@@ -8,7 +8,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import axios from "axios";
-import { GOOGLE_CLOUD_API_KEY } from "@env";
+import { GOOGLE_CLOUD_API_KEY, OPENAI_API_KEY } from "@env";
 
 // Function to classify content using Google Cloud Natural Language API
 const classifyContent = async (text) => {
@@ -36,29 +36,42 @@ const fetchUserTasks = async (userId) => {
   return tasks;
 };
 
-// Function to extract a key phrase from category
-const extractKeyPhrase = (category) => {
-  let parts = category.split("/");
-  // Take the last two parts for more context if available, else take the last part
-  return parts.length > 2 ? parts.slice(-2).join(" ") : parts[parts.length - 1];
-};
+// Function to get suggestions from GPT API
+const getSuggestionsFromGPT = async (categories) => {
+  try {
+    const prompt = `The user is using a task manager app and finds the following categories most relevant: ${categories.join(
+      ", "
+    )}. Suggest 3-4 tasks that are likely to be useful for the user:`;
+    const response = await axios.post(
+      "https://api.openai.com/v1/chat/completions", // Use chat completions endpoint
+      {
+        model: "gpt-3.5-turbo-1106", // Specify the model here
+        messages: [{ role: "system", content: prompt }], // Format the prompt as a message
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-// Define a set of templates
-const templates = [
-  "Have you explored [KEYPHRASE]? It might be just what you're looking for! 🌟",
-  "Looks like [KEYPHRASE] has caught your interest. Why not dive deeper into it? 🚀",
-  "As a fan of [KEYPHRASE], you'll love checking out the latest trends and ideas. 🌈",
-];
+    console.log("GPT-3.5 API Response:", response.data);
 
-// Function to generate a suggestion
-const generateSuggestion = (category) => {
-  let keyPhrase = extractKeyPhrase(category);
-
-  // Randomly select a template
-  let template = templates[Math.floor(Math.random() * templates.length)];
-
-  // Replace placeholder with key phrase
-  return template.replace("[KEYPHRASE]", keyPhrase);
+    // Extracting and limiting the number of suggestions
+    if (response.data.choices && response.data.choices.length > 0) {
+      const suggestions = response.data.choices
+        .map((choice) => choice.message.content)
+        .filter((content) => content);
+      return suggestions.slice(0, 4); // Limit to the first 3-4 suggestions
+    } else {
+      console.error("No valid suggestions received");
+      return [];
+    }
+  } catch (error) {
+    console.error("Error fetching suggestions from GPT:", error);
+    throw error;
+  }
 };
 
 // Main function to get predictive suggestions
@@ -85,22 +98,22 @@ export const getPredictiveSuggestions = async (userId) => {
   }
 
   // Determine top two categories
-  const topCategories = Object.entries(categoryCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 2)
-    .map((entry) => entry[0]);
-
-  // Generate suggestions using the new dynamic method
-  const dynamicSuggestions = topCategories.map((category) =>
-    generateSuggestion(category)
+  const sortedCategories = Object.entries(categoryCounts).sort(
+    (a, b) => b[1] - a[1]
   );
+  const topCategories =
+    sortedCategories.length > 1
+      ? sortedCategories.slice(0, 2).map((entry) => entry[0])
+      : sortedCategories.map((entry) => entry[0]);
 
-  // Fallback if no categories are predominant
-  if (dynamicSuggestions.length === 0) {
-    dynamicSuggestions.push(
-      "You currently have no tasks. Consider adding some."
-    );
+  let suggestions;
+  if (topCategories.length > 0) {
+    // Get suggestions from GPT API
+    suggestions = await getSuggestionsFromGPT(topCategories);
+  } else {
+    // Fallback if no categories are predominant
+    suggestions = ["You currently have no tasks. Consider adding some."];
   }
 
-  return dynamicSuggestions;
+  return suggestions;
 };
