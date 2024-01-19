@@ -36,14 +36,32 @@ const fetchUserTasks = async (userId) => {
   return tasks;
 };
 
-// Function to mark a task as analyzed
-const markTaskAsAnalyzed = async (taskId, category) => {
-  const taskRef = doc(db, "tasks", taskId);
-  await updateDoc(taskRef, { analyzed: true, category: category });
+// Function to extract a key phrase from category
+const extractKeyPhrase = (category) => {
+  let parts = category.split("/");
+  // Take the last two parts for more context if available, else take the last part
+  return parts.length > 2 ? parts.slice(-2).join(" ") : parts[parts.length - 1];
+};
+
+// Define a set of templates
+const templates = [
+  "Have you explored [KEYPHRASE]? It might be just what you're looking for! 🌟",
+  "Looks like [KEYPHRASE] has caught your interest. Why not dive deeper into it? 🚀",
+  "As a fan of [KEYPHRASE], you'll love checking out the latest trends and ideas. 🌈",
+];
+
+// Function to generate a suggestion
+const generateSuggestion = (category) => {
+  let keyPhrase = extractKeyPhrase(category);
+
+  // Randomly select a template
+  let template = templates[Math.floor(Math.random() * templates.length)];
+
+  // Replace placeholder with key phrase
+  return template.replace("[KEYPHRASE]", keyPhrase);
 };
 
 // Main function to get predictive suggestions
-
 export const getPredictiveSuggestions = async (userId) => {
   const tasks = await fetchUserTasks(userId);
   const categoryCounts = {};
@@ -58,7 +76,6 @@ export const getPredictiveSuggestions = async (userId) => {
     );
     const mostLikelyCategory =
       categories.length > 0 ? categories[0].name : null;
-    task.category = mostLikelyCategory; // Update task with analyzed category
 
     // Count the frequency of each category
     if (mostLikelyCategory) {
@@ -73,14 +90,17 @@ export const getPredictiveSuggestions = async (userId) => {
     .slice(0, 2)
     .map((entry) => entry[0]);
 
-  const suggestions = topCategories.map(
-    (category) => `Consider focusing on tasks related to: ${category}`
+  // Generate suggestions using the new dynamic method
+  const dynamicSuggestions = topCategories.map((category) =>
+    generateSuggestion(category)
   );
 
-  // Include a generic message if no tasks are present
-  if (tasks.length === 0) {
-    suggestions.push("You currently have no tasks. Consider adding some.");
+  // Fallback if no categories are predominant
+  if (dynamicSuggestions.length === 0) {
+    dynamicSuggestions.push(
+      "You currently have no tasks. Consider adding some."
+    );
   }
 
-  return suggestions;
+  return dynamicSuggestions;
 };
