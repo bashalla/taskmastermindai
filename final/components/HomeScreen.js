@@ -8,6 +8,7 @@ import {
   FlatList,
   SafeAreaView,
   RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { auth, db } from "../firebase";
@@ -24,6 +25,8 @@ import axios from "axios";
 import { OPEN_WEATHER } from "@env";
 import CategoryScreen from "./CategoryScreen";
 
+import { getPredictiveSuggestions } from "./predictionAlgorithm.js";
+
 // This component will be used to display the user's tasks due today
 function HomeScreen({ navigation }) {
   const [userName, setUserName] = useState("");
@@ -31,6 +34,8 @@ function HomeScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [categories, setCategories] = useState({});
   const [completedTasks, setCompletedTasks] = useState({});
+  const [suggestions, setSuggestions] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchCategories = async () => {
     const categoriesRef = collection(db, "categories");
@@ -296,71 +301,111 @@ function HomeScreen({ navigation }) {
     navigation.navigate("TaskDetailScreen", { task: task });
   };
 
+  const handleLampClick = async () => {
+    setIsLoading(true); // Start loading
+    console.log("Lamp clicked");
+    const userId = auth.currentUser.uid;
+    try {
+      const newSuggestions = await getPredictiveSuggestions(userId);
+      navigation.navigate("SuggestionsScreen", { suggestions: newSuggestions });
+    } catch (error) {
+      console.error("Error fetching suggestions:", error);
+      Alert.alert("Error", "Unable to fetch suggestions.");
+    }
+    setIsLoading(false); // End loading
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <CustomHeader onSignOut={handleSignOut} />
-      <Text style={styles.headerText}>Hello, {userName}</Text>
-      <Text style={styles.dateText}>{new Date().toLocaleDateString()}</Text>
-      <Text style={styles.subHeaderText}>Today's Tasks</Text>
-      <FlatList
-        data={tasks}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => navigateToTaskDetail(item)}>
-            <View
-              style={item.isOverdue ? styles.overdueTaskItem : styles.taskItem}
-            >
-              <View
-                style={[
-                  styles.categoryCircle,
-                  { backgroundColor: categories[item.categoryId] || "#000" },
-                ]}
-              />
-              {item.weatherCode && (
-                <Icon
-                  name={getWeatherIconName(item.weatherCode)}
-                  size={30}
-                  color={getWeatherIconColor(item.weatherCode)}
-                />
-              )}
-              <Text style={styles.taskText}>{item.name}</Text>
-              {!item.isCompleted && (
-                <TouchableOpacity
-                  onPress={() => markTaskComplete(item.id)}
-                  style={styles.completeButton}
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      ) : (
+        <>
+          <CustomHeader onSignOut={handleSignOut} />
+          <Text style={styles.headerText}>Hello, {userName}</Text>
+          <Text style={styles.dateText}>{new Date().toLocaleDateString()}</Text>
+          <Text style={styles.subHeaderText}>Today's Tasks</Text>
+
+          {/* Lamp Icon for Predictive Suggestions */}
+          <TouchableOpacity onPress={handleLampClick} style={styles.lampButton}>
+            <Icon name="lightbulb-outline" size={30} color="#F0AD4E" />
+          </TouchableOpacity>
+
+          {/* Display suggestions (Example) */}
+          {suggestions.map((suggestion, index) => (
+            <Text key={index} style={styles.suggestionText}>
+              {suggestion}
+            </Text>
+          ))}
+
+          <FlatList
+            data={tasks}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity onPress={() => navigateToTaskDetail(item)}>
+                <View
+                  style={
+                    item.isOverdue ? styles.overdueTaskItem : styles.taskItem
+                  }
                 >
-                  {completedTasks[item.id] ? (
-                    <Icon name="check-circle" size={30} color="#4CAF50" />
-                  ) : (
+                  <View
+                    style={[
+                      styles.categoryCircle,
+                      {
+                        backgroundColor: categories[item.categoryId] || "#000",
+                      },
+                    ]}
+                  />
+                  {item.weatherCode && (
                     <Icon
-                      name="radio-button-unchecked"
+                      name={getWeatherIconName(item.weatherCode)}
                       size={30}
-                      color="#CCCCCC"
+                      color={getWeatherIconColor(item.weatherCode)}
                     />
                   )}
-                </TouchableOpacity>
-              )}
-              {item.isOverdue && (
-                <Text style={styles.overdueText}>Overdue</Text>
-              )}
-            </View>
+                  <Text style={styles.taskText}>{item.name}</Text>
+                  {!item.isCompleted && (
+                    <TouchableOpacity
+                      onPress={() => markTaskComplete(item.id)}
+                      style={styles.completeButton}
+                    >
+                      {completedTasks[item.id] ? (
+                        <Icon name="check-circle" size={30} color="#4CAF50" />
+                      ) : (
+                        <Icon
+                          name="radio-button-unchecked"
+                          size={30}
+                          color="#CCCCCC"
+                        />
+                      )}
+                    </TouchableOpacity>
+                  )}
+                  {item.isOverdue && (
+                    <Text style={styles.overdueText}>Overdue</Text>
+                  )}
+                </View>
+              </TouchableOpacity>
+            )}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+            ListEmptyComponent={() => (
+              <View style={styles.noTasksContainer}>
+                <Text style={styles.noTasksText}>
+                  You have no tasks, enjoy your day!
+                </Text>
+              </View>
+            )}
+          />
+
+          {/* "+" Icon for adding new tasks */}
+          <TouchableOpacity style={styles.addButton} onPress={onAddTaskPress}>
+            <Icon name="add-circle-outline" size={50} color="#0782F9" />
           </TouchableOpacity>
-        )}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        ListEmptyComponent={() => (
-          <View style={styles.noTasksContainer}>
-            <Text style={styles.noTasksText}>
-              You are free no Task, enjoy your day!
-            </Text>
-          </View>
-        )}
-      />
-      {/* "+" Icon for adding new tasks */}
-      <TouchableOpacity style={styles.addButton} onPress={onAddTaskPress}>
-        <Icon name="add-circle-outline" size={50} color="#0782F9" />
-      </TouchableOpacity>
+        </>
+      )}
     </SafeAreaView>
   );
 }
@@ -464,6 +509,23 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 20,
     bottom: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff", // or any other background color you prefer
+  },
+  lampButton: {
+    position: "absolute",
+    left: 20, // Position the lamp icon on the left side
+    top: 20,
+    marginTop: 60,
+  },
+  suggestionText: {
+    fontSize: 16,
+    color: "#333",
+    padding: 10,
   },
 });
 

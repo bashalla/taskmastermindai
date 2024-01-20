@@ -15,6 +15,7 @@ import TaskDetailScreen from "./components/TaskDetailScreen";
 import EditCategoryScreen from "./components/EditCategoryScreen";
 import CompletedTaskScreen from "./components/CompletedTaskScreen";
 import TaskOrCategoryScreen from "./components/TaskOrCategoryScreen";
+import SuggestionsScreen from "./components/SuggestionsScreen";
 
 // Create the Stack Navigator
 const Stack = createNativeStackNavigator();
@@ -89,6 +90,11 @@ export default function App() {
         <Stack.Screen
           name="TaskOrCategoryScreen"
           component={TaskOrCategoryScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="SuggestionsScreen"
+          component={SuggestionsScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

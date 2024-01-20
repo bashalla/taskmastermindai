@@ -10,7 +10,7 @@ import {
   SafeAreaView,
 } from "react-native";
 import { db } from "../firebase";
-import { collection, getDocs, addDoc } from "firebase/firestore";
+import { collection, getDocs, addDoc, query, where } from "firebase/firestore";
 import { auth } from "../firebase"; // Import your authentication module
 
 function TaskOrCategoryScreen({ navigation }) {
@@ -19,16 +19,22 @@ function TaskOrCategoryScreen({ navigation }) {
   const [newLabelName, setNewLabelName] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
   const colors = ["#ff6347", "#4682b4", "#32cd32", "#ff69b4", "#ffa500"];
-
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "categories"));
-        const fetchedCategories = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setCategories(fetchedCategories);
+        const user = auth.currentUser;
+        if (user) {
+          const categoriesRef = collection(db, "categories");
+          const q = query(categoriesRef, where("userId", "==", user.uid));
+          const querySnapshot = await getDocs(q);
+
+          const fetchedCategories = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+
+          setCategories(fetchedCategories);
+        }
       } catch (error) {
         console.error("Error fetching categories:", error);
         Alert.alert("Error", "Failed to load categories.");
@@ -107,6 +113,13 @@ function TaskOrCategoryScreen({ navigation }) {
                 {item.name} - {item.label}
               </Text>
             </TouchableOpacity>
+          )}
+          ListEmptyComponent={() => (
+            <View style={styles.noCategoriesContainer}>
+              <Text style={styles.noCategoriesText}>
+                There are no categories.
+              </Text>
+            </View>
           )}
           style={styles.list}
         />
@@ -189,6 +202,15 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     width: "90%",
+  },
+  noCategoriesContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+  },
+  noCategoriesText: {
+    fontSize: 16,
+    color: "#666",
   },
   input: {
     borderWidth: 1,
