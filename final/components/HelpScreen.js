@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Linking,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 
@@ -31,8 +32,28 @@ const HelpScreen = ({ navigation }) => {
         <Icon name="stars" size={30} color="#0782F9" />
         <Text style={styles.sectionTitle}>Point System</Text>
         <Text style={styles.sectionContent}>
-          Each task completed on time earns you points. The more challenging the
-          task, the more points you earn!
+          Each task completed on time earns you 10 points. Points are awarded
+          provided the task's deadline has not been changed more than 3 times
+          and the task is not overdue. If the task is overdue or the deadline
+          changed too often, no points will be awarded.
+        </Text>
+      </View>
+
+      <View style={styles.section}>
+        <Icon name="contact-support" size={30} color="#0782F9" />
+        <Text style={styles.sectionTitle}>Support</Text>
+        <Text style={styles.sectionContent}>
+          If you encounter any issues or have queries, please contact the
+          developer team via{" "}
+          <Text
+            style={styles.emailLink}
+            onPress={() =>
+              Linking.openURL("mailto:sebastian.hallabrin@googlemail.com")
+            }
+          >
+            Mail
+          </Text>
+          .
         </Text>
       </View>
 
@@ -68,6 +89,10 @@ const styles = StyleSheet.create({
   },
   sectionContent: {
     fontSize: 16,
+  },
+  emailLink: {
+    color: "#0782F9",
+    textDecorationLine: "underline",
   },
   // ... additional styles
 });
