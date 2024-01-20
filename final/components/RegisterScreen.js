@@ -98,7 +98,7 @@ const RegisterScreen = () => {
           <TextInput
             placeholder="Email"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => setEmail(text.toLowerCase())}
             style={styles.input}
           />
           <TextInput

@@ -1,31 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   Button,
-  RefreshControl,
+  TouchableOpacity,
 } from "react-native";
+import Icon from "react-native-vector-icons/MaterialIcons";
+import * as Clipboard from "expo-clipboard"; // Use Expo's Clipboard API
 
 const SuggestionsPage = ({ route, navigation }) => {
   const { suggestions } = route.params;
-  const [refreshing, setRefreshing] = useState(false);
 
-  const refreshSuggestions = async () => {
-    setRefreshing(true);
-    // Add logic to refresh suggestions here if needed
-    setRefreshing(false);
-  };
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", () => {
-      refreshSuggestions();
-    });
-    return unsubscribe;
-  }, [navigation]);
-
-  // Define a set of more serious colors for the cards
+  // Define a set of colors for the cards
   const cardColors = ["#B0C4DE", "#778899", "#708090", "#A9A9A9", "#2F4F4F"];
 
   // Function to render each item of the suggestions in a separate card
@@ -35,7 +23,7 @@ const SuggestionsPage = ({ route, navigation }) => {
       suggestion
         .split(".") // Split by dot
         .map((item) => item.trim()) // Trim whitespace
-        .filter((item) => item && !item.match(/^\d+$/)) // Filter out empty items and standalone numbers
+        .filter((item) => item && !item.match(/^\d+\.?$/)) // Filter out standalone numbers, with or without a trailing dot
         .map((cleanItem, idx) => {
           const cardStyle = {
             ...styles.suggestionCard,
@@ -43,25 +31,27 @@ const SuggestionsPage = ({ route, navigation }) => {
           };
           cardIndex++;
           return (
-            <View key={`${index}-${idx}`} style={cardStyle}>
+            <TouchableOpacity
+              key={`${index}-${idx}`}
+              style={cardStyle}
+              onPress={async () => {
+                await Clipboard.setStringAsync(cleanItem);
+                // Optionally, you can show a confirmation message here
+              }}
+            >
               <Text style={styles.suggestionText}>{cleanItem}</Text>
-            </View>
+            </TouchableOpacity>
           );
         })
     );
   };
 
+  const navigateToTaskCreation = () => {
+    navigation.navigate("TaskOrCategoryScreen");
+  };
+
   return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={refreshSuggestions}
-        />
-      }
-      contentContainerStyle={{ paddingBottom: 20 }}
-    >
+    <ScrollView style={styles.container}>
       <Text style={styles.header}>Personalized Suggestions</Text>
       {renderSuggestionCards()}
       <View style={styles.buttonContainer}>
@@ -71,6 +61,13 @@ const SuggestionsPage = ({ route, navigation }) => {
           color="#007AFF"
         />
       </View>
+      {/* "+" Icon for adding new tasks or categories */}
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={navigateToTaskCreation}
+      >
+        <Icon name="add-circle-outline" size={50} color="#0782F9" />
+      </TouchableOpacity>
     </ScrollView>
   );
 };
@@ -108,6 +105,11 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     margin: 20,
+  },
+  addButton: {
+    position: "absolute",
+    right: 20,
+    bottom: 20,
   },
 });
 

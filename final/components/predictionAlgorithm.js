@@ -112,7 +112,7 @@ export const getPredictiveSuggestions = async (userId) => {
     suggestions = await getSuggestionsFromGPT(topCategories);
   } else {
     // Fallback if no categories are predominant
-    suggestions = ["You currently have no tasks. Consider adding some."];
+    suggestions = ["You currently have no tasks"];
   }
 
   return suggestions;
