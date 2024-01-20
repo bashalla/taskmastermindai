@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -16,7 +16,15 @@ const SearchScreen = ({ navigation }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSearch = async () => {
+  useEffect(() => {
+    if (searchQuery) {
+      performSearch();
+    } else {
+      setSearchResults([]); // Clear results if search query is empty
+    }
+  }, [searchQuery]);
+
+  const performSearch = async () => {
     setIsLoading(true);
     const tasksRef = collection(db, "tasks");
     const categoriesRef = collection(db, "categories");
@@ -57,6 +65,21 @@ const SearchScreen = ({ navigation }) => {
     setIsLoading(false);
   };
 
+  const navigateToItem = (item) => {
+    if (item.type === "Task") {
+      if (item.isCompleted) {
+        // Navigate to CompletedTaskScreen for completed tasks
+        navigation.navigate("CompletedTaskScreen", { task: item });
+      } else {
+        // Navigate to TaskDetailScreen for tasks not completed
+        navigation.navigate("TaskDetailScreen", { task: item });
+      }
+    } else if (item.type === "Category") {
+      // Navigate to EditCategoryScreen for categories
+      navigation.navigate("EditCategoryScreen", { category: item });
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -73,7 +96,6 @@ const SearchScreen = ({ navigation }) => {
         placeholder="Search tasks or categories"
         value={searchQuery}
         onChangeText={setSearchQuery}
-        onSubmitEditing={handleSearch}
       />
       {isLoading ? (
         <Text>Loading...</Text>
@@ -82,11 +104,14 @@ const SearchScreen = ({ navigation }) => {
           data={searchResults}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View style={styles.resultItem}>
-              <Text>
+            <TouchableOpacity
+              style={styles.resultItem}
+              onPress={() => navigateToItem(item)}
+            >
+              <Text style={styles.resultText}>
                 {item.type}: {item.name}
               </Text>
-            </View>
+            </TouchableOpacity>
           )}
         />
       )}
@@ -104,35 +129,39 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
-    marginTop: 40,
   },
   backButton: {
+    marginRight: 10,
     marginTop: 50,
-    marginRight: 10, // Adjust spacing as needed
   },
   headerText: {
     fontSize: 24,
     fontWeight: "bold",
     marginLeft: 10,
+    marginTop: 50,
   },
   searchInput: {
-    height: 50,
+    height: 70,
     borderColor: "lightgray",
     borderWidth: 1,
     borderRadius: 25,
     paddingHorizontal: 20,
     marginBottom: 20,
     fontSize: 16,
-    marginTop: 20,
   },
   resultItem: {
-    padding: 10,
+    padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
     backgroundColor: "#f9f9f9",
     borderRadius: 10,
     marginTop: 10,
   },
+  resultText: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  // Add additional styles as needed
 });
 
 export default SearchScreen;
