@@ -6,16 +6,18 @@ import LoginScreen from "./components/LoginScreen";
 import RegisterScreen from "./components/RegisterScreen";
 import HomeScreen from "./components/HomeScreen";
 import CategoryScreen from "./components/CategoryScreen";
-import RewardsScreen from "./components/RewardsScreen"; // Assuming you have this component
+import RewardsScreen from "./components/RewardsScreen";
 import ProfileScreen from "./components/ProfileScreen";
-import TaskScreen from "./components/TaskScreen"; // Import your TaskCreationScreen component
-import TaskCreationScreen from "./components/CreateTask"; // Import your TaskCreationScreen component
+import TaskScreen from "./components/TaskScreen";
+import TaskCreationScreen from "./components/CreateTask";
 import CreateTask from "./components/CreateTask";
 import TaskDetailScreen from "./components/TaskDetailScreen";
 import EditCategoryScreen from "./components/EditCategoryScreen";
 import CompletedTaskScreen from "./components/CompletedTaskScreen";
 import TaskOrCategoryScreen from "./components/TaskOrCategoryScreen";
 import SuggestionsScreen from "./components/SuggestionsScreen";
+import SearchScreen from "./components/SearchScreen";
+import HelpScreen from "./components/HelpScreen";
 
 // Create the Stack Navigator
 const Stack = createNativeStackNavigator();
@@ -95,6 +97,16 @@ export default function App() {
         <Stack.Screen
           name="SuggestionsScreen"
           component={SuggestionsScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="SearchScreen"
+          component={SearchScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="HelpScreen"
+          component={HelpScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

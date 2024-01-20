@@ -55,14 +55,28 @@ function HomeScreen({ navigation }) {
   const CustomHeader = ({ onSignOut }) => {
     return (
       <View style={styles.customHeader}>
-        <TouchableOpacity onPress={onSignOut} style={styles.signOutButton}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("SearchScreen")}
+          style={styles.headerIcon}
+        >
+          <Icon name="search" size={30} color="#0782F9" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("HelpScreen")}
+          style={styles.headerIcon}
+        >
+          <Icon name="help-outline" size={30} color="#0782F9" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={onSignOut}
+          style={[styles.headerIcon, styles.signOutButton]}
+        >
           <Icon name="exit-to-app" size={40} color="#0782F9" />
           <Text style={styles.invisibleText}>Sign Out</Text>
         </TouchableOpacity>
       </View>
     );
   };
-
   // Fetch user info from Firestore
   const fetchUserInfo = async () => {
     try {
@@ -485,6 +499,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 10,
     paddingTop: 20,
+  },
+  headerIcon: {
+    marginLeft: 15, // Add space between icons
   },
   signOutButton: {
     marginRight: 15,
