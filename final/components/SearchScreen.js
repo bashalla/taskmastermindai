@@ -29,33 +29,30 @@ const SearchScreen = ({ navigation }) => {
     const tasksRef = collection(db, "tasks");
     const categoriesRef = collection(db, "categories");
     const userId = auth.currentUser.uid;
+    const formattedSearchQuery = searchQuery.toLowerCase();
 
     try {
-      // Query tasks
-      const qTasks = query(
-        tasksRef,
-        where("userId", "==", userId),
-        where("name", ">=", searchQuery),
-        where("name", "<=", searchQuery + "\uf8ff")
-      );
-      const taskSnapshot = await getDocs(qTasks);
+      // Query all tasks and categories for the user
+      const qTasks = query(tasksRef, where("userId", "==", userId));
+      const qCategories = query(categoriesRef, where("userId", "==", userId));
 
-      // Query categories
-      const qCategories = query(
-        categoriesRef,
-        where("userId", "==", userId),
-        where("name", ">=", searchQuery),
-        where("name", "<=", searchQuery + "\uf8ff")
-      );
+      const taskSnapshot = await getDocs(qTasks);
       const categorySnapshot = await getDocs(qCategories);
 
+      // Filter results client-side
       const results = [];
-      taskSnapshot.forEach((doc) =>
-        results.push({ ...doc.data(), id: doc.id, type: "Task" })
-      );
-      categorySnapshot.forEach((doc) =>
-        results.push({ ...doc.data(), id: doc.id, type: "Category" })
-      );
+      taskSnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.name.toLowerCase().includes(formattedSearchQuery)) {
+          results.push({ ...data, id: doc.id, type: "Task" });
+        }
+      });
+      categorySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.name.toLowerCase().includes(formattedSearchQuery)) {
+          results.push({ ...data, id: doc.id, type: "Category" });
+        }
+      });
 
       setSearchResults(results);
     } catch (error) {

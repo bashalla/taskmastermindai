@@ -122,7 +122,6 @@ const CreateTask = ({ navigation, route }) => {
       }
     };
 
-    // Fetching location
     fetchLocation();
   }, []);
 

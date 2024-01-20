@@ -17,6 +17,7 @@ import {
 } from "firebase/auth";
 import { useNavigation } from "@react-navigation/core";
 import { auth } from "../firebase";
+import { checkAndScheduleNotifications } from "../notifications.js";
 
 // Login screen component
 const LoginScreen = () => {
@@ -41,6 +42,8 @@ const LoginScreen = () => {
       .then((userCredentials) => {
         const user = userCredentials.user;
         console.log("Logged in with:", user.email);
+        // Call the function to check tasks and schedule notifications
+        checkAndScheduleNotifications(user.uid);
       })
       .catch((error) => {
         if (
