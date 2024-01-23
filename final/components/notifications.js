@@ -1,7 +1,12 @@
 import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
-import * as Permissions from "expo-permissions";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  updateDoc,
+} from "firebase/firestore";
 import { db, auth } from "../firebase"; // Ensure this path is correct
 
 // Handler for incoming notifications
@@ -28,7 +33,14 @@ export const registerForPushNotificationsAsync = async () => {
       alert("Failed to get push token for push notification!");
       return;
     }
-    token = (await Notifications.getExpoPushTokenAsync()).data;
+
+    // Get the Expo push token
+    token = (
+      await Notifications.getExpoPushTokenAsync({
+        experienceId: "@bashalla/unifinaltaskmanager",
+        projectId: "1e34c809-583a-48f3-86a6-671d63be523d", // Use the Expo project ID you obtained
+      })
+    ).data;
   } else {
     alert("Must use physical device for Push Notifications");
   }
@@ -47,56 +59,53 @@ export const registerForPushNotificationsAsync = async () => {
 
 // Function to schedule a notification
 const scheduleNotification = async (task) => {
-  const deadline = new Date(task.deadline);
-  const dayBefore = new Date(deadline);
-  dayBefore.setDate(deadline.getDate() - 1);
+  // Create a new date object for the next day at 10:00 AM
+  let notificationTime = new Date();
+  notificationTime.setHours(10, 0, 0); // Set time to 10:00 AM
 
   await Notifications.scheduleNotificationAsync({
     content: {
       title: "Task Reminder",
-      body: `Don't forget to complete '${task.name}' by tomorrow!`,
+      body: `Don't forget to complete '${task.name}' by today to get points!`,
     },
-    trigger: dayBefore,
+    trigger: notificationTime,
   });
 };
 
-// Function to check tasks and schedule notifications
+// Function to check tasks due today and schedule notifications
+// Function to check tasks due today and schedule notifications
 export const checkTasksAndScheduleNotifications = async () => {
   try {
     const userId = auth.currentUser?.uid;
-
     if (!userId) {
       console.error("User ID is undefined. User might not be logged in.");
       return;
     }
 
+    // Query for tasks where notificationScheduled is not true
     const tasksQuery = query(
       collection(db, "tasks"),
       where("userId", "==", userId),
-      where("notificationScheduled", "==", false) // Select tasks without a scheduled notification
+      where("notificationScheduled", "!=", true)
     );
     const snapshot = await getDocs(tasksQuery);
 
+    const today = new Date();
+    const todayString = today.toISOString().split("T")[0];
+
     snapshot.forEach(async (doc) => {
       const task = doc.data();
-      const deadline = new Date(task.deadline);
-      const now = new Date();
+      const taskDeadlineDate = new Date(task.deadline);
+      const taskDeadlineString = taskDeadlineDate.toISOString().split("T")[0];
 
-      // Check if task is due tomorrow
-      if (
-        !task.isCompleted &&
-        deadline - now > 86400000 &&
-        deadline - now < 172800000
-      ) {
+      if (!task.isCompleted && taskDeadlineString === todayString) {
         await scheduleNotification(task);
-
-        // Update task to indicate notification has been scheduled
         await updateDoc(doc.ref, {
           notificationScheduled: true,
         });
       }
     });
   } catch (error) {
-    console.error("Error scheduling notifications:", error);
+    console.error("Error checking tasks and scheduling notifications:", error);
   }
 };
