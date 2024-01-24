@@ -18,6 +18,7 @@ import SuggestionsScreen from "./components/SuggestionsScreen";
 import SearchScreen from "./components/SearchScreen";
 import HelpScreen from "./components/HelpScreen";
 
+import Ionicons from "react-native-vector-icons/Ionicons";
 import { registerForPushNotificationsAsync } from "./components/notifications";
 
 const Stack = createNativeStackNavigator();
@@ -25,7 +26,33 @@ const Tab = createBottomTabNavigator();
 
 function MyTabs() {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+
+          switch (route.name) {
+            case "Dashboard":
+              iconName = focused ? "ios-home" : "ios-home-outline";
+              break;
+            case "Category":
+              iconName = focused ? "ios-list" : "ios-list-outline";
+              break;
+            case "Rewards":
+              iconName = focused ? "ios-trophy" : "ios-trophy-outline";
+              break;
+            case "Profile":
+              iconName = focused ? "ios-person" : "ios-person-outline";
+              break;
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: "tomato",
+        tabBarInactiveTintColor: "gray",
+      })}
+    >
       <Tab.Screen name="Dashboard" component={HomeScreen} />
       <Tab.Screen name="Category" component={CategoryScreen} />
       <Tab.Screen name="Rewards" component={RewardsScreen} />

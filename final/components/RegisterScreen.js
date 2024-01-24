@@ -17,6 +17,10 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useNavigation } from "@react-navigation/native";
 import { auth, db } from "../firebase";
 import { doc, setDoc } from "firebase/firestore";
+import {
+  widthPercentageToDP,
+  heightPercentageToDP,
+} from "react-native-responsive-screen";
 
 // Register screen component
 const RegisterScreen = () => {
@@ -221,60 +225,60 @@ const RegisterScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 50,
+    marginTop: heightPercentageToDP("2%"),
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
   scrollViewContainer: {
-    padding: 20,
+    padding: widthPercentageToDP("5%"),
     alignItems: "center",
     justifyContent: "center",
   },
   backButton: {
     alignSelf: "flex-start",
-    marginVertical: 20,
+    marginVertical: heightPercentageToDP("2%"),
   },
   backButtonText: {
     color: "#0782F9",
-    fontSize: 16,
+    fontSize: widthPercentageToDP("4%"),
   },
   inputContainer: {
-    width: "90%",
+    width: widthPercentageToDP("80%"),
   },
   input: {
     backgroundColor: "white",
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingHorizontal: widthPercentageToDP("4%"),
+    paddingVertical: heightPercentageToDP("2%"),
     borderRadius: 10,
-    marginVertical: 10,
-    fontSize: 18,
+    marginVertical: heightPercentageToDP("1%"),
+    fontSize: widthPercentageToDP("4%"),
     width: "100%",
   },
   button: {
     backgroundColor: "#0782F9",
-    padding: 15,
+    padding: heightPercentageToDP("2.5%"),
     borderRadius: 10,
     alignItems: "center",
-    marginTop: 20,
+    marginTop: heightPercentageToDP("2%"),
     width: "100%",
   },
   buttonText: {
     color: "white",
-    fontSize: 18,
+    fontSize: widthPercentageToDP("4%"),
     fontWeight: "700",
   },
   genderContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginVertical: 10,
+    marginVertical: heightPercentageToDP("1%"),
   },
   genderButton: {
-    padding: 10,
+    padding: widthPercentageToDP("3%"),
     borderRadius: 5,
-    marginHorizontal: 10,
+    marginHorizontal: widthPercentageToDP("2%"),
   },
   genderText: {
-    fontSize: 18,
+    fontSize: widthPercentageToDP("4%"),
   },
   genderButtonSelected: {
     backgroundColor: "#0782F9",
@@ -285,27 +289,27 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: "white",
-    padding: 20,
+    padding: widthPercentageToDP("5%"),
     alignItems: "center",
   },
   picker: {
     width: "100%",
-    height: 150,
+    height: heightPercentageToDP("25%"),
   },
   modalButton: {
     backgroundColor: "#0782F9",
-    marginTop: 10,
-    padding: 10,
+    marginTop: heightPercentageToDP("2%"),
+    padding: widthPercentageToDP("3%"),
     borderRadius: 5,
     width: "100%",
     alignItems: "center",
   },
   modalButtonText: {
     color: "white",
-    fontSize: 16,
+    fontSize: widthPercentageToDP("4%"),
   },
   inputText: {
-    fontSize: 16,
+    fontSize: widthPercentageToDP("3.5%"),
   },
 });
 

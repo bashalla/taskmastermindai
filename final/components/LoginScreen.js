@@ -17,6 +17,10 @@ import {
 } from "firebase/auth";
 import { useNavigation } from "@react-navigation/core";
 import { auth } from "../firebase";
+import {
+  widthPercentageToDP,
+  heightPercentageToDP,
+} from "react-native-responsive-screen"; // Import the responsive-screen functions
 
 // Login screen component
 const LoginScreen = () => {
@@ -125,7 +129,7 @@ const LoginScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 160,
+    marginTop: heightPercentageToDP("5%"), // Adjust the percentage as needed
     flex: 1,
   },
   keyboardAvoiding: {
@@ -133,38 +137,38 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: 40,
+    marginTop: heightPercentageToDP("5%"), // Adjust the percentage as needed
   },
   logo: {
-    width: 150,
-    height: 150,
+    width: widthPercentageToDP("50%"), // Adjust the percentage as needed
+    height: widthPercentageToDP("50%"), // Adjust the percentage as needed
     resizeMode: "contain",
   },
   inputContainer: {
-    width: "80%",
+    width: widthPercentageToDP("80%"), // Adjust the percentage as needed
     alignSelf: "center",
-    marginTop: 20,
+    marginTop: heightPercentageToDP("2%"), // Adjust the percentage as needed
   },
   input: {
     backgroundColor: "white",
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+    paddingHorizontal: widthPercentageToDP("4%"), // Adjust the percentage as needed
+    paddingVertical: heightPercentageToDP("2%"), // Adjust the percentage as needed
     borderRadius: 10,
-    marginTop: 10,
-    fontSize: 16,
+    marginTop: heightPercentageToDP("1%"), // Adjust the percentage as needed
+    fontSize: widthPercentageToDP("4%"), // Adjust the percentage as needed
   },
   buttonContainer: {
-    width: "60%",
+    width: widthPercentageToDP("60%"), // Adjust the percentage as needed
     alignSelf: "center",
-    marginTop: 40,
+    marginTop: heightPercentageToDP("4%"), // Adjust the percentage as needed
   },
   button: {
     backgroundColor: "#0782F9",
     width: "100%",
-    padding: 15,
+    padding: heightPercentageToDP("2.5%"), // Adjust the percentage as needed
     borderRadius: 10,
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: heightPercentageToDP("1%"), // Adjust the percentage as needed
   },
   buttonOutline: {
     backgroundColor: "white",
@@ -174,12 +178,12 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     fontWeight: "700",
-    fontSize: 16,
+    fontSize: widthPercentageToDP("4%"), // Adjust the percentage as needed
   },
   buttonOutlineText: {
     color: "#0782F9",
     fontWeight: "700",
-    fontSize: 16,
+    fontSize: widthPercentageToDP("4%"), // Adjust the percentage as needed
   },
 });
 
