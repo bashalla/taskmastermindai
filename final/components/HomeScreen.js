@@ -26,6 +26,10 @@ import { OPEN_WEATHER } from "@env";
 import CategoryScreen from "./CategoryScreen";
 
 import { getPredictiveSuggestions } from "./predictionAlgorithm.js";
+import {
+  registerForPushNotificationsAsync,
+  checkTasksAndScheduleNotifications,
+} from "./notifications.js";
 
 // This component will be used to display the user's tasks due today
 function HomeScreen({ navigation }) {
@@ -48,21 +52,58 @@ function HomeScreen({ navigation }) {
   };
 
   useEffect(() => {
-    fetchCategories();
-  }, []);
+    const initialize = async () => {
+      try {
+        await registerForPushNotificationsAsync(); // Register for push notifications
+        await checkTasksAndScheduleNotifications(); // Check tasks and schedule notifications
+
+        // Fetch categories, user info, and tasks due today
+        fetchCategories();
+        fetchUserInfo();
+        fetchTasksDueToday();
+      } catch (error) {
+        console.error("Error during initialization:", error);
+      }
+    };
+
+    initialize();
+
+    const unsubscribeFocusListener = navigation.addListener("focus", () => {
+      // Perform actions when the screen is focused
+      fetchCategories();
+      fetchUserInfo();
+      fetchTasksDueToday();
+    });
+
+    return unsubscribeFocusListener;
+  }, [navigation]);
 
   // Custom header component
   const CustomHeader = ({ onSignOut }) => {
     return (
       <View style={styles.customHeader}>
-        <TouchableOpacity onPress={onSignOut} style={styles.signOutButton}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("SearchScreen")}
+          style={styles.headerIcon}
+        >
+          <Icon name="search" size={30} color="#0782F9" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("HelpScreen")}
+          style={styles.headerIcon}
+        >
+          <Icon name="help-outline" size={30} color="#0782F9" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={onSignOut}
+          style={[styles.headerIcon, styles.signOutButton]}
+        >
           <Icon name="exit-to-app" size={40} color="#0782F9" />
           <Text style={styles.invisibleText}>Sign Out</Text>
         </TouchableOpacity>
       </View>
     );
   };
-
   // Fetch user info from Firestore
   const fetchUserInfo = async () => {
     try {
@@ -485,6 +526,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 10,
     paddingTop: 20,
+  },
+  headerIcon: {
+    marginLeft: 15, // Add space between icons
   },
   signOutButton: {
     marginRight: 15,

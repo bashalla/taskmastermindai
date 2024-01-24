@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -6,29 +6,26 @@ import LoginScreen from "./components/LoginScreen";
 import RegisterScreen from "./components/RegisterScreen";
 import HomeScreen from "./components/HomeScreen";
 import CategoryScreen from "./components/CategoryScreen";
-import RewardsScreen from "./components/RewardsScreen"; // Assuming you have this component
+import RewardsScreen from "./components/RewardsScreen";
 import ProfileScreen from "./components/ProfileScreen";
-import TaskScreen from "./components/TaskScreen"; // Import your TaskCreationScreen component
-import TaskCreationScreen from "./components/CreateTask"; // Import your TaskCreationScreen component
+import TaskScreen from "./components/TaskScreen";
 import CreateTask from "./components/CreateTask";
 import TaskDetailScreen from "./components/TaskDetailScreen";
 import EditCategoryScreen from "./components/EditCategoryScreen";
 import CompletedTaskScreen from "./components/CompletedTaskScreen";
 import TaskOrCategoryScreen from "./components/TaskOrCategoryScreen";
 import SuggestionsScreen from "./components/SuggestionsScreen";
+import SearchScreen from "./components/SearchScreen";
+import HelpScreen from "./components/HelpScreen";
 
-// Create the Stack Navigator
+import { registerForPushNotificationsAsync } from "./components/notifications";
+
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Define the Tab Navigator
 function MyTabs() {
   return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false, // This will hide the header for all screens in the tab navigator
-      }}
-    >
+    <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name="Dashboard" component={HomeScreen} />
       <Tab.Screen name="Category" component={CategoryScreen} />
       <Tab.Screen name="Rewards" component={RewardsScreen} />
@@ -37,20 +34,23 @@ function MyTabs() {
   );
 }
 
-// Main App component with Stack Navigator
 export default function App() {
+  useEffect(() => {
+    registerForPushNotificationsAsync();
+  }, []);
+
   return (
     <NavigationContainer>
       <Stack.Navigator>
         <Stack.Screen
-          options={{ headerShown: false }}
           name="Login"
           component={LoginScreen}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
-          options={{ headerShown: false }}
           name="Register"
           component={RegisterScreen}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Home"
@@ -95,6 +95,16 @@ export default function App() {
         <Stack.Screen
           name="SuggestionsScreen"
           component={SuggestionsScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="SearchScreen"
+          component={SearchScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="HelpScreen"
+          component={HelpScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

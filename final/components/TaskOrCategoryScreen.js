@@ -8,6 +8,7 @@ import {
   FlatList,
   Alert,
   SafeAreaView,
+  RefreshControl,
 } from "react-native";
 import { db } from "../firebase";
 import { collection, getDocs, addDoc, query, where } from "firebase/firestore";
@@ -18,31 +19,39 @@ function TaskOrCategoryScreen({ navigation }) {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newLabelName, setNewLabelName] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
+  const [refreshing, setRefreshing] = useState(false); // State for tracking refresh status
   const colors = ["#ff6347", "#4682b4", "#32cd32", "#ff69b4", "#ffa500"];
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const user = auth.currentUser;
-        if (user) {
-          const categoriesRef = collection(db, "categories");
-          const q = query(categoriesRef, where("userId", "==", user.uid));
-          const querySnapshot = await getDocs(q);
 
-          const fetchedCategories = querySnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
+  const fetchCategories = async () => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const categoriesRef = collection(db, "categories");
+        const q = query(categoriesRef, where("userId", "==", user.uid));
+        const querySnapshot = await getDocs(q);
 
-          setCategories(fetchedCategories);
-        }
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-        Alert.alert("Error", "Failed to load categories.");
+        const fetchedCategories = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setCategories(fetchedCategories);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      Alert.alert("Error", "Failed to load categories.");
+    }
+    setRefreshing(false); // Set refreshing to false when fetch is complete
+  };
 
+  useEffect(() => {
     fetchCategories();
   }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchCategories(); // Re-fetch categories
+  };
 
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim() || !newLabelName.trim() || !selectedColor) {
@@ -122,6 +131,9 @@ function TaskOrCategoryScreen({ navigation }) {
             </View>
           )}
           style={styles.list}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         />
 
         <Text style={styles.subtitle}>Or Create a New Category</Text>

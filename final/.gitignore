@@ -140,3 +140,5 @@ dist
 
 #app.json
 app.json
+
+eas.json
