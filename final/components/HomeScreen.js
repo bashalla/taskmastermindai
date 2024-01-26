@@ -255,9 +255,8 @@ function HomeScreen({ navigation }) {
       case "squalls":
       case "tornado":
         return "visibility";
-      // ... include any other conditions
       default:
-        return "wb-cloudy"; // Default icon for unknown conditions
+        return "wb-cloudy";
     }
   };
 
