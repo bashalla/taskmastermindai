@@ -40,6 +40,7 @@ function HomeScreen({ navigation }) {
   const [completedTasks, setCompletedTasks] = useState({});
   const [suggestions, setSuggestions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isNight, setIsNight] = useState(false);
 
   const fetchCategories = async () => {
     const categoriesRef = collection(db, "categories");
@@ -52,6 +53,11 @@ function HomeScreen({ navigation }) {
   };
 
   useEffect(() => {
+    const updateDayOrNight = () => {
+      const currentHour = new Date().getHours();
+      setIsNight(currentHour < 6 || currentHour >= 18); // Example: Night is considered from 6 PM to 6 AM
+    };
+
     const initialize = async () => {
       try {
         await registerForPushNotificationsAsync(); // Register for push notifications
@@ -66,16 +72,24 @@ function HomeScreen({ navigation }) {
       }
     };
 
+    updateDayOrNight(); // Determine if it's currently day or night
     initialize();
+
+    // Optionally, set an interval to update day/night status every hour
+    const intervalId = setInterval(updateDayOrNight, 3600000); // Update every hour
 
     const unsubscribeFocusListener = navigation.addListener("focus", () => {
       // Perform actions when the screen is focused
+      updateDayOrNight(); // Update day/night status on screen focus
       fetchCategories();
       fetchUserInfo();
       fetchTasksDueToday();
     });
 
-    return unsubscribeFocusListener;
+    return () => {
+      clearInterval(intervalId); // Clear interval on component unmount
+      unsubscribeFocusListener(); // Remove focus listener
+    };
   }, [navigation]);
 
   // Custom header component
@@ -216,18 +230,17 @@ function HomeScreen({ navigation }) {
   const getWeatherIconName = (description) => {
     switch (description.toLowerCase()) {
       case "clear sky":
-        return "wb-sunny";
+        return isNight ? "nightlight-round" : "wb-sunny";
       case "scattered clouds":
       case "broken clouds":
       case "overcast clouds":
       case "few clouds":
-        return "wb-cloudy";
+        return isNight ? "nights-stay" : "wb-cloudy";
       case "shower rain":
       case "light intensity shower rain":
-      case "shower rain":
+      case "rain":
       case "heavy intensity shower rain":
       case "ragged shower rain":
-      case "rain":
       case "light rain":
       case "moderate rain":
       case "heavy intensity rain":

@@ -268,10 +268,13 @@ const CreateTask = ({ navigation, route }) => {
           multiline
           value={description}
           onChangeText={setDescription}
-          onSubmitEditing={() => {
-            /* Handle the submit action, e.g., close keyboard */
+          onKeyPress={({ nativeEvent }) => {
+            if (nativeEvent.key === "Enter") {
+              // Add a new line on pressing Enter
+              setDescription(description + "\n");
+            }
           }}
-          blurOnSubmit={true} // this will close the keyboard when the user presses enter
+          blurOnSubmit={false} // Set this to false to avoid closing the keyboard on Enter
         />
       </View>
 
