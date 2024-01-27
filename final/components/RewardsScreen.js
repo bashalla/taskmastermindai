@@ -66,24 +66,19 @@ function RewardsScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [completedTasks, setCompletedTasks] = useState([]);
   const [currentStreak, setCurrentStreak] = useState(0);
+  const [successfulStreaks, setSuccessfulStreaks] = useState([]);
+
   const maxStreak = 5;
 
   const fetchUserData = async () => {
     setIsRefreshing(true);
     try {
-      // Fetch user data
       const userRef = doc(db, "users", auth.currentUser.uid);
       const userDoc = await getDoc(userRef);
-
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        const userPoints = userData.points || 0;
-        setUserPoints(userPoints); // Set the actual current points
-
-        // Check for the 5-day streak and award points if successful
+        setUserPoints(userData.points || 0);
         await checkFiveDayStreak(userData.streakCount);
-
-        // Fetch completed tasks
         await fetchCompletedTasks();
       }
     } catch (error) {
@@ -127,6 +122,33 @@ function RewardsScreen() {
     );
     return type ? type.name : "Unknown";
   };
+
+  const fetchSuccessfulStreaks = async () => {
+    try {
+      const streaksRef = collection(db, "streaks");
+      const q = query(
+        streaksRef,
+        where("userId", "==", auth.currentUser.uid),
+        where("streakEnded", "==", true),
+        where("pointsGiven", "==", true)
+      );
+
+      const querySnapshot = await getDocs(q);
+      const streaks = [];
+      querySnapshot.forEach((doc) => {
+        streaks.push(doc.data());
+      });
+
+      setSuccessfulStreaks(streaks);
+    } catch (error) {
+      console.error("Error fetching streak data:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserData();
+    fetchSuccessfulStreaks(); // Fetch successful streaks on component mount
+  }, []);
 
   const getEarnedBadge = (points) => {
     return badges
@@ -232,7 +254,6 @@ function RewardsScreen() {
       }
     >
       <Text style={styles.headerText}>Rewards Dashboard</Text>
-
       <Text style={styles.subHeaderText}>
         Your progress and achievements, {userName}
       </Text>
@@ -254,10 +275,9 @@ function RewardsScreen() {
       )}
 
       <Text style={styles.challengeDescription}>
-        "5 Days Challenge - Close a Task 5 Days in a Row to Get 100 Points!"
+        5 Days Challenge - Close a Task 5 Days in a Row to Get 100 Points!
       </Text>
 
-      {/* Display the current streak */}
       {currentStreak > 0 && (
         <Text style={styles.streakText}>
           Current Streak: {currentStreak} Days
@@ -278,16 +298,28 @@ function RewardsScreen() {
         ))}
       </View>
 
-      {/* Timeline for Completed Tasks */}
-      <View style={styles.timelineContainer}>
-        {completedTasks.map((date, index) => (
-          <View key={index} style={styles.dateItem}>
-            <Text style={styles.dateText}>{date}</Text>
-          </View>
-        ))}
-      </View>
-
-      {/* Additional UI elements can be added here */}
+      {successfulStreaks.length > 0 ? (
+        <View style={styles.successfulStreaksContainer}>
+          {successfulStreaks.map((streak, index) => (
+            <View key={index} style={styles.streakItem}>
+              <Text style={styles.streakText}>
+                SuccesfulStreak:{" "}
+                {new Date(streak.startDate).toLocaleDateString()} -{" "}
+                {new Date(streak.endDate).toLocaleDateString()} | 100 Points
+                Earned
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : (
+        <View style={styles.timelineContainer}>
+          {completedTasks.map((date, index) => (
+            <View key={index} style={styles.dateItem}>
+              <Text style={styles.dateText}>{date}</Text>
+            </View>
+          ))}
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -394,6 +426,24 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 16,
     fontWeight: "bold",
+  },
+  successfulStreaksContainer: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: "#e6e6e6", // Light grey background
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#ccc", // Light grey border
+  },
+  streakItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd", // Light grey border for each item
+  },
+  streakText: {
+    fontSize: 16,
+    color: "#333", // Dark text color
+    textAlign: "center", // Center-align text
   },
 });
 
