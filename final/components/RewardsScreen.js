@@ -8,7 +8,16 @@ import {
   RefreshControl,
 } from "react-native";
 import { auth, db } from "../firebase";
-import { doc, getDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+} from "firebase/firestore";
 import { useFocusEffect } from "@react-navigation/native";
 
 const userTypes = [
@@ -55,37 +64,63 @@ function RewardsScreen() {
   const [userType, setUserType] = useState("");
   const [earnedBadge, setEarnedBadge] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [completedTasks, setCompletedTasks] = useState([]);
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const maxStreak = 5;
 
-  // Fetch user data from Firestore
   const fetchUserData = async () => {
     setIsRefreshing(true);
     try {
+      // Fetch user data
       const userRef = doc(db, "users", auth.currentUser.uid);
-      const docSnap = await getDoc(userRef);
+      const userDoc = await getDoc(userRef);
 
-      // Update the state variables
-      if (docSnap.exists()) {
-        const userData = docSnap.data();
-        setUserPoints(userData.points);
-        setUserName(userData.firstName);
-        setUserType(getUserType(userData.points));
-        setEarnedBadge(getEarnedBadge(userData.points));
-      } else {
-        console.log("No such document!");
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const userPoints = userData.points || 0;
+        setUserPoints(userPoints); // Set the actual current points
+
+        // Check for the 5-day streak and award points if successful
+        await checkFiveDayStreak(userData.streakCount);
+
+        // Fetch completed tasks
+        await fetchCompletedTasks();
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
     } finally {
-      setIsRefreshing(false); // End the refresh animation
+      setIsRefreshing(false);
     }
   };
 
-  // Fetch user data when the screen loads
+  const fetchCompletedTasks = async () => {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 4); // Get date from 5 days ago
+    startDate.setHours(0, 0, 0, 0); // Set to start of the day
+
+    const tasksRef = collection(db, "tasks");
+    const q = query(
+      tasksRef,
+      where("userId", "==", auth.currentUser.uid),
+      where("completedDate", ">=", startDate.toISOString()),
+      where("isCompleted", "==", true),
+      where("pointsAwarded", "==", true)
+    );
+
+    const querySnapshot = await getDocs(q);
+    const uniqueDates = new Set();
+    querySnapshot.forEach((doc) => {
+      let taskDate = new Date(doc.data().completedDate).toLocaleDateString();
+      uniqueDates.add(taskDate);
+    });
+
+    setCompletedTasks(Array.from(uniqueDates));
+  };
+
   useEffect(() => {
     fetchUserData();
   }, []);
 
-  // Fetch user data when the screen is focused
   const getUserType = (points) => {
     const type = userTypes.find(
       (type) => points >= type.minPoints && points <= type.maxPoints
@@ -93,12 +128,100 @@ function RewardsScreen() {
     return type ? type.name : "Unknown";
   };
 
-  // Getting the earned badge based on the users points
   const getEarnedBadge = (points) => {
     return badges
       .slice()
       .reverse()
       .find((badge) => points >= badge.points);
+  };
+
+  const checkFiveDayStreak = async () => {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 4);
+    startDate.setHours(0, 0, 0, 0);
+
+    const tasksRef = collection(db, "tasks");
+    const q = query(
+      tasksRef,
+      where("userId", "==", auth.currentUser.uid),
+      where("completedDate", ">=", startDate.toISOString()),
+      where("isCompleted", "==", true)
+    );
+    const querySnapshot = await getDocs(q);
+
+    let completedDates = new Set();
+    querySnapshot.forEach((doc) => {
+      let taskDate = new Date(doc.data().completedDate);
+      completedDates.add(taskDate.toISOString().split("T")[0]);
+    });
+
+    let streakCount = 0; // Define streakCount here
+    for (let i = 0; i < maxStreak; i++) {
+      const checkDate = new Date();
+      checkDate.setDate(startDate.getDate() + i);
+      if (completedDates.has(checkDate.toISOString().split("T")[0])) {
+        streakCount++;
+      }
+    }
+
+    setCurrentStreak(streakCount);
+
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    const userDoc = await getDoc(userRef);
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+
+      if (streakCount >= maxStreak && !userData.streakAwarded) {
+        // Award 100 points and record the streak
+        const newPoints = userData.points + 100;
+        await updateDoc(userRef, {
+          points: newPoints,
+          streakAwarded: true,
+          pointsAwarded: true, // Set pointsAwarded to true
+        });
+
+        // Record the streak in a new collection
+        await addDoc(collection(db, "streaks"), {
+          userId: auth.currentUser.uid,
+          startDate: startDate.toISOString(),
+          endDate: new Date().toISOString(),
+          streakEnded: true, // Set streakEnded to true
+          pointsGiven: true, // Set pointsGiven to true
+        });
+
+        // Reset the streak count to zero
+        setCurrentStreak(0);
+
+        // Update the user's points
+        setUserPoints(newPoints);
+      } else if (streakCount < maxStreak && userData.streakAwarded) {
+        // Reset streakAwarded status after streak ends
+        await updateDoc(userRef, {
+          streakAwarded: false,
+          pointsAwarded: false, // Reset pointsAwarded to false
+        });
+      } else if (streakCount > maxStreak) {
+        // Handle the case where streak was unsuccessful and longer than 5 days
+        // Reset streakAwarded status
+        await updateDoc(userRef, {
+          streakAwarded: false,
+          pointsAwarded: false, // Reset pointsAwarded to false
+        });
+
+        // Record the streak in a new collection with appropriate flags
+        await addDoc(collection(db, "streaks"), {
+          userId: auth.currentUser.uid,
+          startDate: startDate.toISOString(),
+          endDate: new Date().toISOString(),
+          streakEnded: true, // Set streakEnded to true
+          pointsGiven: false, // Set pointsGiven to false
+        });
+
+        // Reset the streak count to zero
+        setCurrentStreak(0);
+      }
+    }
   };
 
   return (
@@ -113,10 +236,12 @@ function RewardsScreen() {
       <Text style={styles.subHeaderText}>
         Your progress and achievements, {userName}
       </Text>
+
       <View style={styles.pointsContainer}>
         <Text style={styles.pointsText}>Points: {userPoints}</Text>
         <Text style={styles.userTypeText}>User Type: {userType}</Text>
       </View>
+
       <Text style={styles.motivationalMessage}>
         Finish more tasks on time to earn more points!
       </Text>
@@ -127,6 +252,40 @@ function RewardsScreen() {
           <Image source={earnedBadge.image} style={styles.badgeImage} />
         </View>
       )}
+
+      <Text style={styles.challengeDescription}>
+        "5 Days Challenge - Close a Task 5 Days in a Row to Get 100 Points!"
+      </Text>
+
+      {/* Display the current streak */}
+      {currentStreak > 0 && (
+        <Text style={styles.streakText}>
+          Current Streak: {currentStreak} Days
+        </Text>
+      )}
+
+      <View style={styles.streakBarContainer}>
+        {Array.from({ length: maxStreak }).map((_, index) => (
+          <View
+            key={index}
+            style={[
+              styles.streakDay,
+              index < currentStreak
+                ? styles.streakDayCompleted
+                : styles.streakDayIncomplete,
+            ]}
+          />
+        ))}
+      </View>
+
+      {/* Timeline for Completed Tasks */}
+      <View style={styles.timelineContainer}>
+        {completedTasks.map((date, index) => (
+          <View key={index} style={styles.dateItem}>
+            <Text style={styles.dateText}>{date}</Text>
+          </View>
+        ))}
+      </View>
 
       {/* Additional UI elements can be added here */}
     </ScrollView>
@@ -188,6 +347,53 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     resizeMode: "contain",
+  },
+
+  streakBarContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  streakDay: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    marginHorizontal: 5,
+  },
+  streakDayCompleted: {
+    backgroundColor: "#4CAF50", // Green for completed days
+  },
+  streakDayIncomplete: {
+    backgroundColor: "#ddd", // Grey for incomplete days
+  },
+  challengeDescription: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#FFA500", // A vibrant orange color
+    textAlign: "center",
+    marginTop: 20,
+    marginBottom: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderWidth: 2,
+    borderColor: "#FFA500",
+    borderRadius: 10,
+    backgroundColor: "#FFF3E0", // Light orange background for emphasis
+  },
+  timelineContainer: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: "#f0f0f0",
+  },
+  dateItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+  },
+  dateText: {
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 

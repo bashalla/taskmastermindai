@@ -9,6 +9,7 @@ import {
   FlatList,
   View,
   Alert,
+  Vibration,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons"; // Import Material Icons or any other icon library
 import { auth, db } from "../firebase";
@@ -63,6 +64,10 @@ const CategoryScreen = ({ navigation }) => {
       alert("Please fill in all fields.");
       return;
     }
+
+    const categoryCreateHaptic = [200, 100, 200, 100, 200, 100, 500]; // "drrrrr dr dr"
+
+    Vibration.vibrate(categoryCreateHaptic); // 100 milliseconds
 
     // Add a new document with a generated id.
     await addDoc(collection(db, "categories"), {

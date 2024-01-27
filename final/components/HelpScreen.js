@@ -57,6 +57,16 @@ const HelpScreen = ({ navigation }) => {
         </Text>
       </View>
 
+      <View style={styles.section}>
+        <Icon name="today" size={30} color="#0782F9" />
+        <Text style={styles.sectionTitle}>5 Days Challenge</Text>
+        <Text style={styles.sectionContent}>
+          In the 5 Days Challenge, you can earn an extra 100 points by
+          successfully closing a task for five consecutive days, making your
+          task management experience even more rewarding!
+        </Text>
+      </View>
+
       {/* Add more sections as needed */}
     </ScrollView>
   );
