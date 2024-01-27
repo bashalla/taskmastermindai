@@ -570,11 +570,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff", // or any other background color you prefer
+    backgroundColor: "#fff",
   },
   lampButton: {
     position: "absolute",
-    left: 20, // Position the lamp icon on the left side
+    left: 20,
     top: 20,
     marginTop: 60,
   },
