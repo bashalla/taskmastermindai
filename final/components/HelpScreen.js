@@ -83,12 +83,13 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: hp("1%"), // Use hp for vertical margin
+    marginBottom: hp("2%"), // Use hp for vertical margin
   },
   headerText: {
     fontSize: hp("2.5%"), // Use hp for font size
     fontWeight: "bold",
     marginLeft: wp("1%"), // Use wp for horizontal margin
+    marginTop: hp("2%"), // Use hp for vertical margin
   },
   section: {
     marginBottom: hp("2%"), // Use hp for vertical margin
