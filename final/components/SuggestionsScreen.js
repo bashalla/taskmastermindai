@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,24 +6,45 @@ import {
   ScrollView,
   Button,
   TouchableOpacity,
+  Alert,
+  Platform,
+  ToastAndroid,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import * as Clipboard from "expo-clipboard"; // Use Expo's Clipboard API
+import * as Clipboard from "expo-clipboard";
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
 
 const SuggestionsPage = ({ route, navigation }) => {
   const { suggestions } = route.params;
 
-  // Define a set of colors for the cards
-  const cardColors = ["#B0C4DE", "#778899", "#708090", "#A9A9A9", "#2F4F4F"];
+  const cardColors = ["#B19470", "#43766C", "#76453B", "#A9A9A9", "#2F4F4F"];
 
-  // Function to render each item of the suggestions in a separate card
+  const [copiedText, setCopiedText] = useState("");
+
+  const copyToClipboard = async (text) => {
+    await Clipboard.setStringAsync(text);
+    setCopiedText(text);
+
+    // Show a toast on Android or an alert on iOS
+    if (Platform.OS === "android") {
+      ToastAndroid.show("Copied to clipboard", ToastAndroid.SHORT);
+    } else {
+      Alert.alert("Copied", "Text copied to clipboard", [
+        { text: "OK", onPress: () => {} },
+      ]);
+    }
+  };
+
   const renderSuggestionCards = () => {
     let cardIndex = 0;
     return suggestions.flatMap((suggestion, index) =>
       suggestion
-        .split(".") // Split by dot
-        .map((item) => item.trim()) // Trim whitespace
-        .filter((item) => item && !item.match(/^\d+\.?$/)) // Filter out standalone numbers, with or without a trailing dot
+        .split(".")
+        .map((item) => item.trim())
+        .filter((item) => item && !item.match(/^\d+\.?$/))
         .map((cleanItem, idx) => {
           const cardStyle = {
             ...styles.suggestionCard,
@@ -34,10 +55,7 @@ const SuggestionsPage = ({ route, navigation }) => {
             <TouchableOpacity
               key={`${index}-${idx}`}
               style={cardStyle}
-              onPress={async () => {
-                await Clipboard.setStringAsync(cleanItem);
-                // Optionally, you can show a confirmation message here
-              }}
+              onPress={() => copyToClipboard(cleanItem)}
             >
               <Text style={styles.suggestionText}>{cleanItem}</Text>
             </TouchableOpacity>
@@ -51,65 +69,58 @@ const SuggestionsPage = ({ route, navigation }) => {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.header}>Personalized Suggestions</Text>
-      {renderSuggestionCards()}
-      <View style={styles.buttonContainer}>
-        <Button
-          title="Back"
-          onPress={() => navigation.goBack()}
-          color="#007AFF"
-        />
-      </View>
-      {/* "+" Icon for adding new tasks or categories */}
+    <View style={styles.container}>
+      <ScrollView style={styles.cardsContainer}>
+        <Text style={styles.header}>Personalized Suggestions</Text>
+        {renderSuggestionCards()}
+      </ScrollView>
       <TouchableOpacity
         style={styles.addButton}
         onPress={navigateToTaskCreation}
       >
-        <Icon name="add-circle-outline" size={50} color="#0782F9" />
+        <Icon name="add-circle-outline" size={wp("10%")} color="#0782F9" />
       </TouchableOpacity>
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 70,
-    paddingTop: 40,
-    paddingHorizontal: 15,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#F8FAE5",
   },
   header: {
-    fontSize: 26,
+    fontSize: wp("6%"),
     fontWeight: "bold",
-    marginBottom: 20,
+    marginBottom: hp("2%"),
     textAlign: "center",
     color: "#1A1A1A",
-    paddingTop: 20,
+    paddingTop: hp("2%"),
+  },
+  cardsContainer: {
+    flex: 1,
+    paddingTop: hp("5%"),
+    paddingHorizontal: wp("5%"),
   },
   suggestionCard: {
-    padding: 20,
-    borderRadius: 15,
-    marginBottom: 15,
+    padding: wp("4%"),
+    borderRadius: wp("3%"),
+    marginBottom: hp("2%"),
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: hp("1%") },
     shadowOpacity: 0.2,
-    shadowRadius: 5,
+    shadowRadius: wp("2%"),
     elevation: 5,
   },
   suggestionText: {
-    fontSize: 18,
+    fontSize: wp("4%"),
     color: "#333",
-    marginBottom: 5,
-  },
-  buttonContainer: {
-    margin: 20,
+    marginBottom: hp("1%"),
   },
   addButton: {
     position: "absolute",
-    right: 20,
-    bottom: 20,
+    right: wp("5%"),
+    bottom: hp("12%"),
   },
 });
 

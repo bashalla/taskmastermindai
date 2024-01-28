@@ -134,12 +134,22 @@ export default function App() {
         <Stack.Screen
           name="SuggestionsScreen"
           component={SuggestionsScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerStyle: {
+              backgroundColor: "#43766C", // Set your desired color here
+            },
+            headerTintColor: "#fff",
+          }}
         />
         <Stack.Screen
           name="SearchScreen"
           component={SearchScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerStyle: {
+              backgroundColor: "#43766C", // Set your desired color here
+            },
+            headerTintColor: "#fff",
+          }}
         />
         <Stack.Screen
           name="HelpScreen"

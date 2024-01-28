@@ -80,12 +80,6 @@ const SearchScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Icon name="arrow-back" size={30} color="#000" />
-        </TouchableOpacity>
         <Text style={styles.headerText}>Search</Text>
       </View>
       <TextInput
@@ -120,7 +114,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#FFF",
+    backgroundColor: "#F8FAE5",
   },
   header: {
     flexDirection: "row",
@@ -135,7 +129,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     marginLeft: 10,
-    marginTop: 50,
+    marginTop: 20,
   },
   searchInput: {
     height: 70,
@@ -150,7 +144,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
-    backgroundColor: "#f9f9f9",
+    backgroundColor: "#B19470",
     borderRadius: 10,
     marginTop: 10,
   },
