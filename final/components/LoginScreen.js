@@ -10,6 +10,7 @@ import {
   Image,
   ScrollView,
   Dimensions,
+  StatusBar,
 } from "react-native";
 import {
   createUserWithEmailAndPassword,
@@ -28,6 +29,7 @@ import {
   MaterialCommunityIcons,
   FontAwesome5,
 } from "@expo/vector-icons"; // Import Material Icons or any other icon library
+import * as Font from "expo-font";
 
 const screenWidth = Dimensions.get("window").width;
 const isTablet = screenWidth > 768; // Common breakpoint for tablet devices
@@ -39,6 +41,17 @@ const LoginScreen = () => {
   const navigation = useNavigation();
 
   useEffect(() => {
+    const loadFonts = async () => {
+      try {
+        await Font.loadAsync({
+          MaterialCommunityIcons: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.ttf"),
+        });
+      } catch (error) {
+        console.error("Error loading fonts", error);
+      }
+    };
+
+    loadFonts();
     // Set up the authentication state change listener
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
@@ -103,9 +116,7 @@ const LoginScreen = () => {
       <KeyboardAvoidingView style={styles.keyboardAvoiding} behavior="padding">
         <View style={styles.logoContainer}>
           <Image source={require("../assets/logo.png")} style={styles.logo} />
-          <Text style={styles.welcomeText}>
-            Welcome Back to TaskMastermind Ai
-          </Text>
+          <Text style={styles.welcomeText}>TaskMastermind Ai</Text>
         </View>
 
         <View style={styles.inputContainer}>
@@ -140,7 +151,7 @@ const LoginScreen = () => {
           >
             <Text style={styles.buttonOutlineText}>Reset Password</Text>
           </TouchableOpacity>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             onPress={handleGoogleSignIn}
             style={styles.googleButton}
           >
@@ -151,7 +162,7 @@ const LoginScreen = () => {
               style={styles.googleIcon}
             />
             <Text style={styles.googleButtonText}>Sign in with Google</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </KeyboardAvoidingView>
     </ScrollView>
@@ -161,14 +172,14 @@ const LoginScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f0f2f5",
+    backgroundColor: "#F8FAE5",
   },
   keyboardAvoiding: {
     flex: 1,
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: isTablet ? hp("5%") : hp("10%"),
+    marginTop: isTablet ? hp("5%") : hp("7"),
   },
   logo: {
     width: isTablet ? wp("20%") : wp("30%"),
@@ -177,7 +188,7 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
   welcomeText: {
-    fontSize: isTablet ? wp("4%") : wp("5%"),
+    fontSize: isTablet ? wp("6%") : wp("7%"),
     fontWeight: "bold",
     marginVertical: hp("2%"),
     fontFamily: Platform.OS === "ios" ? "Helvetica Neue" : "Roboto",
@@ -201,7 +212,7 @@ const styles = StyleSheet.create({
     marginTop: hp("4%"),
   },
   button: {
-    backgroundColor: "#0782F9",
+    backgroundColor: "#76453B",
     width: "100%",
     padding: isTablet ? hp("2%") : hp("2.5%"),
     borderRadius: 10,

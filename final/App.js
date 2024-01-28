@@ -18,6 +18,8 @@ import SuggestionsScreen from "./components/SuggestionsScreen";
 import SearchScreen from "./components/SearchScreen";
 import HelpScreen from "./components/HelpScreen";
 
+import { StatusBar } from "react-native";
+
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { registerForPushNotificationsAsync } from "./components/notifications";
 
@@ -49,8 +51,8 @@ function MyTabs() {
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: "tomato",
-        tabBarInactiveTintColor: "gray",
+        tabBarActiveTintColor: "#6B240C",
+        tabBarInactiveTintColor: "grey",
       })}
     >
       <Tab.Screen name="Dashboard" component={HomeScreen} />
@@ -72,12 +74,22 @@ export default function App() {
         <Stack.Screen
           name="Login"
           component={LoginScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerStyle: {
+              backgroundColor: "#43766C", // Set your desired color here
+            },
+            headerTintColor: "#fff",
+          }}
         />
         <Stack.Screen
           name="Register"
           component={RegisterScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerStyle: {
+              backgroundColor: "#43766C", // Set your desired color here
+            },
+            headerTintColor: "#fff",
+          }}
         />
         <Stack.Screen
           name="Home"

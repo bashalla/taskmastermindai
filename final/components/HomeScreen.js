@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   RefreshControl,
   ActivityIndicator,
+  Dimensions,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { auth, db } from "../firebase";
@@ -30,6 +31,14 @@ import {
   registerForPushNotificationsAsync,
   checkTasksAndScheduleNotifications,
 } from "./notifications.js";
+
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
+
+const screenWidth = Dimensions.get("window").width;
+const isTablet = screenWidth > 768;
 
 // This component will be used to display the user's tasks due today
 function HomeScreen({ navigation }) {
@@ -113,7 +122,7 @@ function HomeScreen({ navigation }) {
           style={[styles.headerIcon, styles.signOutButton]}
         >
           <Icon name="exit-to-app" size={40} color="#0782F9" />
-          <Text style={styles.invisibleText}>Sign Out</Text>
+          <Text style={styles.invisibleText}></Text>
         </TouchableOpacity>
       </View>
     );
@@ -467,104 +476,93 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#E8EAED",
-  },
-  noTasksContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 50,
-  },
-  noTasksText: {
-    fontSize: 20,
-    color: "#333",
+    paddingTop: Platform.OS === "android" ? 25 : 0, // Adjust for Android status bar
   },
   headerText: {
-    fontSize: 28,
+    fontSize: isTablet ? wp("6%") : wp("7%"),
     fontWeight: "bold",
+    fontFamily: Platform.OS === "ios" ? "Arial" : "Roboto",
     textAlign: "center",
-    padding: 20,
-    color: "#333",
-  },
-  invisibleText: {
-    height: 0,
-    width: 0,
-    opacity: 0,
+    padding: hp("2%"),
+    color: "#637E76", // Deep shade of blue
+    letterSpacing: 0.5,
+    marginBottom: hp("2%"), // Added spacing below the header text
   },
   dateText: {
-    marginBottom: 10,
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: isTablet ? wp("4%") : wp("5%"),
+    fontWeight: "600", // Semi-bold
     textAlign: "center",
-    color: "#555",
+    color: "#C69774", // Dark gray-blue
+    marginBottom: hp("1%"),
   },
   subHeaderText: {
-    fontSize: 22,
-    fontWeight: "bold",
+    fontSize: isTablet ? wp("4%") : wp("5%"),
+    fontWeight: "500", // Medium font weight
     textAlign: "center",
-    color: "#444",
-    paddingBottom: 10,
+    color: "#34495E", // Dark gray-blue
+    paddingBottom: hp("2%"),
+    borderBottomWidth: 1,
+    borderBottomColor: "#95A5A6", // Light gray underline for a subtle divider
+    marginHorizontal: wp("10%"), // Adding horizontal margins for better focus on text
+  },
+  customHeader: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    padding: hp("1%"),
+    paddingTop: hp("2%"),
+  },
+  headerIcon: {
+    marginLeft: wp("4%"),
+  },
+  signOutButton: {
+    marginTop: hp("1.2%"),
+    marginRight: wp("4%"),
   },
   taskItem: {
-    backgroundColor: "#FFFFFF",
-    padding: 20,
-    marginVertical: 8,
-    marginHorizontal: 16,
+    backgroundColor: "#AFC8AD",
+    padding: wp("4%"),
+    marginVertical: hp("1%"),
+    marginHorizontal: wp("4%"),
     borderRadius: 10,
     flexDirection: "row",
     alignItems: "center",
   },
   overdueTaskItem: {
     backgroundColor: "#FFE0E0",
-    padding: 20,
-    marginVertical: 8,
-    marginHorizontal: 16,
+    padding: wp("4%"),
+    marginVertical: hp("1%"),
+    marginHorizontal: wp("4%"),
     borderRadius: 10,
     flexDirection: "row",
     alignItems: "center",
   },
   taskText: {
-    fontSize: 18,
-    marginLeft: 10,
+    fontSize: isTablet ? wp("3%") : wp("4%"),
+    marginLeft: wp("2%"),
     flex: 1,
   },
   overdueText: {
-    fontSize: 16,
+    fontSize: isTablet ? wp("2.5%") : wp("3.5%"),
     fontWeight: "bold",
     color: "#D32F2F",
   },
-  customHeader: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    padding: 10,
-    paddingTop: 20,
-  },
-  headerIcon: {
-    marginLeft: 15, // Add space between icons
-  },
-  signOutButton: {
-    marginRight: 15,
-  },
   categoryCircle: {
-    width: 15,
-    height: 15,
-    borderRadius: 7.5,
-    marginRight: 10,
+    width: isTablet ? wp("2%") : wp("3%"),
+    height: isTablet ? wp("2%") : wp("3%"),
+    borderRadius: isTablet ? wp("1%") : wp("1.5%"),
+    marginRight: wp("2%"),
   },
   completeButton: {
-    padding: 8,
+    padding: wp("2%"),
     borderRadius: 5,
     justifyContent: "center",
     alignItems: "center",
   },
-  completeButtonText: {
-    color: "white",
-    fontWeight: "bold",
-  },
   addButton: {
     position: "absolute",
-    right: 20,
-    bottom: 20,
+    right: wp("5%"),
+    bottom: hp("5%"),
   },
   loadingContainer: {
     flex: 1,
@@ -574,14 +572,47 @@ const styles = StyleSheet.create({
   },
   lampButton: {
     position: "absolute",
-    left: 20,
-    top: 20,
-    marginTop: 60,
+    left: wp("5%"),
+    top: isTablet ? hp("5") : hp("10%"),
   },
   suggestionText: {
-    fontSize: 16,
+    fontSize: isTablet ? wp("3%") : wp("4%"),
     color: "#333",
-    padding: 10,
+    padding: wp("2%"),
+  },
+  noTasksContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 50,
+  },
+  noTasksText: {
+    fontSize: isTablet ? wp("3%") : wp("4%"),
+    color: "#333",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: wp("4%"),
+    borderRadius: 10,
+  },
+  picker: {
+    width: "100%",
+    height: hp("15%"),
+  },
+  modalButton: {
+    backgroundColor: "#0782F9",
+    padding: wp("4%"),
+    borderRadius: 10,
+    marginTop: hp("2%"),
+  },
+  modalButtonText: {
+    color: "white",
+    fontSize: isTablet ? wp("3%") : wp("4%"),
   },
 });
 

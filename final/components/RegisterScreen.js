@@ -94,12 +94,8 @@ const RegisterScreen = () => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Text style={styles.backButtonText}>Back</Text>
-        </TouchableOpacity>
+        {/* Registration Form Title */}
+        <Text style={styles.titleText}>Create Your Account</Text>
 
         <View style={styles.inputContainer}>
           <TextInput
@@ -228,23 +224,26 @@ const RegisterScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: heightPercentageToDP("5%"),
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#F8FAE5",
   },
   scrollViewContainer: {
     padding: widthPercentageToDP("8%"),
     alignItems: "center",
     justifyContent: "center",
   },
-  backButton: {
-    alignSelf: "flex-start",
-    marginVertical: heightPercentageToDP("2%"),
+  titleText: {
+    fontSize: widthPercentageToDP("5%"),
+    fontWeight: "bold",
+    marginBottom: heightPercentageToDP("2%"),
   },
-  backButtonText: {
-    color: "#0782F9",
-    fontSize: widthPercentageToDP("3.5%"), // Smaller font size
+  labelText: {
+    fontSize: widthPercentageToDP("3.5%"),
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: heightPercentageToDP("1%"),
   },
+
   inputContainer: {
     width: widthPercentageToDP(isTablet ? "50%" : "82%"), // Adjusted width for tablet
   },
@@ -258,7 +257,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   button: {
-    backgroundColor: "#0782F9",
+    backgroundColor: "#76453B", // A nice shade of green
     padding: heightPercentageToDP("2%"), // Smaller padding
     borderRadius: 10,
     alignItems: "center",
