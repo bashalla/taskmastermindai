@@ -10,6 +10,10 @@ import {
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db, auth } from "../firebase";
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
 
 const SearchScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -113,46 +117,45 @@ const SearchScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    padding: wp("4%"),
     backgroundColor: "#F8FAE5",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: hp("2%"),
   },
   backButton: {
-    marginRight: 10,
-    marginTop: 50,
+    marginRight: wp("2%"),
+    marginTop: hp("2%"),
   },
   headerText: {
-    fontSize: 24,
+    fontSize: hp("3%"),
     fontWeight: "bold",
-    marginLeft: 10,
-    marginTop: 20,
+    marginLeft: wp("2%"),
+    marginTop: hp("2%"),
   },
   searchInput: {
-    height: 70,
+    height: hp("8%"),
     borderColor: "lightgray",
     borderWidth: 1,
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    marginBottom: 20,
-    fontSize: 16,
+    borderRadius: wp("6%"),
+    paddingHorizontal: wp("4%"),
+    marginBottom: hp("2%"),
+    fontSize: wp("4%"),
   },
   resultItem: {
-    padding: 15,
+    padding: wp("4%"),
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
     backgroundColor: "#B19470",
-    borderRadius: 10,
-    marginTop: 10,
+    borderRadius: wp("3%"),
+    marginTop: hp("2%"),
   },
   resultText: {
-    fontSize: 16,
+    fontSize: wp("4%"),
     fontWeight: "bold",
   },
-  // Add additional styles as needed
 });
 
 export default SearchScreen;

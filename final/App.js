@@ -154,7 +154,12 @@ export default function App() {
         <Stack.Screen
           name="HelpScreen"
           component={HelpScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerStyle: {
+              backgroundColor: "#43766C", // Set your desired color here
+            },
+            headerTintColor: "#fff",
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>

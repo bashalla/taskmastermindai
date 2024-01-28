@@ -8,29 +8,21 @@ import {
   Linking,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
 
 const HelpScreen = ({ navigation }) => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={30} color="#000" />
-        </TouchableOpacity>
         <Text style={styles.headerText}>Help & Information</Text>
       </View>
 
       <View style={styles.section}>
-        <Icon name="emoji-events" size={30} color="#0782F9" />
-        <Text style={styles.sectionTitle}>Gamification</Text>
-        <Text style={styles.sectionContent}>
-          Discover how gamification makes task management fun and rewarding.
-          Accumulate points by completing tasks and achieving goals.
-        </Text>
-      </View>
-
-      <View style={styles.section}>
-        <Icon name="stars" size={30} color="#0782F9" />
-        <Text style={styles.sectionTitle}>Point System</Text>
+        <Icon name="stars" size={hp("3%")} color="#0782F9" />
+        <Text style={styles.sectionTitle}>Point System & Gamification</Text>
         <Text style={styles.sectionContent}>
           Each task completed on time earns you 10 points. Points are awarded
           provided the task's deadline has not been changed more than 3 times
@@ -40,7 +32,29 @@ const HelpScreen = ({ navigation }) => {
       </View>
 
       <View style={styles.section}>
-        <Icon name="contact-support" size={30} color="#0782F9" />
+        <Icon name="today" size={hp("3%")} color="#0782F9" />
+        <Text style={styles.sectionTitle}>Monthly Challenge</Text>
+        <Text style={styles.sectionContent}>
+          Try the Monthly Challenge, as you can earn an extra 100 points by
+          successfully closing 10 tasks each month, making your task management
+          experience even more rewarding! Keep track of your progress in the
+          Rewards Section.
+        </Text>
+      </View>
+
+      {/* Additional Section */}
+      <View style={styles.section}>
+        <Icon name="lightbulb" size={hp("3%")} color="#0782F9" />
+        <Text style={styles.sectionTitle}>AI Scanner</Text>
+        <Text style={styles.sectionContent}>
+          To identify important tasks, simply click on the lamp icon on the home
+          screen. The AI scanner will analyze your tasks and highlight the
+          important ones, helping you prioritize your work effectively.
+        </Text>
+      </View>
+
+      <View style={styles.section}>
+        <Icon name="contact-support" size={hp("3%")} color="#0782F9" />
         <Text style={styles.sectionTitle}>Support</Text>
         <Text style={styles.sectionContent}>
           If you encounter any issues or have queries, please contact the
@@ -56,18 +70,6 @@ const HelpScreen = ({ navigation }) => {
           .
         </Text>
       </View>
-
-      <View style={styles.section}>
-        <Icon name="today" size={30} color="#0782F9" />
-        <Text style={styles.sectionTitle}>5 Days Challenge</Text>
-        <Text style={styles.sectionContent}>
-          In the 5 Days Challenge, you can earn an extra 100 points by
-          successfully closing a task for five consecutive days, making your
-          task management experience even more rewarding!
-        </Text>
-      </View>
-
-      {/* Add more sections as needed */}
     </ScrollView>
   );
 };
@@ -75,30 +77,31 @@ const HelpScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    marginTop: 65,
+    padding: wp("3%"), // Use wp for horizontal padding
+    backgroundColor: "#F8FAE5",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: hp("1%"), // Use hp for vertical margin
   },
   headerText: {
-    fontSize: 24,
+    fontSize: hp("2.5%"), // Use hp for font size
     fontWeight: "bold",
-    marginLeft: 10,
+    marginLeft: wp("1%"), // Use wp for horizontal margin
   },
   section: {
-    marginBottom: 20,
+    marginBottom: hp("2%"), // Use hp for vertical margin
+    marginTop: hp("2%"),
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: hp("2%"), // Use hp for font size
     fontWeight: "bold",
-    marginTop: 10,
-    marginBottom: 5,
+    marginTop: hp("0.5%"), // Use hp for vertical margin
+    marginBottom: hp("0.25%"), // Use hp for vertical margin
   },
   sectionContent: {
-    fontSize: 16,
+    fontSize: hp("1.75%"), // Use hp for font size
   },
   emailLink: {
     color: "#0782F9",
