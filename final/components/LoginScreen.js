@@ -9,6 +9,7 @@ import {
   Alert,
   Image,
   ScrollView,
+  Dimensions,
 } from "react-native";
 import {
   createUserWithEmailAndPassword,
@@ -18,25 +19,35 @@ import {
 import { useNavigation } from "@react-navigation/core";
 import { auth } from "../firebase";
 import {
-  widthPercentageToDP,
-  heightPercentageToDP,
-} from "react-native-responsive-screen"; // Import the responsive-screen functions
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
+
+import {
+  MaterialIcons,
+  MaterialCommunityIcons,
+  FontAwesome5,
+} from "@expo/vector-icons"; // Import Material Icons or any other icon library
+
+const screenWidth = Dimensions.get("window").width;
+const isTablet = screenWidth > 768; // Common breakpoint for tablet devices
 
 // Login screen component
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const navigation = useNavigation();
 
   useEffect(() => {
+    // Set up the authentication state change listener
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         navigation.replace("Home");
       }
     });
 
-    return unsubscribe;
+    // Clean up the listener on component unmount
+    return () => unsubscribe();
   }, []);
 
   // Login with email and password
@@ -81,12 +92,20 @@ const LoginScreen = () => {
     }
   };
 
+  // Placeholder for Google Sign-In functionality
+  const handleGoogleSignIn = () => {
+    Alert.alert("Google Sign-In", "Functionality to be implemented.");
+  };
+
   // Return the screen content
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <KeyboardAvoidingView style={styles.keyboardAvoiding} behavior="padding">
         <View style={styles.logoContainer}>
           <Image source={require("../assets/logo.png")} style={styles.logo} />
+          <Text style={styles.welcomeText}>
+            Welcome Back to TaskMastermind Ai
+          </Text>
         </View>
 
         <View style={styles.inputContainer}>
@@ -121,6 +140,18 @@ const LoginScreen = () => {
           >
             <Text style={styles.buttonOutlineText}>Reset Password</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleGoogleSignIn}
+            style={styles.googleButton}
+          >
+            <MaterialCommunityIcons
+              name="google"
+              size={isTablet ? wp("4%") : wp("5%")}
+              color="white"
+              style={styles.googleIcon}
+            />
+            <Text style={styles.googleButtonText}>Sign in with Google</Text>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </ScrollView>
@@ -129,61 +160,85 @@ const LoginScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: heightPercentageToDP("5%"), // Adjust the percentage as needed
     flex: 1,
+    backgroundColor: "#f0f2f5",
   },
   keyboardAvoiding: {
     flex: 1,
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: heightPercentageToDP("5%"), // Adjust the percentage as needed
+    marginTop: isTablet ? hp("5%") : hp("10%"),
   },
   logo: {
-    width: widthPercentageToDP("50%"), // Adjust the percentage as needed
-    height: widthPercentageToDP("50%"), // Adjust the percentage as needed
+    width: isTablet ? wp("20%") : wp("30%"),
+    height: isTablet ? wp("20%") : wp("30%"),
+    borderRadius: isTablet ? wp("10%") : wp("15%"),
     resizeMode: "contain",
   },
+  welcomeText: {
+    fontSize: isTablet ? wp("4%") : wp("5%"),
+    fontWeight: "bold",
+    marginVertical: hp("2%"),
+    fontFamily: Platform.OS === "ios" ? "Helvetica Neue" : "Roboto",
+  },
   inputContainer: {
-    width: widthPercentageToDP("80%"), // Adjust the percentage as needed
+    width: isTablet ? wp("70%") : wp("80%"),
     alignSelf: "center",
-    marginTop: heightPercentageToDP("2%"), // Adjust the percentage as needed
+    marginTop: hp("2%"),
   },
   input: {
     backgroundColor: "white",
-    paddingHorizontal: widthPercentageToDP("4%"), // Adjust the percentage as needed
-    paddingVertical: heightPercentageToDP("2%"), // Adjust the percentage as needed
+    paddingHorizontal: wp("4%"),
+    paddingVertical: hp("2%"),
     borderRadius: 10,
-    marginTop: heightPercentageToDP("1%"), // Adjust the percentage as needed
-    fontSize: widthPercentageToDP("4%"), // Adjust the percentage as needed
+    marginTop: hp("1%"),
+    fontSize: isTablet ? wp("3.5%") : wp("4%"),
   },
   buttonContainer: {
-    width: widthPercentageToDP("60%"), // Adjust the percentage as needed
+    width: isTablet ? wp("50%") : wp("60%"),
     alignSelf: "center",
-    marginTop: heightPercentageToDP("4%"), // Adjust the percentage as needed
+    marginTop: hp("4%"),
   },
   button: {
     backgroundColor: "#0782F9",
     width: "100%",
-    padding: heightPercentageToDP("2.5%"), // Adjust the percentage as needed
+    padding: isTablet ? hp("2%") : hp("2.5%"),
     borderRadius: 10,
     alignItems: "center",
-    marginBottom: heightPercentageToDP("1%"), // Adjust the percentage as needed
+    marginBottom: hp("1%"),
   },
   buttonOutline: {
     backgroundColor: "white",
     borderColor: "#0782F9",
     borderWidth: 2,
+    marginTop: hp("1%"),
   },
   buttonText: {
     color: "white",
     fontWeight: "700",
-    fontSize: widthPercentageToDP("4%"), // Adjust the percentage as needed
+    fontSize: isTablet ? wp("3.5%") : wp("4%"),
   },
   buttonOutlineText: {
     color: "#0782F9",
     fontWeight: "700",
-    fontSize: widthPercentageToDP("4%"), // Adjust the percentage as needed
+    fontSize: isTablet ? wp("3.5%") : wp("4%"),
+  },
+  googleButton: {
+    backgroundColor: "#db4437",
+    width: "100%",
+    padding: isTablet ? hp("2%") : hp("2.5%"),
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: hp("2%"),
+  },
+  googleButtonText: {
+    color: "white",
+    fontWeight: "700",
+    fontSize: isTablet ? wp("3.5%") : wp("4%"),
+  },
+  googleIcon: {
+    marginRight: isTablet ? wp("2%") : wp("3%"), // Add some spacing between the icon and text
   },
 });
 

@@ -10,6 +10,7 @@ import {
   Modal,
   ScrollView,
   Platform,
+  Dimensions,
 } from "react-native";
 import CountryPicker from "react-native-country-picker-modal";
 import { Picker } from "@react-native-picker/picker";
@@ -22,6 +23,8 @@ import {
   heightPercentageToDP,
 } from "react-native-responsive-screen";
 
+const screenWidth = Dimensions.get("window").width;
+const isTablet = screenWidth > 768;
 // Register screen component
 const RegisterScreen = () => {
   const [email, setEmail] = useState("");
@@ -225,12 +228,12 @@ const RegisterScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: heightPercentageToDP("2%"),
+    marginTop: heightPercentageToDP("5%"),
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
   scrollViewContainer: {
-    padding: widthPercentageToDP("5%"),
+    padding: widthPercentageToDP("8%"),
     alignItems: "center",
     justifyContent: "center",
   },
@@ -240,31 +243,31 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     color: "#0782F9",
-    fontSize: widthPercentageToDP("4%"),
+    fontSize: widthPercentageToDP("3.5%"), // Smaller font size
   },
   inputContainer: {
-    width: widthPercentageToDP("80%"),
+    width: widthPercentageToDP(isTablet ? "50%" : "82%"), // Adjusted width for tablet
   },
   input: {
     backgroundColor: "white",
-    paddingHorizontal: widthPercentageToDP("4%"),
-    paddingVertical: heightPercentageToDP("2%"),
+    paddingHorizontal: widthPercentageToDP("3.5%"), // Smaller padding
+    paddingVertical: heightPercentageToDP("1.5%"), // Smaller padding
     borderRadius: 10,
     marginVertical: heightPercentageToDP("1%"),
-    fontSize: widthPercentageToDP("4%"),
+    fontSize: widthPercentageToDP("3.5%"), // Smaller font size
     width: "100%",
   },
   button: {
     backgroundColor: "#0782F9",
-    padding: heightPercentageToDP("2.5%"),
+    padding: heightPercentageToDP("2%"), // Smaller padding
     borderRadius: 10,
     alignItems: "center",
-    marginTop: heightPercentageToDP("2%"),
+    marginTop: heightPercentageToDP("1.5%"), // Smaller margin
     width: "100%",
   },
   buttonText: {
     color: "white",
-    fontSize: widthPercentageToDP("4%"),
+    fontSize: widthPercentageToDP("3.5%"), // Smaller font size
     fontWeight: "700",
   },
   genderContainer: {
@@ -273,12 +276,12 @@ const styles = StyleSheet.create({
     marginVertical: heightPercentageToDP("1%"),
   },
   genderButton: {
-    padding: widthPercentageToDP("3%"),
+    padding: widthPercentageToDP("2.5%"), // Smaller padding
     borderRadius: 5,
-    marginHorizontal: widthPercentageToDP("2%"),
+    marginHorizontal: widthPercentageToDP("1%"), // Smaller margin
   },
   genderText: {
-    fontSize: widthPercentageToDP("4%"),
+    fontSize: widthPercentageToDP("3.5%"), // Smaller font size
   },
   genderButtonSelected: {
     backgroundColor: "#0782F9",
@@ -289,27 +292,27 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: "white",
-    padding: widthPercentageToDP("5%"),
+    padding: widthPercentageToDP("3.5%"), // Smaller padding
     alignItems: "center",
   },
   picker: {
     width: "100%",
-    height: heightPercentageToDP("25%"),
+    height: heightPercentageToDP(isTablet ? "12%" : "15%"), // Further reduced height for tablet
   },
   modalButton: {
     backgroundColor: "#0782F9",
-    marginTop: heightPercentageToDP("2%"),
-    padding: widthPercentageToDP("3%"),
+    marginTop: heightPercentageToDP("1.5%"), // Smaller margin
+    padding: widthPercentageToDP("2.5%"), // Smaller padding
     borderRadius: 5,
     width: "100%",
     alignItems: "center",
   },
   modalButtonText: {
     color: "white",
-    fontSize: widthPercentageToDP("4%"),
+    fontSize: widthPercentageToDP("3.5%"), // Smaller font size
   },
   inputText: {
-    fontSize: widthPercentageToDP("3.5%"),
+    fontSize: widthPercentageToDP("3%"), // Smaller font size
   },
 });
 
