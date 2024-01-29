@@ -10,6 +10,7 @@ import {
   View,
   Alert,
   Vibration,
+  Dimensions,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons"; // Import Material Icons or any other icon library
 import { auth, db } from "../firebase";
@@ -23,6 +24,9 @@ import {
   doc,
 } from "firebase/firestore";
 
+const screenWidth = Dimensions.get("window").width;
+const isTablet = screenWidth > 768; // Common breakpoint for tablet devices
+
 // This component will be used to create a new category
 const CategoryScreen = ({ navigation }) => {
   const [categoryName, setCategoryName] = useState("");
@@ -34,7 +38,7 @@ const CategoryScreen = ({ navigation }) => {
     navigation.navigate("TaskScreen", { categoryId, categoryName });
   };
 
-  const colors = ["#ff6347", "#4682b4", "#32cd32", "#ff69b4", "#ffa500"];
+  const colors = ["#2B2A4C", "#B31312", "#F4CE14", "#87C4FF", "#C5E898"];
 
   // Fetch categories when the screen loads
   useEffect(() => {
@@ -133,6 +137,8 @@ const CategoryScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
+        <Text style={styles.sectionHeader}>Create New Category</Text>
+
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
@@ -163,10 +169,15 @@ const CategoryScreen = ({ navigation }) => {
           ))}
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleCreateCategory}>
+        <TouchableOpacity
+          style={styles.roundButton}
+          onPress={handleCreateCategory}
+        >
           <Text style={styles.buttonText}>+ Add Category</Text>
         </TouchableOpacity>
       </ScrollView>
+      <Text style={styles.sectionCategory}>Existing Categories</Text>
+
       <FlatList
         style={styles.flatList}
         data={categories}
@@ -206,37 +217,53 @@ const CategoryScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 10,
+    backgroundColor: "#F8FAE5",
   },
   scrollView: {
     flex: 1,
   },
   inputContainer: {
-    marginTop: 100,
+    marginTop: isTablet ? 30 : 20,
+  },
+  sectionHeader: {
+    fontSize: isTablet ? 24 : 20,
+    fontWeight: "bold",
+    marginTop: isTablet ? 30 : 20,
+    textAlign: "left",
+    marginLeft: isTablet ? 30 : 20,
+  },
+  sectionCategory: {
+    fontSize: isTablet ? 24 : 20,
+    fontWeight: "bold",
+    marginTop: isTablet ? 30 : 20,
+    textAlign: "left",
+    marginLeft: isTablet ? 30 : 20,
   },
   input: {
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: "gray",
-    width: "90%",
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 10,
+    borderRadius: isTablet ? 15 : 25,
+    padding: isTablet ? 15 : 10,
+    fontSize: isTablet ? 18 : 16,
+    marginBottom: isTablet ? 15 : 12,
+    width: isTablet ? "80%" : "95%",
     alignSelf: "center",
   },
   colorSelectionText: {
     alignSelf: "center",
-    marginVertical: 10,
+    marginVertical: isTablet ? 15 : 10,
     fontWeight: "bold",
+    fontSize: isTablet ? 18 : 16,
   },
   colorContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginBottom: 10,
+    marginBottom: isTablet ? 15 : 10,
   },
   colorOption: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: isTablet ? 40 : 30,
+    height: isTablet ? 40 : 30,
+    borderRadius: isTablet ? 20 : 15,
     marginHorizontal: 5,
   },
   selectedColor: {
@@ -245,41 +272,54 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: "#0782F9",
-    padding: 15,
+    padding: isTablet ? 20 : 15,
     borderRadius: 10,
     alignItems: "center",
-    marginBottom: 20,
-    width: "90%",
+    marginBottom: isTablet ? 25 : 20,
+    width: isTablet ? "70%" : "90%",
     alignSelf: "center",
+  },
+  roundButton: {
+    backgroundColor: "#0782F9",
+    padding: isTablet ? 20 : 15,
+    borderRadius: isTablet ? 25 : 30,
+    alignItems: "center",
+    justifyContent: "center",
+    width: isTablet ? "50%" : "60%",
+    alignSelf: "center",
+    marginTop: isTablet ? 25 : 20,
   },
   buttonText: {
     color: "white",
-    fontWeight: "700",
+    fontSize: isTablet ? 20 : 18,
+    fontWeight: "bold",
   },
   flatList: {
     flex: 1,
   },
   categoryContainer: {
+    marginTop: isTablet ? 25 : 20,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
   category: {
     flex: 1,
-    padding: 20,
-    marginVertical: 5,
+    padding: isTablet ? 25 : 20,
     borderRadius: 5,
     alignSelf: "center",
+    marginLeft: 3,
   },
   categoryText: {
     color: "white",
     fontWeight: "bold",
+    fontSize: isTablet ? 18 : 16,
   },
   iconContainer: {
     flexDirection: "row",
   },
   iconButton: {
-    padding: 5,
+    padding: isTablet ? 7 : 5,
     marginLeft: 10,
   },
 });

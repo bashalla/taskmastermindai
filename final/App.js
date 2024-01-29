@@ -56,13 +56,22 @@ function MyTabs() {
       })}
     >
       <Tab.Screen name="Dashboard" component={HomeScreen} />
-      <Tab.Screen name="Category" component={CategoryScreen} />
+      <Tab.Screen
+        name="Category"
+        component={CategoryScreen}
+        options={{
+          headerShown: true, // Show the header
+          headerStyle: {
+            backgroundColor: "#43766C", // Set your desired color here
+          },
+          headerTintColor: "#fff", // Set your desired header tint color here
+        }}
+      />
       <Tab.Screen name="Rewards" component={RewardsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
-
 export default function App() {
   useEffect(() => {
     registerForPushNotificationsAsync();
@@ -99,7 +108,12 @@ export default function App() {
         <Stack.Screen
           name="TaskScreen"
           component={TaskScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerStyle: {
+              backgroundColor: "#43766C", // Set your desired color here
+            },
+            headerTintColor: "#fff",
+          }}
         />
         <Stack.Screen
           name="CreateTask"
@@ -109,7 +123,12 @@ export default function App() {
         <Stack.Screen
           name="CategoryScreen"
           component={CategoryScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerStyle: {
+              backgroundColor: "#43766C", // Set your desired color here
+            },
+            headerTintColor: "#fff",
+          }}
         />
         <Stack.Screen
           name="TaskDetailScreen"
@@ -119,7 +138,12 @@ export default function App() {
         <Stack.Screen
           name="EditCategoryScreen"
           component={EditCategoryScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerStyle: {
+              backgroundColor: "#43766C", // Set your desired color here
+            },
+            headerTintColor: "#fff",
+          }}
         />
         <Stack.Screen
           name="CompletedTaskScreen"

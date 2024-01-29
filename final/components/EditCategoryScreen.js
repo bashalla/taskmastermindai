@@ -8,9 +8,13 @@ import {
   StyleSheet,
   View,
   Alert,
+  Dimensions,
 } from "react-native";
 import { db } from "../firebase";
 import { doc, updateDoc } from "firebase/firestore";
+
+const screenWidth = Dimensions.get("window").width;
+const isTablet = screenWidth > 768; // Common breakpoint for tablet devices
 
 // This component will be used to edit an existing category
 const EditCategoryScreen = ({ navigation, route }) => {
@@ -19,7 +23,7 @@ const EditCategoryScreen = ({ navigation, route }) => {
   const [labelName, setLabelName] = useState(category.label);
   const [selectedColor, setSelectedColor] = useState(category.color);
 
-  const colors = ["#ff6347", "#4682b4", "#32cd32", "#ff69b4", "#ffa500"];
+  const colors = ["#2B2A4C", "#B31312", "#F4CE14", "#87C4FF", "#C5E898"];
 
   // Setting the header title and making sure the header is shown
   useEffect(() => {
@@ -55,6 +59,8 @@ const EditCategoryScreen = ({ navigation, route }) => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
+        <Text style={styles.sectionHeader}>Edit Category</Text>
+
         <TextInput
           style={styles.input}
           placeholder="Category Name"
@@ -93,45 +99,45 @@ const EditCategoryScreen = ({ navigation, route }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 60,
     flex: 1,
-    padding: 10,
-    backgroundColor: "#f4f4f4",
+    backgroundColor: "#F8FAE5",
   },
   scrollView: {
     flex: 1,
   },
-  header: {
-    fontSize: 24,
+  sectionHeader: {
+    fontSize: isTablet ? 24 : 20,
     fontWeight: "bold",
-    textAlign: "center",
-    marginVertical: 20,
+    marginTop: isTablet ? 30 : 20,
+    textAlign: "left",
+    marginLeft: isTablet ? 30 : 20,
+    marginBottom: isTablet ? 30 : 20,
   },
   input: {
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: "gray",
-    borderRadius: 5,
-    padding: 10,
-    fontSize: 16,
-    marginBottom: 10,
-    width: "90%",
+    borderRadius: isTablet ? 15 : 25,
+    padding: isTablet ? 15 : 10,
+    fontSize: isTablet ? 18 : 16,
+    marginBottom: isTablet ? 15 : 12,
+    width: isTablet ? "80%" : "95%",
     alignSelf: "center",
   },
   colorSelectionText: {
     textAlign: "center",
     fontWeight: "bold",
-    fontSize: 16,
-    marginVertical: 10,
+    fontSize: isTablet ? 18 : 16,
+    marginVertical: isTablet ? 15 : 10,
   },
   colorContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginBottom: 20,
+    marginBottom: isTablet ? 20 : 10,
   },
   colorOption: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: isTablet ? 50 : 40,
+    height: isTablet ? 50 : 40,
+    borderRadius: isTablet ? 25 : 20,
     marginHorizontal: 5,
     borderWidth: 2,
     borderColor: "white",
@@ -141,18 +147,17 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: "#0782F9",
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 10,
+    padding: isTablet ? 20 : 15,
+    borderRadius: isTablet ? 25 : 30,
     alignItems: "center",
     justifyContent: "center",
-    width: "90%",
+    width: isTablet ? "70%" : "60%",
     alignSelf: "center",
-    marginBottom: 20,
+    marginTop: isTablet ? 25 : 20,
   },
   buttonText: {
     color: "white",
-    fontSize: 18,
+    fontSize: isTablet ? 20 : 18,
     fontWeight: "bold",
   },
 });
