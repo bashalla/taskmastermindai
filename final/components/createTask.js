@@ -31,6 +31,9 @@ import MapView, { Marker } from "react-native-maps";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import { GOOGLE_API_KEY } from "@env";
 
+const screenWidth = Dimensions.get("window").width;
+const isTablet = screenWidth > 768;
+
 // This component will be used to create a new task
 const CreateTask = ({ navigation, route }) => {
   const { categoryId } = route.params;
@@ -278,6 +281,35 @@ const CreateTask = ({ navigation, route }) => {
         />
       </View>
 
+      {/* Deadline Picker */}
+      <View style={styles.centeredView}>
+        <Text style={styles.headerText}>Deadline</Text>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => setShowDatePicker(true)}
+        >
+          <Icon name="calendar-today" size={30} color="#0782F9" />
+        </TouchableOpacity>
+
+        {showDatePicker && (
+          <DateTimePicker
+            value={deadline}
+            mode="date"
+            display="default"
+            minimumDate={new Date()} // Set the minimum date to the current date
+            onChange={(event, selectedDate) => {
+              setShowDatePicker(Platform.OS === "ios");
+              if (
+                event.type === "set" ||
+                (event.type === "dismissed" && Platform.OS === "android")
+              ) {
+                setDeadline(adjustDeadline(selectedDate || deadline));
+              }
+            }}
+          />
+        )}
+      </View>
+
       {/* Location Search */}
       <GooglePlacesAutocomplete
         placeholder="Search for places"
@@ -322,10 +354,10 @@ const CreateTask = ({ navigation, route }) => {
       </View>
 
       {/* Document Picker */}
-      <TouchableOpacity style={styles.button} onPress={selectDocument}>
-        <Icon name="attach-file" size={20} color="white" />
-        <Text style={styles.buttonText}>Select Document</Text>
+      <TouchableOpacity style={styles.documentButton} onPress={selectDocument}>
+        <Icon name="attach-file" style={styles.documentIcon} />
       </TouchableOpacity>
+
       <View style={styles.selectedDocumentContainer}>
         {documents.map((doc, index) => (
           <View key={index} style={styles.documentRow}>
@@ -337,41 +369,9 @@ const CreateTask = ({ navigation, route }) => {
         ))}
       </View>
 
-      {/* Deadline Picker */}
-      <View style={styles.centeredView}>
-        <Text style={styles.headerText}>Deadline</Text>
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={() => setShowDatePicker(true)}
-        >
-          <Icon name="calendar-today" size={30} color="#0782F9" />
-        </TouchableOpacity>
-
-        {showDatePicker && (
-          <DateTimePicker
-            value={deadline}
-            mode="date"
-            display="default"
-            minimumDate={new Date()} // Set the minimum date to the current date
-            onChange={(event, selectedDate) => {
-              setShowDatePicker(Platform.OS === "ios");
-              if (
-                event.type === "set" ||
-                (event.type === "dismissed" && Platform.OS === "android")
-              ) {
-                setDeadline(adjustDeadline(selectedDate || deadline));
-              }
-            }}
-          />
-        )}
-      </View>
-
-      {/* Save and Cancel Buttons */}
-      <TouchableOpacity style={styles.button} onPress={handleSaveTask}>
-        <Text style={styles.buttonText}>Save Task</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
-        <Text style={styles.cancelButtonText}>Cancel</Text>
+      {/* Save  Buttons */}
+      <TouchableOpacity style={styles.saveButton} onPress={handleSaveTask}>
+        <Icon name="check" style={styles.saveIcon} />
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -380,105 +380,180 @@ const CreateTask = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 10,
-    backgroundColor: "#f4f4f4",
+    backgroundColor: "#F8FAE5",
+    paddingTop: isTablet ? 15 : 5,
+    paddingHorizontal: isTablet ? 20 : 10,
   },
-
   headerText: {
-    fontSize: 18,
+    fontSize: isTablet ? 22 : 18,
     fontWeight: "bold",
-    marginBottom: 5,
+    textAlign: "center",
   },
   icon: {
     marginRight: 10,
   },
   centeredView: {
     alignItems: "center",
-    marginVertical: 15,
+    marginTop: 10,
+    marginBottom: 20,
   },
   iconButton: {
-    marginBottom: 10,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "gray",
-    padding: 10,
-    flex: 1,
-    borderRadius: 5,
-    marginRight: 10,
-  },
-  multilineInput: {
-    height: 120,
-  },
-  documentRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 5,
-    padding: 5,
-  },
-  deleteIcon: {
-    marginLeft: 10,
-  },
-  deleteText: {
-    color: "red",
-    fontWeight: "bold",
-    fontSize: 20,
-    paddingHorizontal: 10,
-  },
-  button: {
-    flexDirection: "row",
-    backgroundColor: "#0782F9",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    width: "60%",
-    alignSelf: "center",
-    marginBottom: 10,
-  },
-  buttonText: {
-    color: "white",
-    fontWeight: "700",
-    marginLeft: 10,
-  },
-  cancelButton: {
-    backgroundColor: "#d9534f",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    width: "60%",
-    alignSelf: "center",
-    marginBottom: 10,
-  },
-  cancelButtonText: {
-    color: "white",
-    fontWeight: "700",
-  },
-  selectedDocumentContainer: {
-    marginTop: 10,
-    alignItems: "center",
-  },
-  mapContainer: {
-    height: 300,
-    width: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  map: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  textInputContainer: {
-    backgroundColor: "grey",
     marginBottom: 10,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
+    marginTop: 20,
     marginBottom: 10,
+    backgroundColor: "#FFF",
+    borderRadius: 30,
+    paddingVertical: isTablet ? 15 : 12,
+    paddingHorizontal: isTablet ? 20 : 15,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  input: {
+    flex: 1,
+    fontSize: isTablet ? 18 : 16,
+    color: "#333",
+    marginLeft: 10,
+  },
+  multilineInput: {
+    height: isTablet ? 120 : 80, // Reduced height for the description box
+    textAlignVertical: "top",
+  },
+  button: {
+    backgroundColor: "#0782F9",
+    borderRadius: 30,
+    paddingVertical: isTablet ? 15 : 10,
+    paddingHorizontal: isTablet ? 20 : 15,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+    marginBottom: 20,
+    width: "80%",
+    alignSelf: "center",
+  },
+  buttonText: {
+    color: "white",
+    fontSize: isTablet ? 18 : 16,
+    fontWeight: "700",
+  },
+  mapContainer: {
+    height: isTablet ? 450 : 150,
+    borderRadius: 15,
+    overflow: "hidden",
+  },
+  map: {
+    ...StyleSheet.absoluteFillObject,
+    marginBottom: 20,
+  },
+  selectedDocumentContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  documentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FFF",
+    padding: 10,
+    borderRadius: 20,
+    marginVertical: 5,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+    elevation: 3,
+  },
+  deleteText: {
+    color: "red",
+    fontWeight: "bold",
+    marginLeft: 10,
+  },
+  saveButton: {
+    backgroundColor: "#0782F9",
+    borderRadius: 30,
+    padding: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    width: 60,
+    height: 60,
+    alignSelf: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+  },
+  saveIcon: {
+    color: "white",
+    fontSize: 30,
+  },
+  documentButton: {
+    backgroundColor: "#0782F9",
+    borderRadius: 30,
+    padding: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    width: 60,
+    height: 60,
+    alignSelf: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+  },
+  documentIcon: {
+    color: "white",
+    fontSize: 30,
+  },
+  locationView: {
+    marginVertical: 60,
+    paddingHorizontal: isTablet ? 20 : 15,
+    backgroundColor: "#FFF",
+    borderRadius: 30,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  googlePlacesAutocomplete: {
+    textInput: {
+      height: 38,
+      color: "#5d5d5d",
+      fontSize: 16,
+      backgroundColor: "transparent",
+      borderRadius: 30,
+    },
+    textInputContainer: {
+      backgroundColor: "transparent",
+      borderTopWidth: 0,
+      borderBottomWidth: 0,
+    },
+    predefinedPlacesDescription: {
+      color: "#1faadb",
+    },
   },
 });
 

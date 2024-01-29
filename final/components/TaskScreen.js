@@ -34,6 +34,8 @@ const TaskScreen = ({ navigation, route }) => {
   const [tasks, setTasks] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [needsRefresh, setNeedsRefresh] = useState(false);
+  const [hasOpenTasks, setHasOpenTasks] = useState(false);
+  const [hasDoneTasks, setHasDoneTasks] = useState(false);
 
   const fetchTasks = async () => {
     setRefreshing(true);
@@ -41,13 +43,40 @@ const TaskScreen = ({ navigation, route }) => {
       const tasksRef = collection(db, "tasks");
       const q = query(tasksRef, where("categoryId", "==", categoryId));
       const querySnapshot = await getDocs(q);
-      const fetchedTasks = [];
+
+      const overdueTasks = [];
+      const onTimeTasks = [];
+      const completedTasks = [];
       querySnapshot.forEach((doc) => {
         const task = { ...doc.data(), id: doc.id };
-        task.isOverdue = new Date() > new Date(task.deadline);
-        fetchedTasks.push(task);
+        const deadlineDate = new Date(task.deadline);
+        const currentDate = new Date();
+
+        task.isOverdue = currentDate > deadlineDate && !task.isCompleted;
+        task.isOnTime = currentDate <= deadlineDate && !task.isCompleted;
+
+        if (task.isOverdue) {
+          overdueTasks.push(task);
+        } else if (task.isCompleted) {
+          completedTasks.push(task);
+        } else if (task.isOnTime) {
+          onTimeTasks.push(task);
+        }
       });
-      setTasks(fetchedTasks);
+
+      // Update state to indicate if there are open or done tasks
+      setHasOpenTasks(overdueTasks.length > 0 || onTimeTasks.length > 0);
+      setHasDoneTasks(completedTasks.length > 0);
+
+      // Concatenate the arrays: first overdue, then on-time, then completed
+      const sortedTasks = [...overdueTasks, ...onTimeTasks];
+
+      if (completedTasks.length > 0) {
+        sortedTasks.push({ isHeadline: true, title: "Done Tasks" });
+        sortedTasks.push(...completedTasks);
+      }
+
+      setTasks(sortedTasks);
     } catch (error) {
       console.error("Error fetching tasks: ", error);
       Alert.alert("Error", "Unable to fetch tasks.");
@@ -275,63 +304,79 @@ const TaskScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Tasks for {categoryName}</Text>
+      <Text style={styles.title}>Open Tasks for {categoryName}</Text>
       <FlatList
         data={tasks}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.taskItemContainer}>
-            <View style={styles.taskItem}>
-              <TouchableOpacity
-                style={styles.taskDetails}
-                onPress={() => navigateToTaskDetail(item)}
-              >
-                <Text style={styles.taskName}>{item.name}</Text>
-                <Text
-                  style={
-                    item.isCompleted
-                      ? styles.done
-                      : item.isOverdue
-                      ? styles.overdue
-                      : null
-                  }
+        keyExtractor={(item, index) => item.id || `item-${index}`}
+        renderItem={({ item }) => {
+          if (item.isHeadline) {
+            return <Text style={styles.headline}>{item.title}</Text>;
+          }
+
+          let textStyle;
+          if (item.isCompleted) {
+            textStyle = styles.done;
+          } else if (item.isOverdue) {
+            textStyle = styles.overdue;
+          } else {
+            textStyle = styles.onTimeText; // On Time task style
+          }
+
+          let backgroundColor = item.isCompleted
+            ? "#A9A9A9" // Background for completed tasks
+            : item.isOverdue
+            ? "#EC8F5E" // Background for overdue tasks
+            : "#9BBEC8"; // Background for on-time tasks
+
+          return (
+            <View style={styles.taskItemContainer}>
+              <View style={[styles.taskItem, { backgroundColor }]}>
+                <TouchableOpacity
+                  style={styles.taskDetails}
+                  onPress={() => navigateToTaskDetail(item)}
                 >
-                  {item.isCompleted
-                    ? "Done"
-                    : item.isOverdue
-                    ? "Overdue"
-                    : "On Time"}
-                </Text>
-              </TouchableOpacity>
-              <View style={styles.taskActions}>
-                {item.isCompleted ? (
-                  <Icon name="done" size={20} color="green" />
-                ) : (
-                  <>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => markTaskAsDone(item)}
-                    >
-                      <Text style={styles.completeTaskText}>Complete Task</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => deleteTask(item)}
-                    >
-                      <Icon name="delete" size={20} color="#820300" />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => addTaskToCalendar(item)}
-                    >
-                      <Icon name="calendar-today" size={20} color="#637E76" />
-                    </TouchableOpacity>
-                  </>
-                )}
+                  <Text style={styles.taskName}>{item.name}</Text>
+                  <Text style={textStyle}>
+                    {item.isCompleted
+                      ? "Done"
+                      : item.isOverdue
+                      ? "Overdue"
+                      : "On Time"}
+                  </Text>
+                </TouchableOpacity>
+                <View style={styles.taskActions}>
+                  {item.isCompleted ? (
+                    <Icon name="done" size={20} color="green" />
+                  ) : (
+                    <>
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => markTaskAsDone(item)}
+                      >
+                        <Icon name="check-circle" size={30} color="#A2FF86" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => deleteTask(item)}
+                      >
+                        <Icon name="delete" size={30} color="#820300" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => addTaskToCalendar(item)}
+                      >
+                        <Icon name="calendar-today" size={30} color="#232D3F" />
+                      </TouchableOpacity>
+                    </>
+                  )}
+                </View>
               </View>
             </View>
-          </View>
-        )}
+          );
+        }}
+        ListEmptyComponent={
+          !hasOpenTasks && <Text style={styles.noTasksText}>No tasks</Text>
+        }
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={fetchTasks} />
         }
@@ -364,7 +409,7 @@ const styles = StyleSheet.create({
   },
   taskItemContainer: {
     paddingVertical: isTablet ? 15 : 10,
-    borderBottomWidth: 1,
+    borderBottomWidth: 0,
     borderBottomColor: "#6B240C",
   },
   taskItem: {
@@ -378,10 +423,22 @@ const styles = StyleSheet.create({
   taskDetails: {
     flex: 1,
   },
+  headline: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginTop: 80,
+    marginLeft: 10,
+  },
   taskName: {
     fontSize: isTablet ? 18 : 16,
     fontWeight: "bold",
     color: "#333333",
+  },
+  onTimeText: {
+    color: "green", // Color for On Time text
+    marginLeft: 5,
+    marginTop: 2,
+    fontSize: isTablet ? 16 : 14,
   },
   overdue: {
     color: "red",
@@ -389,7 +446,7 @@ const styles = StyleSheet.create({
     fontSize: isTablet ? 16 : 14,
   },
   done: {
-    color: "#65B741",
+    color: "#0C356A",
     marginLeft: 5,
     fontSize: isTablet ? 16 : 14,
   },
@@ -399,9 +456,10 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     marginLeft: isTablet ? 15 : 10,
+    padding: isTablet ? 10 : 8,
   },
   completeTaskText: {
-    color: "#EE7214",
+    color: "#739072",
     marginRight: isTablet ? 15 : 10,
     fontSize: isTablet ? 16 : 15,
   },
@@ -419,6 +477,21 @@ const styles = StyleSheet.create({
   addButtonIcon: {
     color: "white",
     fontSize: isTablet ? 30 : 24,
+  },
+  taskItemOverdue: {
+    backgroundColor: "red",
+  },
+  taskItemOnTime: {
+    backgroundColor: "blue",
+  },
+  taskItemDone: {
+    backgroundColor: "green",
+  },
+  noTasksText: {
+    textAlign: "center",
+    fontSize: 18,
+    marginTop: 20,
+    color: "#666",
   },
 });
 

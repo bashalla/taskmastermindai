@@ -118,7 +118,12 @@ export default function App() {
         <Stack.Screen
           name="CreateTask"
           component={CreateTask}
-          options={{ headerShown: false }}
+          options={{
+            headerStyle: {
+              backgroundColor: "#43766C", // Set your desired color here
+            },
+            headerTintColor: "#fff",
+          }}
         />
         <Stack.Screen
           name="CategoryScreen"
