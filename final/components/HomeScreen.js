@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold", // Text style for the 'Complete' button
   },
-  // Add any additional styles you might have
+  // Add any additional styles coming
 });
 
 export default HomeScreen;
