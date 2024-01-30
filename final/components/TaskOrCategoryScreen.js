@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { db } from "../firebase";
 import { collection, getDocs, addDoc, query, where } from "firebase/firestore";
-import { auth } from "../firebase"; // Import your authentication module
+import { auth } from "../firebase";
 
 function TaskOrCategoryScreen({ navigation }) {
   const [categories, setCategories] = useState([]);
@@ -280,7 +280,6 @@ const styles = StyleSheet.create({
   list: {
     width: "100%",
   },
-  // ... any other styles you need
 });
 
 export default TaskOrCategoryScreen;
