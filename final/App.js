@@ -18,6 +18,9 @@ import SuggestionsScreen from "./components/SuggestionsScreen";
 import SearchScreen from "./components/SearchScreen";
 import HelpScreen from "./components/HelpScreen";
 
+import { StatusBar } from "react-native";
+
+import Ionicons from "react-native-vector-icons/Ionicons";
 import { registerForPushNotificationsAsync } from "./components/notifications";
 
 const Stack = createNativeStackNavigator();
@@ -25,15 +28,50 @@ const Tab = createBottomTabNavigator();
 
 function MyTabs() {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+
+          switch (route.name) {
+            case "Dashboard":
+              iconName = focused ? "ios-home" : "ios-home-outline";
+              break;
+            case "Category":
+              iconName = focused ? "ios-list" : "ios-list-outline";
+              break;
+            case "Rewards":
+              iconName = focused ? "ios-trophy" : "ios-trophy-outline";
+              break;
+            case "Profile":
+              iconName = focused ? "ios-person" : "ios-person-outline";
+              break;
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: "#6B240C",
+        tabBarInactiveTintColor: "grey",
+      })}
+    >
       <Tab.Screen name="Dashboard" component={HomeScreen} />
-      <Tab.Screen name="Category" component={CategoryScreen} />
+      <Tab.Screen
+        name="Category"
+        component={CategoryScreen}
+        options={{
+          headerShown: true, // Show the header
+          headerStyle: {
+            backgroundColor: "#43766C", // Set your desired color here
+          },
+          headerTintColor: "#fff", // Set your desired header tint color here
+        }}
+      />
       <Tab.Screen name="Rewards" component={RewardsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
-
 export default function App() {
   useEffect(() => {
     registerForPushNotificationsAsync();
@@ -45,12 +83,22 @@ export default function App() {
         <Stack.Screen
           name="Login"
           component={LoginScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerStyle: {
+              backgroundColor: "#43766C", // Set your desired color here
+            },
+            headerTintColor: "#fff",
+          }}
         />
         <Stack.Screen
           name="Register"
           component={RegisterScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerStyle: {
+              backgroundColor: "#43766C", // Set your desired color here
+            },
+            headerTintColor: "#fff",
+          }}
         />
         <Stack.Screen
           name="Home"
@@ -60,17 +108,32 @@ export default function App() {
         <Stack.Screen
           name="TaskScreen"
           component={TaskScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerStyle: {
+              backgroundColor: "#43766C", // Set your desired color here
+            },
+            headerTintColor: "#fff",
+          }}
         />
         <Stack.Screen
           name="CreateTask"
           component={CreateTask}
-          options={{ headerShown: false }}
+          options={{
+            headerStyle: {
+              backgroundColor: "#43766C", // Set your desired color here
+            },
+            headerTintColor: "#fff",
+          }}
         />
         <Stack.Screen
           name="CategoryScreen"
           component={CategoryScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerStyle: {
+              backgroundColor: "#43766C", // Set your desired color here
+            },
+            headerTintColor: "#fff",
+          }}
         />
         <Stack.Screen
           name="TaskDetailScreen"
@@ -80,7 +143,12 @@ export default function App() {
         <Stack.Screen
           name="EditCategoryScreen"
           component={EditCategoryScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerStyle: {
+              backgroundColor: "#43766C", // Set your desired color here
+            },
+            headerTintColor: "#fff",
+          }}
         />
         <Stack.Screen
           name="CompletedTaskScreen"
@@ -95,17 +163,32 @@ export default function App() {
         <Stack.Screen
           name="SuggestionsScreen"
           component={SuggestionsScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerStyle: {
+              backgroundColor: "#43766C", // Set your desired color here
+            },
+            headerTintColor: "#fff",
+          }}
         />
         <Stack.Screen
           name="SearchScreen"
           component={SearchScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerStyle: {
+              backgroundColor: "#43766C", // Set your desired color here
+            },
+            headerTintColor: "#fff",
+          }}
         />
         <Stack.Screen
           name="HelpScreen"
           component={HelpScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerStyle: {
+              backgroundColor: "#43766C", // Set your desired color here
+            },
+            headerTintColor: "#fff",
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>

@@ -10,6 +10,7 @@ import {
   Modal,
   ScrollView,
   Platform,
+  Dimensions,
 } from "react-native";
 import CountryPicker from "react-native-country-picker-modal";
 import { Picker } from "@react-native-picker/picker";
@@ -17,7 +18,13 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useNavigation } from "@react-navigation/native";
 import { auth, db } from "../firebase";
 import { doc, setDoc } from "firebase/firestore";
+import {
+  widthPercentageToDP,
+  heightPercentageToDP,
+} from "react-native-responsive-screen";
 
+const screenWidth = Dimensions.get("window").width;
+const isTablet = screenWidth > 768;
 // Register screen component
 const RegisterScreen = () => {
   const [email, setEmail] = useState("");
@@ -87,12 +94,8 @@ const RegisterScreen = () => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Text style={styles.backButtonText}>Back</Text>
-        </TouchableOpacity>
+        {/* Registration Form Title */}
+        <Text style={styles.titleText}>Create Your Account</Text>
 
         <View style={styles.inputContainer}>
           <TextInput
@@ -221,60 +224,62 @@ const RegisterScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 50,
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#F8FAE5",
   },
   scrollViewContainer: {
-    padding: 20,
+    padding: widthPercentageToDP("8%"),
     alignItems: "center",
     justifyContent: "center",
   },
-  backButton: {
-    alignSelf: "flex-start",
-    marginVertical: 20,
+  titleText: {
+    fontSize: widthPercentageToDP("5%"),
+    fontWeight: "bold",
+    marginBottom: heightPercentageToDP("2%"),
   },
-  backButtonText: {
-    color: "#0782F9",
-    fontSize: 16,
+  labelText: {
+    fontSize: widthPercentageToDP("3.5%"),
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: heightPercentageToDP("1%"),
   },
+
   inputContainer: {
-    width: "90%",
+    width: widthPercentageToDP(isTablet ? "50%" : "82%"),
   },
   input: {
     backgroundColor: "white",
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingHorizontal: widthPercentageToDP("3.5%"),
+    paddingVertical: heightPercentageToDP("1.5%"),
     borderRadius: 10,
-    marginVertical: 10,
-    fontSize: 18,
+    marginVertical: heightPercentageToDP("1%"),
+    fontSize: widthPercentageToDP("3.5%"),
     width: "100%",
   },
   button: {
-    backgroundColor: "#0782F9",
-    padding: 15,
+    backgroundColor: "#76453B",
+    padding: heightPercentageToDP("2%"),
     borderRadius: 10,
     alignItems: "center",
-    marginTop: 20,
-    width: "100%",
+    marginTop: heightPercentageToDP("1.5%"),
   },
   buttonText: {
     color: "white",
-    fontSize: 18,
+    fontSize: widthPercentageToDP("3.5%"),
     fontWeight: "700",
   },
   genderContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginVertical: 10,
+    marginVertical: heightPercentageToDP("1%"),
   },
   genderButton: {
-    padding: 10,
+    padding: widthPercentageToDP("2.5%"), // Smaller padding
     borderRadius: 5,
-    marginHorizontal: 10,
+    marginHorizontal: widthPercentageToDP("1%"), // Smaller margin
   },
   genderText: {
-    fontSize: 18,
+    fontSize: widthPercentageToDP("3.5%"), // Smaller font size
   },
   genderButtonSelected: {
     backgroundColor: "#0782F9",
@@ -285,27 +290,27 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: "white",
-    padding: 20,
+    padding: widthPercentageToDP("3.5%"),
     alignItems: "center",
   },
   picker: {
     width: "100%",
-    height: 150,
+    height: heightPercentageToDP(isTablet ? "12%" : "15%"),
   },
   modalButton: {
     backgroundColor: "#0782F9",
-    marginTop: 10,
-    padding: 10,
+    marginTop: heightPercentageToDP("1.5%"),
+    padding: widthPercentageToDP("2.5%"),
     borderRadius: 5,
     width: "100%",
     alignItems: "center",
   },
   modalButtonText: {
     color: "white",
-    fontSize: 16,
+    fontSize: widthPercentageToDP("3.5%"),
   },
   inputText: {
-    fontSize: 16,
+    fontSize: widthPercentageToDP("3%"),
   },
 });
 

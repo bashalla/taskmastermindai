@@ -8,7 +8,17 @@ import {
   RefreshControl,
 } from "react-native";
 import { auth, db } from "../firebase";
-import { doc, getDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  setDoc,
+  increment,
+} from "firebase/firestore";
 import { useFocusEffect } from "@react-navigation/native";
 
 const userTypes = [
@@ -55,51 +65,178 @@ function RewardsScreen() {
   const [userType, setUserType] = useState("");
   const [earnedBadge, setEarnedBadge] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [monthlyTaskCount, setMonthlyTaskCount] = useState(0);
+  const [monthlyRewardAwarded, setMonthlyRewardAwarded] = useState(false);
+  const [monthlyRewardsHistory, setMonthlyRewardsHistory] = useState([]);
 
-  // Fetch user data from Firestore
   const fetchUserData = async () => {
     setIsRefreshing(true);
+    const userRef = doc(db, "users", auth.currentUser.uid);
     try {
-      const userRef = doc(db, "users", auth.currentUser.uid);
-      const docSnap = await getDoc(userRef);
-
-      // Update the state variables
-      if (docSnap.exists()) {
-        const userData = docSnap.data();
-        setUserPoints(userData.points);
-        setUserName(userData.firstName);
+      const userDoc = await getDoc(userRef);
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        setUserPoints(userData.points || 0);
+        setUserName(userData.name || "");
         setUserType(getUserType(userData.points));
         setEarnedBadge(getEarnedBadge(userData.points));
-      } else {
-        console.log("No such document!");
+        await fetchMonthlyTaskCount();
+        await fetchMonthlyRewardsHistory();
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
     } finally {
-      setIsRefreshing(false); // End the refresh animation
+      setIsRefreshing(false);
     }
   };
 
-  // Fetch user data when the screen loads
-  useEffect(() => {
-    fetchUserData();
-  }, []);
-
-  // Fetch user data when the screen is focused
-  const getUserType = (points) => {
-    const type = userTypes.find(
-      (type) => points >= type.minPoints && points <= type.maxPoints
+  const fetchMonthlyTaskCount = async () => {
+    const currentYearMonth = new Date().toISOString().slice(0, 7);
+    const monthlyCompRef = doc(
+      db,
+      "monthlyCompetition",
+      `${auth.currentUser.uid}_${currentYearMonth}`
     );
-    return type ? type.name : "Unknown";
+
+    const monthlyCompDoc = await getDoc(monthlyCompRef);
+
+    // Check if a document for the current month exists
+    if (!monthlyCompDoc.exists()) {
+      // No document for the current month, create a new one and reset states
+      await setDoc(monthlyCompRef, {
+        userId: auth.currentUser.uid,
+        taskCount: 0,
+        rewardAwarded: false,
+        yearMonth: currentYearMonth,
+      });
+      setMonthlyTaskCount(0);
+      setMonthlyRewardAwarded(false);
+    } else {
+      // Document for the current month exists, continue with normal operation
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1); // First day of the current month
+      startOfMonth.setHours(0, 0, 0, 0); // Start of the day
+
+      const endOfMonth = new Date(
+        startOfMonth.getFullYear(),
+        startOfMonth.getMonth() + 1,
+        0,
+        23,
+        59,
+        59,
+        999
+      ); // Last moment of the current month
+
+      const tasksRef = collection(db, "tasks");
+      const q = query(
+        tasksRef,
+        where("userId", "==", auth.currentUser.uid),
+        where("isCompleted", "==", true),
+        where("pointsAwarded", "==", true),
+        where("completedDate", ">=", startOfMonth.toISOString()),
+        where("completedDate", "<=", endOfMonth.toISOString())
+      );
+
+      const querySnapshot = await getDocs(q);
+      const monthlyTaskCount = querySnapshot.docs.length;
+      setMonthlyTaskCount(monthlyTaskCount); // Update state with the count
+
+      if (monthlyTaskCount >= 10 && !monthlyCompDoc.data().rewardAwarded) {
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const newPoints = (userData.points || 0) + 100;
+          await updateDoc(userRef, { points: newPoints });
+
+          await updateDoc(monthlyCompRef, {
+            userId: auth.currentUser.uid,
+            taskCount: monthlyTaskCount,
+            rewardAwarded: true,
+            yearMonth: currentYearMonth, // Storing the year and month in the document
+          });
+
+          setUserPoints(newPoints);
+          setMonthlyRewardAwarded(true);
+        }
+      }
+    }
   };
 
-  // Getting the earned badge based on the users points
+  const fetchMonthlyRewardsHistory = async () => {
+    const rewardsRef = collection(db, "monthlyCompetition");
+    const q = query(
+      rewardsRef,
+      where("userId", "==", auth.currentUser.uid),
+      where("rewardAwarded", "==", true)
+    );
+
+    try {
+      const querySnapshot = await getDocs(q);
+      const rewardsHistory = [];
+      querySnapshot.forEach((doc) => {
+        const monthYear = doc.id.split("_")[1];
+        rewardsHistory.push(monthYear);
+      });
+
+      console.log("Fetched Rewards History:", rewardsHistory);
+      setMonthlyRewardsHistory(rewardsHistory);
+    } catch (error) {
+      console.error("Error fetching monthly rewards history:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserData();
+    fetchMonthlyRewardsHistory();
+  }, []);
+
+  const fetchSuccessfulStreaks = async () => {
+    try {
+      const streaksRef = collection(db, "streaks");
+      const q = query(
+        streaksRef,
+        where("userId", "==", auth.currentUser.uid),
+        where("streakEnded", "==", true),
+        where("pointsGiven", "==", true)
+      );
+
+      const querySnapshot = await getDocs(q);
+      const streaks = [];
+      querySnapshot.forEach((doc) => {
+        streaks.push(doc.data());
+      });
+    } catch (error) {
+      console.error("Error fetching streak data:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserData();
+    fetchSuccessfulStreaks();
+  }, []);
+
   const getEarnedBadge = (points) => {
     return badges
       .slice()
       .reverse()
       .find((badge) => points >= badge.points);
   };
+
+  const CounterDisplay = ({ count }) => {
+    return (
+      <View style={styles.counterContainer}>
+        <Text style={styles.counterText}>{count}</Text>
+      </View>
+    );
+  };
+
+  function getUserType(points) {
+    const type = userTypes.find(
+      (type) => points >= type.minPoints && points <= type.maxPoints
+    );
+    return type ? type.name : "Unknown";
+  }
 
   return (
     <ScrollView
@@ -109,18 +246,17 @@ function RewardsScreen() {
       }
     >
       <Text style={styles.headerText}>Rewards Dashboard</Text>
-
       <Text style={styles.subHeaderText}>
         Your progress and achievements, {userName}
       </Text>
+
+      {/* Points and User Type */}
       <View style={styles.pointsContainer}>
         <Text style={styles.pointsText}>Points: {userPoints}</Text>
         <Text style={styles.userTypeText}>User Type: {userType}</Text>
       </View>
-      <Text style={styles.motivationalMessage}>
-        Finish more tasks on time to earn more points!
-      </Text>
 
+      {/* Earned Badge */}
       {earnedBadge && (
         <View style={styles.badgeContainer}>
           <Text style={styles.badgeText}>Earned Badge: {earnedBadge.name}</Text>
@@ -128,7 +264,36 @@ function RewardsScreen() {
         </View>
       )}
 
-      {/* Additional UI elements can be added here */}
+      {/* Separator Line and Monthly Competition Header */}
+      <View style={styles.separatorContainer}>
+        <View style={styles.separatorLine} />
+        <Text style={styles.competitionHeaderText}>Monthly Competition</Text>
+        <View style={styles.separatorLine} />
+      </View>
+
+      {/* Monthly Task Counter Display */}
+      <View style={styles.counterDisplayContainer}>
+        <CounterDisplay count={monthlyTaskCount} />
+        <Text style={styles.counterInfoText}>
+          {monthlyTaskCount >= 10
+            ? "Monthly goal achieved!"
+            : `${10 - monthlyTaskCount} tasks left for 100 points`}
+        </Text>
+      </View>
+
+      {/* Monthly Rewards History */}
+      <View style={styles.historyContainer}>
+        <Text style={styles.historyHeaderText}>Monthly Rewards History:</Text>
+        {monthlyRewardsHistory.length > 0 ? (
+          monthlyRewardsHistory.map((month, index) => (
+            <Text key={index} style={styles.historyMonthText}>
+              {month} - 100 Points Awarded
+            </Text>
+          ))
+        ) : (
+          <Text style={styles.historyEmptyText}>No Rewards Yet</Text>
+        )}
+      </View>
     </ScrollView>
   );
 }
@@ -168,13 +333,6 @@ const styles = StyleSheet.create({
     color: "#4CAF50",
     marginTop: 10,
   },
-  motivationalMessage: {
-    fontSize: 16,
-    color: "#444",
-    textAlign: "center",
-    marginTop: 20,
-    marginBottom: 20,
-  },
   badgeContainer: {
     alignItems: "center",
     marginVertical: 20,
@@ -188,6 +346,84 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     resizeMode: "contain",
+  },
+  monthlyTaskContainer: {
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  monthlyTaskText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  rewardText: {
+    fontSize: 16,
+    color: "#4CAF50",
+  },
+  historyContainer: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: "#f0f0f0",
+  },
+  historyHeaderText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 10,
+  },
+  historyMonthText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  historyEmptyText: {
+    fontSize: 16,
+    color: "#777",
+    textAlign: "center",
+  },
+  counterContainer: {
+    padding: 20,
+    backgroundColor: "#4CAF50",
+    borderRadius: 50,
+    width: 150,
+    height: 150,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  counterText: {
+    fontSize: 40,
+    color: "white",
+    fontWeight: "bold",
+  },
+  counterDisplayContainer: {
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  counterInfoText: {
+    fontSize: 16,
+    color: "#555",
+    marginTop: 10,
+    textAlign: "center",
+  },
+  separatorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  separatorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#ddd",
+  },
+  competitionHeaderText: {
+    marginHorizontal: 10,
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
   },
 });
 

@@ -73,7 +73,6 @@ const scheduleNotification = async (task) => {
 };
 
 // Function to check tasks due today and schedule notifications
-// Function to check tasks due today and schedule notifications
 export const checkTasksAndScheduleNotifications = async () => {
   try {
     const userId = auth.currentUser?.uid;

@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   RefreshControl,
   ActivityIndicator,
+  Dimensions,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { auth, db } from "../firebase";
@@ -31,6 +32,14 @@ import {
   checkTasksAndScheduleNotifications,
 } from "./notifications.js";
 
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
+
+const screenWidth = Dimensions.get("window").width;
+const isTablet = screenWidth > 768;
+
 // This component will be used to display the user's tasks due today
 function HomeScreen({ navigation }) {
   const [userName, setUserName] = useState("");
@@ -40,6 +49,7 @@ function HomeScreen({ navigation }) {
   const [completedTasks, setCompletedTasks] = useState({});
   const [suggestions, setSuggestions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isNight, setIsNight] = useState(false);
 
   const fetchCategories = async () => {
     const categoriesRef = collection(db, "categories");
@@ -52,6 +62,11 @@ function HomeScreen({ navigation }) {
   };
 
   useEffect(() => {
+    const updateDayOrNight = () => {
+      const currentHour = new Date().getHours();
+      setIsNight(currentHour < 6 || currentHour >= 18); // Example: Night is considered from 6 PM to 6 AM
+    };
+
     const initialize = async () => {
       try {
         await registerForPushNotificationsAsync(); // Register for push notifications
@@ -66,16 +81,24 @@ function HomeScreen({ navigation }) {
       }
     };
 
+    updateDayOrNight(); // Determine if it's currently day or night
     initialize();
+
+    // Optionally, set an interval to update day/night status every hour
+    const intervalId = setInterval(updateDayOrNight, 3600000); // Update every hour
 
     const unsubscribeFocusListener = navigation.addListener("focus", () => {
       // Perform actions when the screen is focused
+      updateDayOrNight(); // Update day/night status on screen focus
       fetchCategories();
       fetchUserInfo();
       fetchTasksDueToday();
     });
 
-    return unsubscribeFocusListener;
+    return () => {
+      clearInterval(intervalId); // Clear interval on component unmount
+      unsubscribeFocusListener(); // Remove focus listener
+    };
   }, [navigation]);
 
   // Custom header component
@@ -99,7 +122,7 @@ function HomeScreen({ navigation }) {
           style={[styles.headerIcon, styles.signOutButton]}
         >
           <Icon name="exit-to-app" size={40} color="#0782F9" />
-          <Text style={styles.invisibleText}>Sign Out</Text>
+          <Text style={styles.invisibleText}></Text>
         </TouchableOpacity>
       </View>
     );
@@ -124,7 +147,7 @@ function HomeScreen({ navigation }) {
   // Fetch weather data from OpenWeather API
   const fetchWeather = async (latitude, longitude) => {
     try {
-      const apiKey = OPEN_WEATHER; // Use your OpenWeather API key
+      const apiKey = OPEN_WEATHER;
       const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&appid=${apiKey}`;
 
       console.log("Fetching weather from: ", url);
@@ -216,18 +239,17 @@ function HomeScreen({ navigation }) {
   const getWeatherIconName = (description) => {
     switch (description.toLowerCase()) {
       case "clear sky":
-        return "wb-sunny";
+        return isNight ? "nightlight-round" : "wb-sunny";
       case "scattered clouds":
       case "broken clouds":
       case "overcast clouds":
       case "few clouds":
-        return "wb-cloudy";
+        return isNight ? "nights-stay" : "wb-cloudy";
       case "shower rain":
       case "light intensity shower rain":
-      case "shower rain":
+      case "rain":
       case "heavy intensity shower rain":
       case "ragged shower rain":
-      case "rain":
       case "light rain":
       case "moderate rain":
       case "heavy intensity rain":
@@ -255,9 +277,8 @@ function HomeScreen({ navigation }) {
       case "squalls":
       case "tornado":
         return "visibility";
-      // ... include any other conditions
       default:
-        return "wb-cloudy"; // Default icon for unknown conditions
+        return "wb-cloudy";
     }
   };
 
@@ -455,6 +476,109 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#E8EAED",
+    paddingTop: Platform.OS === "android" ? 25 : 0, // Adjust for Android status bar
+  },
+  headerText: {
+    fontSize: isTablet ? wp("6%") : wp("7%"),
+    fontWeight: "bold",
+    fontFamily: Platform.OS === "ios" ? "Arial" : "Roboto",
+    textAlign: "center",
+    padding: hp("2%"),
+    color: "#637E76", // Deep shade of blue
+    letterSpacing: 0.5,
+    marginBottom: hp("2%"), // Added spacing below the header text
+  },
+  dateText: {
+    fontSize: isTablet ? wp("4%") : wp("5%"),
+    fontWeight: "600", // Semi-bold
+    textAlign: "center",
+    color: "#C69774", // Dark gray-blue
+    marginBottom: hp("1%"),
+  },
+  subHeaderText: {
+    fontSize: isTablet ? wp("4%") : wp("5%"),
+    fontWeight: "500", // Medium font weight
+    textAlign: "center",
+    color: "#34495E", // Dark gray-blue
+    paddingBottom: hp("2%"),
+    borderBottomWidth: 1,
+    borderBottomColor: "#95A5A6", // Light gray underline for a subtle divider
+    marginHorizontal: wp("10%"), // Adding horizontal margins for better focus on text
+  },
+  customHeader: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    padding: hp("1%"),
+    paddingTop: hp("2%"),
+  },
+  headerIcon: {
+    marginLeft: wp("4%"),
+  },
+  signOutButton: {
+    marginTop: hp("1.2%"),
+    marginRight: wp("4%"),
+  },
+  taskItem: {
+    backgroundColor: "#AFC8AD",
+    padding: wp("4%"),
+    marginVertical: hp("1%"),
+    marginHorizontal: wp("4%"),
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  overdueTaskItem: {
+    backgroundColor: "#FFE0E0",
+    padding: wp("4%"),
+    marginVertical: hp("1%"),
+    marginHorizontal: wp("4%"),
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  taskText: {
+    fontSize: isTablet ? wp("3%") : wp("4%"),
+    marginLeft: wp("2%"),
+    flex: 1,
+  },
+  overdueText: {
+    fontSize: isTablet ? wp("2.5%") : wp("3.5%"),
+    fontWeight: "bold",
+    color: "#D32F2F",
+  },
+  categoryCircle: {
+    width: isTablet ? wp("2%") : wp("3%"),
+    height: isTablet ? wp("2%") : wp("3%"),
+    borderRadius: isTablet ? wp("1%") : wp("1.5%"),
+    marginRight: wp("2%"),
+  },
+  completeButton: {
+    padding: wp("2%"),
+    borderRadius: 5,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addButton: {
+    position: "absolute",
+    right: wp("5%"),
+    bottom: hp("5%"),
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+  lampButton: {
+    position: "absolute",
+    left: wp("5%"),
+    top: isTablet ? hp("5") : hp("10%"),
+  },
+  suggestionText: {
+    fontSize: isTablet ? wp("3%") : wp("4%"),
+    color: "#333",
+    padding: wp("2%"),
   },
   noTasksContainer: {
     flex: 1,
@@ -463,113 +587,32 @@ const styles = StyleSheet.create({
     marginTop: 50,
   },
   noTasksText: {
-    fontSize: 20,
+    fontSize: isTablet ? wp("3%") : wp("4%"),
     color: "#333",
   },
-  headerText: {
-    fontSize: 28,
-    fontWeight: "bold",
-    textAlign: "center",
-    padding: 20,
-    color: "#333",
-  },
-  invisibleText: {
-    height: 0,
-    width: 0,
-    opacity: 0,
-  },
-  dateText: {
-    marginBottom: 10,
-    fontSize: 18,
-    fontWeight: "bold",
-    textAlign: "center",
-    color: "#555",
-  },
-  subHeaderText: {
-    fontSize: 22,
-    fontWeight: "bold",
-    textAlign: "center",
-    color: "#444",
-    paddingBottom: 10,
-  },
-  taskItem: {
-    backgroundColor: "#FFFFFF",
-    padding: 20,
-    marginVertical: 8,
-    marginHorizontal: 16,
-    borderRadius: 10,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  overdueTaskItem: {
-    backgroundColor: "#FFE0E0",
-    padding: 20,
-    marginVertical: 8,
-    marginHorizontal: 16,
-    borderRadius: 10,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  taskText: {
-    fontSize: 18,
-    marginLeft: 10,
+  modalContainer: {
     flex: 1,
-  },
-  overdueText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#D32F2F",
-  },
-  customHeader: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    padding: 10,
-    paddingTop: 20,
-  },
-  headerIcon: {
-    marginLeft: 15, // Add space between icons
-  },
-  signOutButton: {
-    marginRight: 15,
-  },
-  categoryCircle: {
-    width: 15,
-    height: 15,
-    borderRadius: 7.5,
-    marginRight: 10,
-  },
-  completeButton: {
-    padding: 8,
-    borderRadius: 5,
     justifyContent: "center",
     alignItems: "center",
   },
-  completeButtonText: {
+  modalContent: {
+    backgroundColor: "white",
+    padding: wp("4%"),
+    borderRadius: 10,
+  },
+  picker: {
+    width: "100%",
+    height: hp("15%"),
+  },
+  modalButton: {
+    backgroundColor: "#0782F9",
+    padding: wp("4%"),
+    borderRadius: 10,
+    marginTop: hp("2%"),
+  },
+  modalButtonText: {
     color: "white",
-    fontWeight: "bold",
-  },
-  addButton: {
-    position: "absolute",
-    right: 20,
-    bottom: 20,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#fff", // or any other background color you prefer
-  },
-  lampButton: {
-    position: "absolute",
-    left: 20, // Position the lamp icon on the left side
-    top: 20,
-    marginTop: 60,
-  },
-  suggestionText: {
-    fontSize: 16,
-    color: "#333",
-    padding: 10,
+    fontSize: isTablet ? wp("3%") : wp("4%"),
   },
 });
 

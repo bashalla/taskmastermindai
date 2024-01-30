@@ -9,6 +9,7 @@ import {
   Alert,
   RefreshControl,
   Platform,
+  Dimensions,
 } from "react-native";
 import {
   collection,
@@ -25,11 +26,16 @@ import { useFocusEffect } from "@react-navigation/native";
 import { auth, db } from "../firebase";
 import * as Calendar from "expo-calendar";
 
+const screenWidth = Dimensions.get("window").width;
+const isTablet = screenWidth > 768; // Common breakpoint for tablet devices
+
 const TaskScreen = ({ navigation, route }) => {
   const { categoryId, categoryName } = route.params;
   const [tasks, setTasks] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [needsRefresh, setNeedsRefresh] = useState(false);
+  const [hasOpenTasks, setHasOpenTasks] = useState(false);
+  const [hasDoneTasks, setHasDoneTasks] = useState(false);
 
   const fetchTasks = async () => {
     setRefreshing(true);
@@ -37,13 +43,40 @@ const TaskScreen = ({ navigation, route }) => {
       const tasksRef = collection(db, "tasks");
       const q = query(tasksRef, where("categoryId", "==", categoryId));
       const querySnapshot = await getDocs(q);
-      const fetchedTasks = [];
+
+      const overdueTasks = [];
+      const onTimeTasks = [];
+      const completedTasks = [];
       querySnapshot.forEach((doc) => {
         const task = { ...doc.data(), id: doc.id };
-        task.isOverdue = new Date() > new Date(task.deadline);
-        fetchedTasks.push(task);
+        const deadlineDate = new Date(task.deadline);
+        const currentDate = new Date();
+
+        task.isOverdue = currentDate > deadlineDate && !task.isCompleted;
+        task.isOnTime = currentDate <= deadlineDate && !task.isCompleted;
+
+        if (task.isOverdue) {
+          overdueTasks.push(task);
+        } else if (task.isCompleted) {
+          completedTasks.push(task);
+        } else if (task.isOnTime) {
+          onTimeTasks.push(task);
+        }
       });
-      setTasks(fetchedTasks);
+
+      // Update state to indicate if there are open or done tasks
+      setHasOpenTasks(overdueTasks.length > 0 || onTimeTasks.length > 0);
+      setHasDoneTasks(completedTasks.length > 0);
+
+      // Concatenate the arrays: first overdue, then on-time, then completed
+      const sortedTasks = [...overdueTasks, ...onTimeTasks];
+
+      if (completedTasks.length > 0) {
+        sortedTasks.push({ isHeadline: true, title: "Done Tasks" });
+        sortedTasks.push(...completedTasks);
+      }
+
+      setTasks(sortedTasks);
     } catch (error) {
       console.error("Error fetching tasks: ", error);
       Alert.alert("Error", "Unable to fetch tasks.");
@@ -271,63 +304,79 @@ const TaskScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Tasks for {categoryName}</Text>
+      <Text style={styles.title}>Open Tasks for {categoryName}</Text>
       <FlatList
         data={tasks}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.taskItemContainer}>
-            <View style={styles.taskItem}>
-              <TouchableOpacity
-                style={styles.taskDetails}
-                onPress={() => navigateToTaskDetail(item)}
-              >
-                <Text style={styles.taskName}>{item.name}</Text>
-                <Text
-                  style={
-                    item.isCompleted
-                      ? styles.done
-                      : item.isOverdue
-                      ? styles.overdue
-                      : null
-                  }
+        keyExtractor={(item, index) => item.id || `item-${index}`}
+        renderItem={({ item }) => {
+          if (item.isHeadline) {
+            return <Text style={styles.headline}>{item.title}</Text>;
+          }
+
+          let textStyle;
+          if (item.isCompleted) {
+            textStyle = styles.done;
+          } else if (item.isOverdue) {
+            textStyle = styles.overdue;
+          } else {
+            textStyle = styles.onTimeText; // On Time task style
+          }
+
+          let backgroundColor = item.isCompleted
+            ? "#A9A9A9" // Background for completed tasks
+            : item.isOverdue
+            ? "#EC8F5E" // Background for overdue tasks
+            : "#9BBEC8"; // Background for on-time tasks
+
+          return (
+            <View style={styles.taskItemContainer}>
+              <View style={[styles.taskItem, { backgroundColor }]}>
+                <TouchableOpacity
+                  style={styles.taskDetails}
+                  onPress={() => navigateToTaskDetail(item)}
                 >
-                  {item.isCompleted
-                    ? "Done"
-                    : item.isOverdue
-                    ? "Overdue"
-                    : "On Time"}
-                </Text>
-              </TouchableOpacity>
-              <View style={styles.taskActions}>
-                {item.isCompleted ? (
-                  <Icon name="done" size={20} color="green" />
-                ) : (
-                  <>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => markTaskAsDone(item)}
-                    >
-                      <Text style={styles.completeTaskText}>Complete Task</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => deleteTask(item)}
-                    >
-                      <Icon name="delete" size={20} color="red" />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => addTaskToCalendar(item)}
-                    >
-                      <Icon name="calendar-today" size={20} color="blue" />
-                    </TouchableOpacity>
-                  </>
-                )}
+                  <Text style={styles.taskName}>{item.name}</Text>
+                  <Text style={textStyle}>
+                    {item.isCompleted
+                      ? "Done"
+                      : item.isOverdue
+                      ? "Overdue"
+                      : "On Time"}
+                  </Text>
+                </TouchableOpacity>
+                <View style={styles.taskActions}>
+                  {item.isCompleted ? (
+                    <Icon name="done" size={20} color="green" />
+                  ) : (
+                    <>
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => markTaskAsDone(item)}
+                      >
+                        <Icon name="check-circle" size={30} color="#A2FF86" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => deleteTask(item)}
+                      >
+                        <Icon name="delete" size={30} color="#820300" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => addTaskToCalendar(item)}
+                      >
+                        <Icon name="calendar-today" size={30} color="#232D3F" />
+                      </TouchableOpacity>
+                    </>
+                  )}
+                </View>
               </View>
             </View>
-          </View>
-        )}
+          );
+        }}
+        ListEmptyComponent={
+          !hasOpenTasks && <Text style={styles.noTasksText}>No tasks</Text>
+        }
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={fetchTasks} />
         }
@@ -338,12 +387,6 @@ const TaskScreen = ({ navigation, route }) => {
       >
         <Text style={styles.addButtonIcon}>+</Text>
       </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
-      >
-        <Text style={styles.backButtonText}>Back to Categories</Text>
-      </TouchableOpacity>
     </SafeAreaView>
   );
 };
@@ -351,26 +394,27 @@ const TaskScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#F8FAE5",
     padding: 10,
   },
   title: {
-    fontSize: 24,
+    fontSize: isTablet ? 28 : 24,
     fontWeight: "bold",
-    marginTop: 20,
-    marginBottom: 20,
+    marginTop: isTablet ? 30 : 20,
+    marginBottom: isTablet ? 30 : 20,
+    marginLeft: 10,
   },
   taskList: {
     flex: 1,
   },
   taskItemContainer: {
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
+    paddingVertical: isTablet ? 15 : 10,
+    borderBottomWidth: 0,
+    borderBottomColor: "#6B240C",
   },
   taskItem: {
-    backgroundColor: "#f0f0f0",
-    padding: 15,
+    backgroundColor: "#C9D7DD",
+    padding: isTablet ? 20 : 15,
     borderRadius: 10,
     flexDirection: "row",
     alignItems: "center",
@@ -379,60 +423,75 @@ const styles = StyleSheet.create({
   taskDetails: {
     flex: 1,
   },
+  headline: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginTop: 80,
+    marginLeft: 10,
+  },
   taskName: {
-    fontSize: 16,
+    fontSize: isTablet ? 18 : 16,
     fontWeight: "bold",
     color: "#333333",
+  },
+  onTimeText: {
+    color: "green", // Color for On Time text
+    marginLeft: 5,
+    marginTop: 2,
+    fontSize: isTablet ? 16 : 14,
   },
   overdue: {
     color: "red",
     marginLeft: 5,
+    fontSize: isTablet ? 16 : 14,
   },
   done: {
-    color: "green",
+    color: "#0C356A",
     marginLeft: 5,
+    fontSize: isTablet ? 16 : 14,
   },
   taskActions: {
     flexDirection: "row",
     alignItems: "center",
   },
   actionButton: {
-    marginLeft: 10,
+    marginLeft: isTablet ? 15 : 10,
+    padding: isTablet ? 10 : 8,
   },
   completeTaskText: {
-    color: "#0782F9",
-    marginRight: 10,
+    color: "#739072",
+    marginRight: isTablet ? 15 : 10,
+    fontSize: isTablet ? 16 : 15,
   },
   addButton: {
     backgroundColor: "#0782F9",
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: isTablet ? 80 : 70,
+    height: isTablet ? 80 : 70,
+    borderRadius: isTablet ? 40 : 35,
     alignItems: "center",
     justifyContent: "center",
     position: "absolute",
     bottom: 50,
-    right: 50,
+    right: 25,
   },
-
   addButtonIcon: {
     color: "white",
-    fontSize: 24,
+    fontSize: isTablet ? 30 : 24,
   },
-  backButton: {
-    backgroundColor: "#d9534f",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    position: "absolute",
-    bottom: 90,
-    left: 20,
+  taskItemOverdue: {
+    backgroundColor: "red",
   },
-  backButtonText: {
-    color: "white",
-    fontSize: 16,
+  taskItemOnTime: {
+    backgroundColor: "blue",
+  },
+  taskItemDone: {
+    backgroundColor: "green",
+  },
+  noTasksText: {
+    textAlign: "center",
+    fontSize: 18,
+    marginTop: 20,
+    color: "#666",
   },
 });
 
