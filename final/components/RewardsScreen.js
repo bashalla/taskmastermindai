@@ -175,11 +175,11 @@ function RewardsScreen() {
       const querySnapshot = await getDocs(q);
       const rewardsHistory = [];
       querySnapshot.forEach((doc) => {
-        const monthYear = doc.id.split("_")[1]; // Assuming ID format is "userId_YYYY-MM"
+        const monthYear = doc.id.split("_")[1];
         rewardsHistory.push(monthYear);
       });
 
-      console.log("Fetched Rewards History:", rewardsHistory); // For debugging
+      console.log("Fetched Rewards History:", rewardsHistory);
       setMonthlyRewardsHistory(rewardsHistory);
     } catch (error) {
       console.error("Error fetching monthly rewards history:", error);
@@ -213,7 +213,7 @@ function RewardsScreen() {
 
   useEffect(() => {
     fetchUserData();
-    fetchSuccessfulStreaks(); // Fetch successful streaks on component mount
+    fetchSuccessfulStreaks();
   }, []);
 
   const getEarnedBadge = (points) => {

@@ -221,7 +221,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
   const navigateToTaskDetail = (item) => {
     navigation.navigate("TaskDetailScreen", {
       task: item,
-      onTaskUpdate: fetchTasks, // where fetchTasks is your function to refresh the task list
+      onTaskUpdate: fetchTasks,
     });
   };
 
@@ -378,12 +378,12 @@ const styles = StyleSheet.create({
   },
   centeredView: {
     alignItems: "center",
-    justifyContent: "center", // Add this line if it's not already there
+    justifyContent: "center",
     marginVertical: 15,
   },
   iconButton: {
-    alignItems: "center", // Center the icon vertically in the button
-    justifyContent: "center", // Center the icon horizontally in the button
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 10,
   },
   input: {
@@ -400,21 +400,18 @@ const styles = StyleSheet.create({
   documentRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between", // Adjust for spacing
+    justifyContent: "space-between",
     marginBottom: 5,
-    padding: 5, // Add padding for better touch area
-    // ... [Other styling as needed]
+    padding: 5,
   },
   deleteIcon: {
     marginLeft: 10,
-    // Add more styling as needed
   },
   deleteText: {
     color: "red",
     fontWeight: "bold",
-    fontSize: 20, // Increase font size
-    paddingHorizontal: 10, // Add horizontal padding for easier touch
-    // ... [Other styling as needed]
+    fontSize: 20,
+    paddingHorizontal: 10,
   },
   button: {
     flexDirection: "row",
@@ -452,23 +449,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   mapContainer: {
-    height: 300, // Adjust the height as needed
+    height: 300,
     width: "100%",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 10, // Reduce the margin
+    marginBottom: 10,
   },
   map: {
     ...StyleSheet.absoluteFillObject,
   },
   textInputContainer: {
     backgroundColor: "grey",
-    marginBottom: 10, // Reduce the margin
+    marginBottom: 10,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10, // Reduce the margin
+    marginBottom: 10,
   },
 });
 

@@ -12,7 +12,7 @@ import {
   Vibration,
   Dimensions,
 } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons"; // Import Material Icons or any other icon library
+import { MaterialIcons } from "@expo/vector-icons";
 import { auth, db } from "../firebase";
 import {
   collection,

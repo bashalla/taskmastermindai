@@ -147,7 +147,7 @@ function HomeScreen({ navigation }) {
   // Fetch weather data from OpenWeather API
   const fetchWeather = async (latitude, longitude) => {
     try {
-      const apiKey = OPEN_WEATHER; // Use your OpenWeather API key
+      const apiKey = OPEN_WEATHER;
       const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&appid=${apiKey}`;
 
       console.log("Fetching weather from: ", url);

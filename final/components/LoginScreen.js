@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     fontSize: isTablet ? wp("3.5%") : wp("4%"),
   },
   googleIcon: {
-    marginRight: isTablet ? wp("2%") : wp("3%"), // Add some spacing between the icon and text
+    marginRight: isTablet ? wp("2%") : wp("3%"),
   },
 });
 

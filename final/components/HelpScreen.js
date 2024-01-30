@@ -77,38 +77,37 @@ const HelpScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: wp("3%"), // Use wp for horizontal padding
+    padding: wp("3%"),
     backgroundColor: "#F8FAE5",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: hp("2%"), // Use hp for vertical margin
+    marginBottom: hp("2%"),
   },
   headerText: {
-    fontSize: hp("2.5%"), // Use hp for font size
+    fontSize: hp("2.5%"),
     fontWeight: "bold",
-    marginLeft: wp("1%"), // Use wp for horizontal margin
-    marginTop: hp("2%"), // Use hp for vertical margin
+    marginLeft: wp("1%"),
+    marginTop: hp("2%"),
   },
   section: {
-    marginBottom: hp("2%"), // Use hp for vertical margin
+    marginBottom: hp("2%"),
     marginTop: hp("2%"),
   },
   sectionTitle: {
-    fontSize: hp("2%"), // Use hp for font size
+    fontSize: hp("2%"),
     fontWeight: "bold",
-    marginTop: hp("0.5%"), // Use hp for vertical margin
-    marginBottom: hp("0.25%"), // Use hp for vertical margin
+    marginTop: hp("0.5%"),
+    marginBottom: hp("0.25%"),
   },
   sectionContent: {
-    fontSize: hp("1.75%"), // Use hp for font size
+    fontSize: hp("1.75%"),
   },
   emailLink: {
     color: "#0782F9",
     textDecorationLine: "underline",
   },
-  // ... additional styles
 });
 
 export default HelpScreen;

@@ -245,28 +245,27 @@ const styles = StyleSheet.create({
   },
 
   inputContainer: {
-    width: widthPercentageToDP(isTablet ? "50%" : "82%"), // Adjusted width for tablet
+    width: widthPercentageToDP(isTablet ? "50%" : "82%"),
   },
   input: {
     backgroundColor: "white",
-    paddingHorizontal: widthPercentageToDP("3.5%"), // Smaller padding
-    paddingVertical: heightPercentageToDP("1.5%"), // Smaller padding
+    paddingHorizontal: widthPercentageToDP("3.5%"),
+    paddingVertical: heightPercentageToDP("1.5%"),
     borderRadius: 10,
     marginVertical: heightPercentageToDP("1%"),
-    fontSize: widthPercentageToDP("3.5%"), // Smaller font size
+    fontSize: widthPercentageToDP("3.5%"),
     width: "100%",
   },
   button: {
-    backgroundColor: "#76453B", // A nice shade of green
-    padding: heightPercentageToDP("2%"), // Smaller padding
+    backgroundColor: "#76453B",
+    padding: heightPercentageToDP("2%"),
     borderRadius: 10,
     alignItems: "center",
-    marginTop: heightPercentageToDP("1.5%"), // Smaller margin
-    width: "100%",
+    marginTop: heightPercentageToDP("1.5%"),
   },
   buttonText: {
     color: "white",
-    fontSize: widthPercentageToDP("3.5%"), // Smaller font size
+    fontSize: widthPercentageToDP("3.5%"),
     fontWeight: "700",
   },
   genderContainer: {
@@ -291,27 +290,27 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: "white",
-    padding: widthPercentageToDP("3.5%"), // Smaller padding
+    padding: widthPercentageToDP("3.5%"),
     alignItems: "center",
   },
   picker: {
     width: "100%",
-    height: heightPercentageToDP(isTablet ? "12%" : "15%"), // Further reduced height for tablet
+    height: heightPercentageToDP(isTablet ? "12%" : "15%"),
   },
   modalButton: {
     backgroundColor: "#0782F9",
-    marginTop: heightPercentageToDP("1.5%"), // Smaller margin
-    padding: widthPercentageToDP("2.5%"), // Smaller padding
+    marginTop: heightPercentageToDP("1.5%"),
+    padding: widthPercentageToDP("2.5%"),
     borderRadius: 5,
     width: "100%",
     alignItems: "center",
   },
   modalButtonText: {
     color: "white",
-    fontSize: widthPercentageToDP("3.5%"), // Smaller font size
+    fontSize: widthPercentageToDP("3.5%"),
   },
   inputText: {
-    fontSize: widthPercentageToDP("3%"), // Smaller font size
+    fontSize: widthPercentageToDP("3%"),
   },
 });
 
