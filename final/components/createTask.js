@@ -219,8 +219,8 @@ const CreateTask = ({ navigation, route }) => {
       59,
       999
     );
-    setDeadline(endOfDay); // Updating here the actual deadline
-    setShowDatePicker(false); // Closing the date picker
+    setDeadline(endOfDay);
+    setShowDatePicker(false);
   };
 
   const handleCancel = () => {
@@ -255,10 +255,8 @@ const CreateTask = ({ navigation, route }) => {
           placeholder="Task Name"
           value={taskName}
           onChangeText={setTaskName}
-          onSubmitEditing={() => {
-            /* Handle the submit action, e.g., close keyboard */
-          }}
-          returnKeyType="done" // for iOS to show "Done" instead of "return"
+          onSubmitEditing={() => {}}
+          returnKeyType="done"
         />
       </View>
 
@@ -273,11 +271,10 @@ const CreateTask = ({ navigation, route }) => {
           onChangeText={setDescription}
           onKeyPress={({ nativeEvent }) => {
             if (nativeEvent.key === "Enter") {
-              // Add a new line on pressing Enter
               setDescription(description + "\n");
             }
           }}
-          blurOnSubmit={false} // Set this to false to avoid closing the keyboard on Enter
+          blurOnSubmit={false}
         />
       </View>
 
@@ -288,7 +285,7 @@ const CreateTask = ({ navigation, route }) => {
           style={styles.iconButton}
           onPress={() => setShowDatePicker(true)}
         >
-          <Icon name="calendar-today" size={30} color="#0782F9" />
+          <Icon name="calendar-today" size={50} color="#0782F9" />
         </TouchableOpacity>
 
         {showDatePicker && (
@@ -296,7 +293,7 @@ const CreateTask = ({ navigation, route }) => {
             value={deadline}
             mode="date"
             display="default"
-            minimumDate={new Date()} // Set the minimum date to the current date
+            minimumDate={new Date()}
             onChange={(event, selectedDate) => {
               setShowDatePicker(Platform.OS === "ios");
               if (
@@ -315,7 +312,6 @@ const CreateTask = ({ navigation, route }) => {
         placeholder="Search for places"
         fetchDetails={true}
         onPress={(data, details = null) => {
-          // 'details provided when fetchDetails is true
           setRegion({
             latitude: details.geometry.location.lat,
             longitude: details.geometry.location.lng,
@@ -328,6 +324,19 @@ const CreateTask = ({ navigation, route }) => {
           language: "en",
         }}
         styles={{
+          container: {
+            position: "absolute",
+            top: isTablet ? 450 : 360,
+            width: "100%",
+            zIndex: 5,
+          },
+          textInputContainer: {
+            flexDirection: "row",
+            backgroundColor: "rgba(255, 255, 255, 0.9)", // Semi-transparent background
+            borderRadius: 20,
+            padding: 5,
+            paddingLeft: 10,
+          },
           textInput: {
             height: 38,
             color: "#5d5d5d",
@@ -338,26 +347,21 @@ const CreateTask = ({ navigation, route }) => {
           },
         }}
       />
-
-      {/* Map View */}
       <View style={styles.mapContainer}>
-        {region && (
-          <MapView
-            style={styles.map}
-            region={region}
-            onRegionChangeComplete={setRegion}
-            showsUserLocation={true}
-          >
-            <Marker coordinate={region} />
-          </MapView>
-        )}
+        <MapView
+          style={styles.map}
+          region={region}
+          onRegionChangeComplete={setRegion}
+          showsUserLocation={true}
+        >
+          <Marker coordinate={region} />
+        </MapView>
       </View>
 
       {/* Document Picker */}
       <TouchableOpacity style={styles.documentButton} onPress={selectDocument}>
         <Icon name="attach-file" style={styles.documentIcon} />
       </TouchableOpacity>
-
       <View style={styles.selectedDocumentContainer}>
         {documents.map((doc, index) => (
           <View key={index} style={styles.documentRow}>
@@ -369,7 +373,7 @@ const CreateTask = ({ navigation, route }) => {
         ))}
       </View>
 
-      {/* Save  Buttons */}
+      {/* Save  Button */}
       <TouchableOpacity style={styles.saveButton} onPress={handleSaveTask}>
         <Icon name="check" style={styles.saveIcon} />
       </TouchableOpacity>
@@ -425,7 +429,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   multilineInput: {
-    height: isTablet ? 120 : 80, // Reduced height for the description box
+    height: isTablet ? 120 : 80,
     textAlignVertical: "top",
   },
   button: {
@@ -446,13 +450,13 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   mapContainer: {
-    height: isTablet ? 450 : 150,
+    marginTop: 100,
+    height: isTablet ? 250 : 150,
+    width: "100%",
     borderRadius: 15,
-    overflow: "hidden",
   },
   map: {
     ...StyleSheet.absoluteFillObject,
-    marginBottom: 20,
   },
   selectedDocumentContainer: {
     alignItems: "center",
@@ -539,17 +543,23 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   googlePlacesAutocomplete: {
+    container: {
+      position: "absolute",
+      top: 0,
+      width: "100%",
+      zIndex: 10,
+    },
+    textInputContainer: {
+      flexDirection: "row",
+      backgroundColor: "rgba(255, 255, 255, 0.9)",
+      borderRadius: 20,
+      padding: 5,
+      paddingLeft: 10,
+    },
     textInput: {
       height: 38,
       color: "#5d5d5d",
       fontSize: 16,
-      backgroundColor: "transparent",
-      borderRadius: 30,
-    },
-    textInputContainer: {
-      backgroundColor: "transparent",
-      borderTopWidth: 0,
-      borderBottomWidth: 0,
     },
     predefinedPlacesDescription: {
       color: "#1faadb",
