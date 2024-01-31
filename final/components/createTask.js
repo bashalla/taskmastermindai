@@ -12,6 +12,7 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   ScrollView,
+  Modal,
 } from "react-native";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import {
@@ -40,12 +41,13 @@ const CreateTask = ({ navigation, route }) => {
   const [taskName, setTaskName] = useState("");
   const [description, setDescription] = useState("");
   const [deadline, setDeadline] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(true);
   const [documents, setDocuments] = useState([]);
   const [location, setLocation] = useState("");
   const [region, setRegion] = useState(null);
   const [selectedFileName, setSelectedFileName] = useState(""); // Added state for selected file name
   const [tempDate, setTempDate] = useState(new Date());
+  const [modalVisible, setModalVisible] = useState(false); // State for modal visibility
 
   // Function to upload documents to Firebase Storage
   const uploadDocumentsToFirebase = async (documents) => {
@@ -176,6 +178,11 @@ const CreateTask = ({ navigation, route }) => {
     }
   };
 
+  // Function to toggle the modal
+  const toggleModal = () => {
+    setModalVisible(!modalVisible);
+  };
+
   // Function to select documents
   const selectDocument = async () => {
     try {
@@ -285,7 +292,7 @@ const CreateTask = ({ navigation, route }) => {
           style={styles.iconButton}
           onPress={() => setShowDatePicker(true)}
         >
-          <Icon name="calendar-today" size={50} color="#0782F9" />
+          <Icon name="calendar-today" size={50} color="#9A031E" />
         </TouchableOpacity>
 
         {showDatePicker && (
@@ -359,6 +366,8 @@ const CreateTask = ({ navigation, route }) => {
       </View>
 
       {/* Document Picker */}
+      <Text style={styles.headerText}>Attachments</Text>
+
       <TouchableOpacity style={styles.documentButton} onPress={selectDocument}>
         <Icon name="attach-file" style={styles.documentIcon} />
       </TouchableOpacity>
@@ -389,12 +398,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: isTablet ? 20 : 10,
   },
   headerText: {
-    fontSize: isTablet ? 22 : 18,
+    marginTop: 6,
+    fontSize: isTablet ? 32 : 24,
     fontWeight: "bold",
     textAlign: "center",
-  },
-  icon: {
-    marginRight: 10,
   },
   centeredView: {
     alignItems: "center",
@@ -424,7 +431,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: isTablet ? 18 : 16,
+    fontSize: isTablet ? 20 : 19,
     color: "#333",
     marginLeft: 10,
   },
@@ -450,8 +457,9 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   mapContainer: {
-    marginTop: 100,
-    height: isTablet ? 250 : 150,
+    marginTop: isTablet ? 75 : 75,
+    marginBottom: isTablet ? 10 : 5,
+    height: isTablet ? 250 : 130,
     width: "100%",
     borderRadius: 15,
   },
@@ -466,7 +474,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#FFF",
+    backgroundColor: "#9BBEC8",
     padding: 10,
     borderRadius: 20,
     marginVertical: 5,
@@ -483,9 +491,10 @@ const styles = StyleSheet.create({
     color: "red",
     fontWeight: "bold",
     marginLeft: 10,
+    fontSize: 25,
   },
   saveButton: {
-    backgroundColor: "#0782F9",
+    backgroundColor: "#D2DE32",
     borderRadius: 30,
     padding: 15,
     alignItems: "center",
@@ -507,6 +516,7 @@ const styles = StyleSheet.create({
     fontSize: 30,
   },
   documentButton: {
+    marginTop: 20,
     backgroundColor: "#0782F9",
     borderRadius: 30,
     padding: 15,

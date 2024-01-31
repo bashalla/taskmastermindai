@@ -72,7 +72,7 @@ const TaskScreen = ({ navigation, route }) => {
       const sortedTasks = [...overdueTasks, ...onTimeTasks];
 
       if (completedTasks.length > 0) {
-        sortedTasks.push({ isHeadline: true, title: "Done Tasks" });
+        sortedTasks.push({ isHeadline: true, title: "Completed Tasks" });
         sortedTasks.push(...completedTasks);
       }
 
@@ -319,14 +319,14 @@ const TaskScreen = ({ navigation, route }) => {
           } else if (item.isOverdue) {
             textStyle = styles.overdue;
           } else {
-            textStyle = styles.onTimeText; // On Time task style
+            textStyle = styles.onTimeText;
           }
 
           let backgroundColor = item.isCompleted
-            ? "#A9A9A9" // Background for completed tasks
+            ? "#A9A9A9"
             : item.isOverdue
-            ? "#EC8F5E" // Background for overdue tasks
-            : "#9BBEC8"; // Background for on-time tasks
+            ? "#EC8F5E"
+            : "#9BBEC8";
 
           return (
             <View style={styles.taskItemContainer}>
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
     color: "#333333",
   },
   onTimeText: {
-    color: "green", // Color for On Time text
+    color: "green",
     marginLeft: 5,
     marginTop: 2,
     fontSize: isTablet ? 16 : 14,
