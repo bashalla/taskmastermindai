@@ -158,7 +158,13 @@ export default function App() {
         <Stack.Screen
           name="TaskDetailScreen"
           component={TaskDetailScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerShown: true,
+            headerStyle: {
+              backgroundColor: "#43766C",
+            },
+            headerTintColor: "#fff",
+          }}
         />
         <Stack.Screen
           name="EditCategoryScreen"

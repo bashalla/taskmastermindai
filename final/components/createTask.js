@@ -47,7 +47,6 @@ const CreateTask = ({ navigation, route }) => {
   const [location, setLocation] = useState("");
   const [region, setRegion] = useState(null);
   const [selectedFileName, setSelectedFileName] = useState(""); // Added state for selected file name
-  const [tempDate, setTempDate] = useState(new Date());
   const [isMapVisible, setIsMapVisible] = useState(false);
 
   // Function to upload documents to Firebase Storage
@@ -287,7 +286,7 @@ const CreateTask = ({ navigation, route }) => {
                 setDescription(description + "\n");
               }
             }}
-            blurOnSubmit={false}
+            blurOnSubmit={true}
           />
         </View>
 
