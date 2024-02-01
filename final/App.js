@@ -60,6 +60,17 @@ function MyTabs() {
         name="Category"
         component={CategoryScreen}
         options={{
+          headerShown: true,
+          headerStyle: {
+            backgroundColor: "#43766C",
+          },
+          headerTintColor: "#fff",
+        }}
+      />
+      <Tab.Screen
+        name="Rewards"
+        component={RewardsScreen}
+        options={{
           headerShown: true, // Show the header
           headerStyle: {
             backgroundColor: "#43766C", // Set your desired color here
@@ -67,8 +78,17 @@ function MyTabs() {
           headerTintColor: "#fff", // Set your desired header tint color here
         }}
       />
-      <Tab.Screen name="Rewards" component={RewardsScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          headerShown: true,
+          headerStyle: {
+            backgroundColor: "#43766C",
+          },
+          headerTintColor: "#fff",
+        }}
+      />
     </Tab.Navigator>
   );
 }
@@ -85,7 +105,7 @@ export default function App() {
           component={LoginScreen}
           options={{
             headerStyle: {
-              backgroundColor: "#43766C", // Set your desired color here
+              backgroundColor: "#43766C",
             },
             headerTintColor: "#fff",
           }}
@@ -95,7 +115,7 @@ export default function App() {
           component={RegisterScreen}
           options={{
             headerStyle: {
-              backgroundColor: "#43766C", // Set your desired color here
+              backgroundColor: "#43766C",
             },
             headerTintColor: "#fff",
           }}
@@ -110,7 +130,7 @@ export default function App() {
           component={TaskScreen}
           options={{
             headerStyle: {
-              backgroundColor: "#43766C", // Set your desired color here
+              backgroundColor: "#43766C",
             },
             headerTintColor: "#fff",
           }}
@@ -120,7 +140,7 @@ export default function App() {
           component={CreateTask}
           options={{
             headerStyle: {
-              backgroundColor: "#43766C", // Set your desired color here
+              backgroundColor: "#43766C",
             },
             headerTintColor: "#fff",
           }}
@@ -130,7 +150,7 @@ export default function App() {
           component={CategoryScreen}
           options={{
             headerStyle: {
-              backgroundColor: "#43766C", // Set your desired color here
+              backgroundColor: "#43766C",
             },
             headerTintColor: "#fff",
           }}
@@ -145,7 +165,7 @@ export default function App() {
           component={EditCategoryScreen}
           options={{
             headerStyle: {
-              backgroundColor: "#43766C", // Set your desired color here
+              backgroundColor: "#43766C",
             },
             headerTintColor: "#fff",
           }}
@@ -153,19 +173,29 @@ export default function App() {
         <Stack.Screen
           name="CompletedTaskScreen"
           component={CompletedTaskScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerStyle: {
+              backgroundColor: "#43766C",
+            },
+            headerTintColor: "#fff",
+          }}
         />
         <Stack.Screen
           name="TaskOrCategoryScreen"
           component={TaskOrCategoryScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerStyle: {
+              backgroundColor: "#43766C",
+            },
+            headerTintColor: "#fff",
+          }}
         />
         <Stack.Screen
           name="SuggestionsScreen"
           component={SuggestionsScreen}
           options={{
             headerStyle: {
-              backgroundColor: "#43766C", // Set your desired color here
+              backgroundColor: "#43766C",
             },
             headerTintColor: "#fff",
           }}
@@ -175,7 +205,7 @@ export default function App() {
           component={SearchScreen}
           options={{
             headerStyle: {
-              backgroundColor: "#43766C", // Set your desired color here
+              backgroundColor: "#43766C",
             },
             headerTintColor: "#fff",
           }}
@@ -185,7 +215,7 @@ export default function App() {
           component={HelpScreen}
           options={{
             headerStyle: {
-              backgroundColor: "#43766C", // Set your desired color here
+              backgroundColor: "#43766C",
             },
             headerTintColor: "#fff",
           }}

@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     marginTop: hp("4%"),
   },
   button: {
-    backgroundColor: "#76453B",
+    backgroundColor: "#265073",
     width: "100%",
     padding: isTablet ? hp("2%") : hp("2.5%"),
     borderRadius: 10,
