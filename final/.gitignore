@@ -149,3 +149,6 @@ eas.json
 
 #firebase.js
 firebase.js
+
+#package-lock.json  
+package-lock.json
