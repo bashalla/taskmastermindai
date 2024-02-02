@@ -11,6 +11,7 @@ import {
   Alert,
   Vibration,
   Dimensions,
+  Keyboard,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { auth, db } from "../firebase";
@@ -25,7 +26,7 @@ import {
 } from "firebase/firestore";
 
 const screenWidth = Dimensions.get("window").width;
-const isTablet = screenWidth > 768; // Common breakpoint for tablet devices
+const isTablet = screenWidth > 768;
 
 // This component will be used to create a new category
 const CategoryScreen = ({ navigation }) => {
@@ -69,17 +70,18 @@ const CategoryScreen = ({ navigation }) => {
       return;
     }
 
-    const categoryCreateHaptic = [200, 100, 200, 100, 200, 100, 500]; // "drrrrr dr dr"
+    Keyboard.dismiss(); // Dismiss the keyboard
 
-    Vibration.vibrate(categoryCreateHaptic); // 100 milliseconds
+    const categoryCreateHaptic = [200];
+    Vibration.vibrate(categoryCreateHaptic);
 
-    // Add a new document with a generated id.
     await addDoc(collection(db, "categories"), {
       name: categoryName,
       label: labelName,
       color: selectedColor,
       userId: auth.currentUser.uid,
     });
+
     setCategoryName("");
     setLabelName("");
     setSelectedColor("");
@@ -136,46 +138,44 @@ const CategoryScreen = ({ navigation }) => {
   // Render the screen
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        <Text style={styles.sectionHeader}>Create New Category</Text>
+      <Text style={styles.sectionHeader}>Create New Category</Text>
 
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Category Name"
-            value={categoryName}
-            onChangeText={setCategoryName}
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Category Name"
+          value={categoryName}
+          onChangeText={setCategoryName}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Label Name"
+          value={labelName}
+          onChangeText={setLabelName}
+        />
+      </View>
+
+      <Text style={styles.colorSelectionText}>Select a Color:</Text>
+      <View style={styles.colorContainer}>
+        {colors.map((color, index) => (
+          <TouchableOpacity
+            key={index}
+            style={[
+              styles.colorOption,
+              { backgroundColor: color },
+              selectedColor === color && styles.selectedColor,
+            ]}
+            onPress={() => setSelectedColor(color)}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Label Name"
-            value={labelName}
-            onChangeText={setLabelName}
-          />
-        </View>
+        ))}
+      </View>
 
-        <Text style={styles.colorSelectionText}>Select a Color:</Text>
-        <View style={styles.colorContainer}>
-          {colors.map((color, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.colorOption,
-                { backgroundColor: color },
-                selectedColor === color && styles.selectedColor,
-              ]}
-              onPress={() => setSelectedColor(color)}
-            />
-          ))}
-        </View>
-
-        <TouchableOpacity
-          style={styles.roundButton}
-          onPress={handleCreateCategory}
-        >
-          <Text style={styles.buttonText}>+ Add Category</Text>
-        </TouchableOpacity>
-      </ScrollView>
+      <TouchableOpacity
+        style={styles.roundButton}
+        onPress={handleCreateCategory}
+      >
+        <Text style={styles.buttonText}>+ Add Category</Text>
+      </TouchableOpacity>
       <Text style={styles.sectionCategory}>Existing Categories</Text>
 
       <FlatList
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   sectionCategory: {
     fontSize: isTablet ? 24 : 20,
     fontWeight: "bold",
-    marginTop: isTablet ? 30 : 20,
+    marginTop: isTablet ? 30 : 40,
     textAlign: "left",
     marginLeft: isTablet ? 30 : 20,
   },
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     borderRadius: isTablet ? 15 : 25,
     padding: isTablet ? 15 : 10,
     fontSize: isTablet ? 18 : 16,
-    marginBottom: isTablet ? 15 : 12,
+    marginBottom: isTablet ? 15 : 7,
     width: isTablet ? "80%" : "95%",
     alignSelf: "center",
   },
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   colorContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginBottom: isTablet ? 15 : 10,
+    marginBottom: isTablet ? 15 : 2,
   },
   colorOption: {
     width: isTablet ? 40 : 30,
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   categoryContainer: {
-    marginTop: isTablet ? 25 : 20,
+    marginTop: isTablet ? 25 : 11,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",

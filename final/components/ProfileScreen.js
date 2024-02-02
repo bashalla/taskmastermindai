@@ -13,6 +13,7 @@ import {
   ActionSheetIOS,
   Platform,
   RefreshControl,
+  Dimensions,
 } from "react-native";
 import { auth, db, storage } from "../firebase";
 import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
@@ -24,6 +25,9 @@ import * as ImageManipulator from "expo-image-manipulator";
 import CountryPicker from "react-native-country-picker-modal";
 import { Picker } from "@react-native-picker/picker";
 import { Camera } from "expo-camera";
+
+const screenWidth = Dimensions.get("window").width;
+const isTablet = screenWidth > 768;
 
 // Resize image function
 const resizeImage = async (imageUri) => {
@@ -104,7 +108,7 @@ function ProfileScreen({ navigation }) {
       return;
     }
 
-    const imageUri = result.assets[0].uri; // Use assets array
+    const imageUri = result.assets[0].uri;
     const resizedImage = await resizeImage(imageUri);
 
     try {
@@ -195,7 +199,6 @@ function ProfileScreen({ navigation }) {
       );
     } else {
       // Android specific code
-      // You can use a simple Alert with buttons or a custom modal
       Alert.alert(
         "Select Image",
         "",
@@ -270,19 +273,26 @@ function ProfileScreen({ navigation }) {
       style={styles.container}
     >
       <ScrollView
-        contentContainerStyle={styles.scrollView}
-        contentContainerStyle={styles.scrollView}
+        showsVerticalScrollIndicator={false} // This line hides the scroll indicator
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        <TouchableOpacity onPress={selectImageSource}>
-          <Image
-            source={profileImage ? { uri: profileImage } : placeholderImage}
-            style={styles.profileImage}
-            resizeMode="cover"
-          />
-        </TouchableOpacity>
+        <View style={styles.profileHeader}>
+          <TouchableOpacity
+            onPress={selectImageSource}
+            style={styles.imageContainer}
+          >
+            <Image
+              source={profileImage ? { uri: profileImage } : placeholderImage}
+              style={styles.profileImage}
+              resizeMode="cover"
+            />
+          </TouchableOpacity>
+          <Text
+            style={styles.userName}
+          >{`${userData.firstName} ${userData.name}`}</Text>
+        </View>
 
         <TextInput
           style={styles.input}
@@ -390,15 +400,21 @@ function ProfileScreen({ navigation }) {
           value={newPassword}
           onChangeText={setNewPassword}
           placeholder="New Password"
-          secureTextEntry // This keeps the text hidden for password privacy
+          secureTextEntry
           placeholderTextColor="gray"
         />
-        <TouchableOpacity style={styles.button} onPress={handleChangePassword}>
+        <TouchableOpacity
+          style={styles.changeButton}
+          onPress={handleChangePassword}
+        >
           <Text style={styles.buttonText}>Change Password</Text>
         </TouchableOpacity>
 
         {/* Delete Account Button */}
-        <TouchableOpacity style={styles.button} onPress={handleDeleteUser}>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={handleDeleteUser}
+        >
           <Text style={styles.buttonText}>Delete Account</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -408,42 +424,85 @@ function ProfileScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 50,
     flex: 1,
-    alignItems: "center",
     justifyContent: "center",
+    padding: isTablet ? 30 : 30,
+    backgroundColor: "#F8FAE5",
   },
-  scrollView: {
-    flexGrow: 1,
+
+  profileHeader: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start",
+    width: "100%",
+    marginBottom: isTablet ? 60 : 50,
+    paddingHorizontal: 10,
+  },
+  imageContainer: {
+    marginRight: 20,
   },
   profileImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    marginBottom: 20,
+    width: isTablet ? 120 : 100,
+    height: isTablet ? 120 : 100,
+    borderRadius: isTablet ? 60 : 50,
+  },
+  userName: {
+    fontFamily: "AvenirNext-Regular",
+    fontSize: isTablet ? 40 : 30,
+    marginLeft: isTablet ? 30 : 10,
+    fontWeight: "bold",
+    color: "#333",
+    flex: 1,
+    flexWrap: "wrap",
   },
   input: {
-    backgroundColor: "white",
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 10,
-    marginVertical: 10,
-    fontSize: 14,
-    width: "100%",
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: "gray",
+    borderRadius: isTablet ? 15 : 25,
+    padding: isTablet ? 15 : 10,
+    fontSize: isTablet ? 15 : 16,
+    marginBottom: isTablet ? 15 : 10,
+    width: isTablet ? "80%" : "95%",
+    alignSelf: "center",
+    color: "black",
+    backgroundColor: "#F0F0F0",
+  },
+  inputText: {
     color: "black",
   },
   button: {
-    marginBottom: 20,
-    backgroundColor: "#0782F9",
-    padding: 15,
-    borderRadius: 10,
-    marginTop: 10,
+    marginBottom: isTablet ? 70 : 20,
+    backgroundColor: "#265073",
+    padding: isTablet ? 20 : 15,
+    borderRadius: isTablet ? 25 : 30,
+    alignItems: "center",
+    justifyContent: "center",
+    width: isTablet ? "50%" : "60%",
+    alignSelf: "center",
+    marginTop: isTablet ? 25 : 20,
   },
   buttonText: {
+    color: "white",
+    fontSize: isTablet ? 20 : 18,
+  },
+  genderContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginVertical: 10,
+  },
+  genderButton: {
+    padding: 10,
+    borderRadius: 5,
+    marginHorizontal: 10,
+    borderWidth: 1,
+    borderColor: "#0782F9",
+    backgroundColor: "#FFFFFF",
+  },
+  genderText: {
+    fontSize: isTablet ? 20 : 18,
+  },
+  genderButtonSelected: {
+    backgroundColor: "#AFC8AD",
     color: "white",
   },
   modalContainer: {
@@ -456,7 +515,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     padding: 20,
     borderRadius: 10,
-    width: "80%",
+    width: isTablet ? "60%" : "80%",
     alignItems: "center",
   },
   picker: {
@@ -473,25 +532,27 @@ const styles = StyleSheet.create({
   },
   modalButtonText: {
     color: "white",
+    fontSize: isTablet ? 20 : 18,
   },
-  genderContainer: {
-    flexDirection: "row",
+  changeButton: {
+    backgroundColor: "#E8C872",
+    padding: isTablet ? 20 : 15,
+    borderRadius: isTablet ? 25 : 30,
+    alignItems: "center",
     justifyContent: "center",
-    marginVertical: 10,
+    width: isTablet ? "50%" : "60%",
+    alignSelf: "center",
+    marginTop: isTablet ? 25 : 20,
   },
-  genderButton: {
-    padding: 10,
-    borderRadius: 5,
-    marginHorizontal: 10,
-    borderWidth: 1,
-    borderColor: "#0782F9",
-  },
-  genderText: {
-    fontSize: 18,
-  },
-  genderButtonSelected: {
-    backgroundColor: "#0782F9",
-    color: "white",
+  deleteButton: {
+    backgroundColor: "#F05941",
+    padding: isTablet ? 20 : 15,
+    borderRadius: isTablet ? 25 : 30,
+    alignItems: "center",
+    justifyContent: "center",
+    width: isTablet ? "50%" : "60%",
+    alignSelf: "center",
+    marginTop: isTablet ? 25 : 20,
   },
 });
 

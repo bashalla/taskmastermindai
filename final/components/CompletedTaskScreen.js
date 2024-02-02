@@ -18,16 +18,6 @@ const CompletedTaskScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Icon name="arrow-back" size={30} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Task Completed</Text>
-      </View>
-
       <View style={styles.content}>
         <Text style={styles.title}>{task.name}</Text>
         <Text style={styles.description}>{task.description}</Text>
@@ -53,6 +43,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f4f4f4",
   },
   header: {
+    marginTop: 20,
     backgroundColor: "#007AFF",
     paddingHorizontal: 15,
     paddingTop: 20,

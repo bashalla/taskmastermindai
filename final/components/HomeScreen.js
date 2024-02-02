@@ -64,7 +64,7 @@ function HomeScreen({ navigation }) {
   useEffect(() => {
     const updateDayOrNight = () => {
       const currentHour = new Date().getHours();
-      setIsNight(currentHour < 6 || currentHour >= 18); // Example: Night is considered from 6 PM to 6 AM
+      setIsNight(currentHour < 6 || currentHour >= 18); // Night is considered from 6 PM to 6 AM
     };
 
     const initialize = async () => {
@@ -84,7 +84,6 @@ function HomeScreen({ navigation }) {
     updateDayOrNight(); // Determine if it's currently day or night
     initialize();
 
-    // Optionally, set an interval to update day/night status every hour
     const intervalId = setInterval(updateDayOrNight, 3600000); // Update every hour
 
     const unsubscribeFocusListener = navigation.addListener("focus", () => {
@@ -97,7 +96,7 @@ function HomeScreen({ navigation }) {
 
     return () => {
       clearInterval(intervalId); // Clear interval on component unmount
-      unsubscribeFocusListener(); // Remove focus listener
+      unsubscribeFocusListener(); // Removing focus listener
     };
   }, [navigation]);
 
@@ -152,7 +151,7 @@ function HomeScreen({ navigation }) {
 
       console.log("Fetching weather from: ", url);
       const response = await axios.get(url);
-      const weatherDescription = response.data.current.weather[0].description; // Changed to description
+      const weatherDescription = response.data.current.weather[0].description;
       return weatherDescription;
     } catch (error) {
       console.error("Error fetching weather:", error);
@@ -309,7 +308,7 @@ function HomeScreen({ navigation }) {
       // Check if the task is overdue and deadline change count
       const isOverdue = now > deadline;
       const isChangeLimitNotExceeded = (task.deadlineChangeCount || 0) < 3;
-      let pointsAwardedFlag = false; // Initialize flag for points awarded
+      let pointsAwardedFlag = false; // Initializing flag for points awarded
 
       // Determine if points should be awarded
       if (!isOverdue && isChangeLimitNotExceeded) {
@@ -439,7 +438,7 @@ function HomeScreen({ navigation }) {
                         <Icon
                           name="radio-button-unchecked"
                           size={30}
-                          color="#CCCCCC"
+                          color="#265073"
                         />
                       )}
                     </TouchableOpacity>
@@ -484,26 +483,26 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === "ios" ? "Arial" : "Roboto",
     textAlign: "center",
     padding: hp("2%"),
-    color: "#637E76", // Deep shade of blue
+    color: "#637E76",
     letterSpacing: 0.5,
-    marginBottom: hp("2%"), // Added spacing below the header text
+    marginBottom: hp("2%"),
   },
   dateText: {
     fontSize: isTablet ? wp("4%") : wp("5%"),
-    fontWeight: "600", // Semi-bold
+    fontWeight: "600",
     textAlign: "center",
-    color: "#C69774", // Dark gray-blue
+    color: "#C69774",
     marginBottom: hp("1%"),
   },
   subHeaderText: {
     fontSize: isTablet ? wp("4%") : wp("5%"),
-    fontWeight: "500", // Medium font weight
+    fontWeight: "500",
     textAlign: "center",
-    color: "#34495E", // Dark gray-blue
+    color: "#34495E",
     paddingBottom: hp("2%"),
     borderBottomWidth: 1,
-    borderBottomColor: "#95A5A6", // Light gray underline for a subtle divider
-    marginHorizontal: wp("10%"), // Adding horizontal margins for better focus on text
+    borderBottomColor: "#95A5A6",
+    marginHorizontal: wp("10%"),
   },
   customHeader: {
     flexDirection: "row",

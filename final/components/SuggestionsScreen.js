@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -16,6 +16,16 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
+import { auth, db } from "../firebase";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  getDoc,
+  updateDoc,
+} from "firebase/firestore";
 
 const SuggestionsPage = ({ route, navigation }) => {
   const { suggestions } = route.params;
@@ -23,18 +33,35 @@ const SuggestionsPage = ({ route, navigation }) => {
   const cardColors = ["#B19470", "#43766C", "#76453B", "#A9A9A9", "#2F4F4F"];
 
   const [copiedText, setCopiedText] = useState("");
+  const [userName, setUserName] = useState("");
 
   const copyToClipboard = async (text) => {
     await Clipboard.setStringAsync(text);
     setCopiedText(text);
 
-    // Show a toast on Android or an alert on iOS
     if (Platform.OS === "android") {
       ToastAndroid.show("Copied to clipboard", ToastAndroid.SHORT);
     } else {
       Alert.alert("Copied", "Text copied to clipboard", [
         { text: "OK", onPress: () => {} },
       ]);
+    }
+  };
+
+  // Fetch user info from Firestore
+  const fetchUserInfo = async () => {
+    try {
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      const docSnap = await getDoc(userRef);
+
+      if (docSnap.exists()) {
+        const userData = docSnap.data();
+        setUserName(`${userData.firstName}`);
+      } else {
+        console.log("No such document!");
+      }
+    } catch (error) {
+      console.error("Error fetching user info: ", error);
     }
   };
 
@@ -68,10 +95,18 @@ const SuggestionsPage = ({ route, navigation }) => {
     navigation.navigate("TaskOrCategoryScreen");
   };
 
+  useEffect(() => {
+    fetchUserInfo();
+  }, []);
+
   return (
     <View style={styles.container}>
       <ScrollView style={styles.cardsContainer}>
-        <Text style={styles.header}>Personalized Suggestions</Text>
+        <Text style={styles.header}>Hello, {userName}!</Text>
+        <Text style={styles.subheader}>
+          Find your personal Task Suggestions below:
+        </Text>
+
         {renderSuggestionCards()}
       </ScrollView>
       <TouchableOpacity
@@ -90,10 +125,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8FAE5",
   },
   header: {
-    fontSize: wp("6%"),
+    fontSize: wp("5%"),
     fontWeight: "bold",
-    marginBottom: hp("2%"),
-    textAlign: "center",
+    textAlign: "left",
+    color: "#1A1A1A",
+    paddingTop: hp("2%"),
+  },
+  subheader: {
+    fontSize: wp("4%"),
+    marginBottom: hp("3%"),
+    textAlign: "left",
     color: "#1A1A1A",
     paddingTop: hp("2%"),
   },
@@ -120,7 +161,7 @@ const styles = StyleSheet.create({
   addButton: {
     position: "absolute",
     right: wp("5%"),
-    bottom: hp("12%"),
+    bottom: hp("8%"),
   },
 });
 

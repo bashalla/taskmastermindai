@@ -9,48 +9,40 @@ import {
   Alert,
   SafeAreaView,
   RefreshControl,
+  Keyboard,
+  Dimensions,
 } from "react-native";
-import { db } from "../firebase";
+import { db, auth } from "../firebase";
 import { collection, getDocs, addDoc, query, where } from "firebase/firestore";
-import { auth } from "../firebase";
+
+const { width: screenWidth } = Dimensions.get("window");
+const isTablet = screenWidth > 768;
 
 function TaskOrCategoryScreen({ navigation }) {
   const [categories, setCategories] = useState([]);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newLabelName, setNewLabelName] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
-  const [refreshing, setRefreshing] = useState(false); // State for tracking refresh status
-  const colors = ["#ff6347", "#4682b4", "#32cd32", "#ff69b4", "#ffa500"];
-
-  const fetchCategories = async () => {
-    try {
-      const user = auth.currentUser;
-      if (user) {
-        const categoriesRef = collection(db, "categories");
-        const q = query(categoriesRef, where("userId", "==", user.uid));
-        const querySnapshot = await getDocs(q);
-
-        const fetchedCategories = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        setCategories(fetchedCategories);
-      }
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      Alert.alert("Error", "Failed to load categories.");
-    }
-    setRefreshing(false); // Set refreshing to false when fetch is complete
-  };
+  const [refreshing, setRefreshing] = useState(false);
+  const colors = ["#2B2A4C", "#B31312", "#F4CE14", "#87C4FF", "#C5E898"];
 
   useEffect(() => {
     fetchCategories();
   }, []);
 
-  const onRefresh = () => {
+  const fetchCategories = async () => {
     setRefreshing(true);
-    fetchCategories(); // Re-fetch categories
+    const q = query(
+      collection(db, "categories"),
+      where("userId", "==", auth.currentUser.uid)
+    );
+    const querySnapshot = await getDocs(q);
+    const fetchedCategories = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    setCategories(fetchedCategories);
+    setRefreshing(false);
   };
 
   const handleCreateCategory = async () => {
@@ -60,31 +52,17 @@ function TaskOrCategoryScreen({ navigation }) {
     }
 
     try {
-      const user = auth.currentUser; // Get the authenticated user
-
-      if (!user) {
-        // Handle the case where the user is not authenticated
-        Alert.alert("Error", "User is not authenticated.");
-        return;
-      }
-
-      const categoryData = {
+      await addDoc(collection(db, "categories"), {
         name: newCategoryName,
         label: newLabelName,
         color: selectedColor,
-        userId: user.uid, // Include the user ID
-      };
-
-      const docRef = await addDoc(collection(db, "categories"), categoryData);
+        userId: auth.currentUser.uid,
+      });
       setNewCategoryName("");
       setNewLabelName("");
       setSelectedColor("");
-
-      // After creating the category, navigate to the "CreateTask" screen with the new category's ID
-      navigation.navigate("CreateTask", {
-        categoryId: docRef.id,
-        from: "TaskOrCategoryScreen",
-      });
+      Keyboard.dismiss(); // Dismiss the keyboard after submission
+      fetchCategories(); // Refreshing the categories list
     } catch (error) {
       console.error("Error creating category:", error);
       Alert.alert("Error", "Failed to create a new category.");
@@ -93,17 +71,8 @@ function TaskOrCategoryScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Category Selection</Text>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.cancelButton}
-        >
-          <Text style={styles.cancelButtonText}>Cancel</Text>
-        </TouchableOpacity>
-      </View>
-
       <View style={styles.container}>
+        {/* Existing Categories List */}
         <Text style={styles.title}>Select an Existing Category</Text>
         <FlatList
           data={categories}
@@ -132,10 +101,14 @@ function TaskOrCategoryScreen({ navigation }) {
           )}
           style={styles.list}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={fetchCategories}
+            />
           }
         />
 
+        {/* New Category Creation Form */}
         <Text style={styles.subtitle}>Or Create a New Category</Text>
         <View style={styles.inputContainer}>
           <TextInput
@@ -176,109 +149,107 @@ function TaskOrCategoryScreen({ navigation }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f4f4f4",
-  },
-  header: {
-    padding: 10,
-    backgroundColor: "#ffffff",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  cancelButton: {
-    padding: 10,
-  },
-  cancelButtonText: {
-    color: "#007aff",
-    fontSize: 16,
+    backgroundColor: "#F8FAE5",
   },
   container: {
     padding: 20,
   },
   title: {
-    fontSize: 18,
+    fontSize: isTablet ? 24 : 20,
+    marginBottom: 20,
     fontWeight: "bold",
-    marginBottom: 10,
+    marginTop: isTablet ? 30 : 20,
+    textAlign: "left",
+    marginLeft: isTablet ? 30 : 20,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: isTablet ? 24 : 20,
+    marginBottom: 20,
     fontWeight: "bold",
-    marginTop: 20,
-    marginBottom: 10,
+    marginTop: isTablet ? 30 : 20,
+    textAlign: "left",
+    marginLeft: isTablet ? 30 : 20,
   },
   inputContainer: {
-    width: "90%",
-  },
-  noCategoriesContainer: {
+    width: "100%",
     alignItems: "center",
-    justifyContent: "center",
-    marginTop: 20,
-  },
-  noCategoriesText: {
-    fontSize: 16,
-    color: "#666",
+    marginBottom: 20,
   },
   input: {
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: "gray",
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 10,
-    width: "100%",
-  },
-  colorSelectionText: {
+    borderRadius: isTablet ? 15 : 25,
+    padding: isTablet ? 15 : 10,
+    fontSize: isTablet ? 18 : 16,
+    marginBottom: isTablet ? 15 : 7,
+    width: isTablet ? "80%" : "95%",
     alignSelf: "center",
-    marginVertical: 10,
+  },
+  selectionText: {
+    fontSize: isTablet ? 18 : 14,
     fontWeight: "bold",
+    marginBottom: 10,
   },
   colorContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginBottom: 20,
+    marginBottom: isTablet ? 15 : 2,
+  },
+  colorSelectionText: {
+    alignSelf: "center",
+    marginVertical: isTablet ? 15 : 10,
+    fontWeight: "bold",
+    fontSize: isTablet ? 18 : 16,
   },
   colorOption: {
     width: 30,
     height: 30,
     borderRadius: 15,
-    marginHorizontal: 5,
+    margin: 5,
   },
   selectedColor: {
     borderWidth: 2,
     borderColor: "black",
   },
+  button: {
+    backgroundColor: "#0782F9",
+    padding: isTablet ? 20 : 15,
+    borderRadius: isTablet ? 25 : 30,
+    alignItems: "center",
+    justifyContent: "center",
+    width: isTablet ? "50%" : "60%",
+    alignSelf: "center",
+    marginTop: isTablet ? 25 : 20,
+  },
+  buttonText: {
+    color: "white",
+    fontSize: isTablet ? 20 : 16,
+    fontWeight: "bold",
+  },
+  list: {
+    width: "100%",
+    marginBottom: 20,
+  },
+  noCategoriesContainer: {
+    marginTop: 20,
+    alignItems: "center",
+  },
+  noCategoriesText: {
+    fontSize: 16,
+    color: "#666",
+  },
   category: {
     padding: 20,
     marginVertical: 5,
     borderRadius: 5,
-    alignSelf: "center",
+    width: "100%",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    width: "100%",
   },
   categoryText: {
     color: "white",
     fontWeight: "bold",
-  },
-  button: {
-    backgroundColor: "#0782F9",
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    width: "90%",
-  },
-  buttonText: {
-    color: "white",
-    fontWeight: "700",
-  },
-  list: {
-    width: "100%",
   },
 });
 

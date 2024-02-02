@@ -10,6 +10,10 @@ import {
   Platform,
   Linking,
   ScrollView,
+  Dimensions,
+  KeyboardAvoidingView,
+  Modal,
+  Keyboard,
 } from "react-native";
 import { updateDoc, doc, getDoc } from "firebase/firestore";
 import {
@@ -29,12 +33,15 @@ import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplet
 import { GOOGLE_API_KEY } from "@env";
 import * as Calendar from "expo-calendar";
 
+const screenWidth = Dimensions.get("window").width;
+const isTablet = screenWidth > 768;
+
 const TaskDetailsScreen = ({ navigation, route }) => {
   const { task } = route.params;
   const [taskName, setTaskName] = useState(task.name);
   const [description, setDescription] = useState(task.description);
   const [deadline, setDeadline] = useState(new Date(task.deadline));
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(true);
   const [documentUrls, setDocumentUrls] = useState(task.documentUrls || []);
   const [region, setRegion] = useState({
     latitude: task.location ? task.location.latitude : 0,
@@ -42,6 +49,11 @@ const TaskDetailsScreen = ({ navigation, route }) => {
     latitudeDelta: 0.005,
     longitudeDelta: 0.005,
   });
+  const [isMapVisible, setIsMapVisible] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [isLocationInputFocused, setIsLocationInputFocused] = useState(false);
+  const [googlePlacesInputFocused, setGooglePlacesInputFocused] =
+    useState(false);
 
   useEffect(() => {
     (async () => {
@@ -51,6 +63,27 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         return;
       }
     })();
+  }, []);
+
+  // Additional useEffect for keyboard event listeners to make keyboard up
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      "keyboardDidShow",
+      () => {
+        setKeyboardVisible(true);
+      }
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      "keyboardDidHide",
+      () => {
+        setKeyboardVisible(false);
+      }
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
   }, []);
 
   const updateTaskAndCalendarEvent = async (
@@ -136,7 +169,6 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         deadline: newDeadlineDate.toISOString(),
         documentUrls,
         location: region,
-        // Initially not changing the deadlineChangeCount
       };
 
       // Check if the deadline has changed
@@ -156,7 +188,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
 
       Alert.alert("Task Updated", "Your task has been updated successfully.");
       if (route.params?.onTaskUpdate) {
-        route.params.onTaskUpdate(); // Refresh or handle post-update logic if provided
+        route.params.onTaskUpdate();
       }
       navigation.goBack();
     } catch (error) {
@@ -166,6 +198,15 @@ const TaskDetailsScreen = ({ navigation, route }) => {
   };
 
   const handleDocumentUpload = async () => {
+    // Prevent adding more documents if the limit is reached
+    if (documentUrls.length >= 2) {
+      Alert.alert(
+        "Limit Reached",
+        "You can only upload up to two attachments."
+      );
+      return; // Exit the function to prevent further execution
+    }
+
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: "*/*",
@@ -177,9 +218,10 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         return;
       }
 
-      // Upload each selected document and get their download URLs
+      const newDocuments = result.assets.slice(0, 2 - documentUrls.length);
+
       const newDocumentUrls = await Promise.all(
-        result.assets.map(async (document) => {
+        newDocuments.map(async (document) => {
           const storage = getStorage();
           const storageRef = ref(storage, `taskDocuments/${document.name}`);
           const response = await fetch(document.uri);
@@ -190,9 +232,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
           return new Promise((resolve, reject) => {
             uploadTask.on(
               "state_changed",
-              (snapshot) => {
-                // Optional: Handle upload progress
-              },
+              (snapshot) => {},
               (error) => {
                 reject(error);
               },
@@ -206,8 +246,11 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         })
       );
 
-      // Update the state to include the URLs of the newly uploaded documents
-      setDocumentUrls([...documentUrls, ...newDocumentUrls]);
+      // Updating here the state to include the URLs of the newly uploaded documents
+      // Ensuring not to exceed the limit of 2 documents
+      setDocumentUrls((currentUrls) =>
+        [...currentUrls, ...newDocumentUrls].slice(0, 2)
+      );
     } catch (error) {
       console.error("Error during document upload:", error);
       Alert.alert("Upload Error", "There was an error uploading the document.");
@@ -226,246 +269,353 @@ const TaskDetailsScreen = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Task Name Input */}
-      <View style={styles.inputContainer}>
-        <Icon name="title" size={20} style={styles.icon} />
-        <TextInput
-          style={styles.input}
-          placeholder="Task Name"
-          value={taskName}
-          onChangeText={setTaskName}
-          onSubmitEditing={() => {
-            /* Handle the submit action, e.g., close keyboard */
-          }}
-          returnKeyType="done" // for iOS to show "Done" instead of "return"
-        />
-      </View>
-
-      {/* Description Input */}
-      <View style={styles.inputContainer}>
-        <Icon name="description" size={20} style={styles.icon} />
-        <TextInput
-          style={[styles.input, styles.multilineInput]}
-          placeholder="Description"
-          multiline
-          value={description}
-          onChangeText={setDescription}
-          onSubmitEditing={() => {
-            /* Handle the submit action, e.g., close keyboard */
-          }}
-          blurOnSubmit={true} // this will close the keyboard when the user presses enter
-        />
-      </View>
-
-      {/* Location Input with GooglePlacesAutocomplete */}
-      <GooglePlacesAutocomplete
-        placeholder="Update Location"
-        fetchDetails={true}
-        onPress={(data, details = null) => {
-          setRegion({
-            latitude: details.geometry.location.lat,
-            longitude: details.geometry.location.lng,
-            latitudeDelta: 0.005,
-            longitudeDelta: 0.005,
-          });
-        }}
-        query={{
-          key: GOOGLE_API_KEY,
-          language: "en",
-        }}
-        styles={{
-          textInput: styles.input,
-          // Additional styles if needed
-        }}
-      />
-
-      {/* Map View */}
-      <View style={styles.mapContainer}>
-        {region && (
-          <MapView
-            style={styles.map}
-            region={region}
-            onRegionChangeComplete={setRegion}
-            showsUserLocation={true}
-          >
-            <Marker coordinate={region} />
-          </MapView>
-        )}
-      </View>
-
-      {/* Document Handling */}
-      <View style={styles.selectedDocumentContainer}>
-        {documentUrls.map((doc, index) => (
-          <View key={index} style={styles.documentRow}>
-            <TouchableOpacity onPress={() => Linking.openURL(doc.url)}>
-              <Text>{doc.name}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => deleteDocument(index)}>
-              <Text style={styles.deleteText}>x</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
-        <TouchableOpacity onPress={handleDocumentUpload}>
-          <Text>Add/Update Document</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Deadline Picker */}
-      <View style={styles.centeredView}>
-        <Text style={styles.headerText}>Deadline</Text>
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={() => setShowDatePicker(true)}
-        >
-          <Icon name="calendar-today" size={30} color="#0782F9" />
-        </TouchableOpacity>
-
-        {showDatePicker && (
-          <DateTimePicker
-            value={deadline}
-            mode="date"
-            display="default"
-            minimumDate={new Date()} // Set the minimum date to the current date
-            onChange={(event, selectedDate) => {
-              const currentDate = selectedDate || deadline;
-              setShowDatePicker(Platform.OS === "ios");
-
-              // Adjust the selected date to the end of the day
-              const adjustedDate = new Date(
-                currentDate.getFullYear(),
-                currentDate.getMonth(),
-                currentDate.getDate(),
-                23,
-                59,
-                59 // Set to the last moment of the day
-              );
-
-              setDeadline(adjustedDate);
-            }}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : null}
+      enabled
+    >
+      <SafeAreaView style={styles.container}>
+        {/* Task Name Input */}
+        <View style={styles.inputContainer}>
+          <Icon name="title" size={20} style={styles.icon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Task Name"
+            value={taskName}
+            onChangeText={setTaskName}
+            onSubmitEditing={() => {}}
+            returnKeyType="done"
           />
-        )}
-      </View>
+        </View>
 
-      {/* Save and Cancel Buttons */}
-      <TouchableOpacity style={styles.button} onPress={handleSave}>
-        <Text style={styles.buttonText}>Save Task</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.cancelButton}
-        onPress={() => navigation.goBack()}
-      >
-        <Text style={styles.cancelButtonText}>Cancel</Text>
-      </TouchableOpacity>
-    </SafeAreaView>
+        {/* Description Input */}
+        <View style={styles.inputContainer}>
+          <Icon name="description" size={20} style={styles.icon} />
+          <TextInput
+            style={[styles.input, styles.multilineInput]}
+            placeholder="Description"
+            multiline
+            value={description}
+            onChangeText={setDescription}
+            onKeyPress={({ nativeEvent }) => {
+              if (nativeEvent.key === "Enter") {
+                setDescription(description + "\n");
+              }
+            }}
+            blurOnSubmit={true} // this will close the keyboard when the user presses enter
+          />
+        </View>
+
+        {/* Deadline Picker */}
+        <View style={styles.centeredView}>
+          <Text style={styles.headerText}>Deadline</Text>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => setShowDatePicker(true)}
+          >
+            <Icon name="calendar-today" size={30} color="#0782F9" />
+          </TouchableOpacity>
+
+          {showDatePicker && (
+            <DateTimePicker
+              value={deadline}
+              mode="date"
+              display="default"
+              minimumDate={new Date()} // Set the minimum date to the current date
+              onChange={(event, selectedDate) => {
+                const currentDate = selectedDate || deadline;
+                setShowDatePicker(Platform.OS === "ios");
+
+                // Adjust the selected date to the end of the day
+                const adjustedDate = new Date(
+                  currentDate.getFullYear(),
+                  currentDate.getMonth(),
+                  currentDate.getDate(),
+                  23,
+                  59,
+                  59 // Set to the last moment of the day
+                );
+
+                setDeadline(adjustedDate);
+              }}
+            />
+          )}
+        </View>
+
+        {/* Location Input with GooglePlacesAutocomplete */}
+        <GooglePlacesAutocomplete
+          placeholder="Search for places"
+          fetchDetails={true}
+          onPress={(data, details = null) => {
+            // Logic to handle the selection of a place
+            setRegion({
+              latitude: details.geometry.location.lat,
+              longitude: details.geometry.location.lng,
+              latitudeDelta: 0.005,
+              longitudeDelta: 0.005,
+            });
+          }}
+          query={{
+            key: GOOGLE_API_KEY,
+            language: "en",
+          }}
+          styles={{
+            container: {
+              position: "absolute",
+              top:
+                keyboardVisible && isLocationInputFocused
+                  ? isTablet
+                    ? "20%"
+                    : "10%"
+                  : isTablet
+                  ? "35%"
+                  : "45%",
+              width: "100%",
+            },
+            textInputContainer: {
+              flexDirection: "row",
+              backgroundColor: "rgba(255, 255, 255, 0.9)",
+              borderRadius: 20,
+              padding: 5,
+              paddingLeft: 10,
+            },
+            textInput: {
+              height: 38,
+              color: "#5d5d5d",
+              fontSize: 16,
+            },
+            listView: {
+              backgroundColor: "white",
+              zIndex: 1000,
+            },
+          }}
+          onFocus={() => setIsLocationInputFocused(true)}
+          onBlur={() => setIsLocationInputFocused(false)}
+        />
+
+        {/* Map Button */}
+        <TouchableOpacity
+          style={styles.mapIconButton}
+          onPress={() => setIsMapVisible(true)}
+        >
+          <Icon name="map" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+
+        {/* Map View */}
+        <View style={styles.mapContainer}>
+          <Modal
+            animationType="slide"
+            transparent={false}
+            visible={isMapVisible}
+            onRequestClose={() => setIsMapVisible(false)}
+          >
+            <View style={styles.mapModalContainer}>
+              <MapView
+                style={{ width: "100%", height: "80%" }}
+                region={region}
+                onRegionChangeComplete={setRegion}
+              >
+                <Marker coordinate={region} />
+              </MapView>
+              <TouchableOpacity
+                style={styles.hideMapButton}
+                onPress={() => setIsMapVisible(false)}
+              >
+                <Text style={{ color: "#FFFFFF" }}>Hide Map</Text>
+              </TouchableOpacity>
+            </View>
+          </Modal>
+        </View>
+
+        {/* Document Handling */}
+        <View style={styles.selectedDocumentContainer}>
+          {documentUrls.map((doc, index) => (
+            <View key={index} style={styles.documentRow}>
+              <TouchableOpacity onPress={() => Linking.openURL(doc.url)}>
+                <Text>{doc.name}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => deleteDocument(index)}>
+                <Text style={styles.deleteText}>x</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+          <TouchableOpacity
+            onPress={handleDocumentUpload}
+            style={styles.documentButton}
+          >
+            <Icon name="attach-file" style={styles.documentIcon} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Save and Cancel Buttons */}
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <Icon name="check" style={styles.saveIcon} />
+        </TouchableOpacity>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 10,
-    backgroundColor: "#f4f4f4",
+    backgroundColor: "#F8FAE5",
+    paddingTop: isTablet ? 15 : 5,
+    paddingHorizontal: isTablet ? 20 : 10,
   },
-
   headerText: {
-    fontSize: 18,
+    marginTop: 6,
+    fontSize: isTablet ? 32 : 24,
     fontWeight: "bold",
-    marginBottom: 5,
-  },
-  icon: {
-    marginRight: 10,
+    textAlign: "center",
   },
   centeredView: {
     alignItems: "center",
-    justifyContent: "center",
-    marginVertical: 15,
+    marginTop: 10,
+    marginBottom: 20,
   },
   iconButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 10,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "gray",
-    padding: 10,
-    flex: 1,
-    borderRadius: 5,
-    marginRight: 10,
-  },
-  multilineInput: {
-    height: 120,
-  },
-  documentRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 5,
-    padding: 5,
-  },
-  deleteIcon: {
-    marginLeft: 10,
-  },
-  deleteText: {
-    color: "red",
-    fontWeight: "bold",
-    fontSize: 20,
-    paddingHorizontal: 10,
-  },
-  button: {
-    flexDirection: "row",
-    backgroundColor: "#0782F9",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    width: "60%",
-    alignSelf: "center",
-    marginBottom: 10,
-  },
-  buttonText: {
-    color: "white",
-    fontWeight: "700",
-    marginLeft: 10,
-  },
-  cancelButton: {
-    backgroundColor: "#d9534f",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    width: "60%",
-    alignSelf: "center",
-    marginBottom: 10,
-  },
-  cancelButtonText: {
-    color: "white",
-    fontWeight: "700",
-  },
-  selectedDocumentContainer: {
-    marginTop: 10,
-    alignItems: "center",
-  },
-  mapContainer: {
-    height: 300,
-    width: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  map: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  textInputContainer: {
-    backgroundColor: "grey",
     marginBottom: 10,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
+    marginTop: 20,
     marginBottom: 10,
+    backgroundColor: "#FFF",
+    borderRadius: 30,
+    paddingVertical: isTablet ? 15 : 12,
+    paddingHorizontal: isTablet ? 20 : 15,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  input: {
+    flex: 1,
+    fontSize: isTablet ? 20 : 19,
+    color: "#333",
+    marginLeft: 10,
+  },
+  multilineInput: {
+    marginBottom: 30,
+    textAlignVertical: "top",
+  },
+  map: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  selectedDocumentContainer: {
+    marginTop: isTablet ? 100 : 170,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  documentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#9BBEC8",
+    padding: 10,
+    borderRadius: 20,
+    marginVertical: 5,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+    elevation: 3,
+  },
+  deleteText: {
+    color: "red",
+    fontWeight: "bold",
+    marginLeft: 10,
+    fontSize: 25,
+  },
+  saveButton: {
+    backgroundColor: "#D2DE32",
+    borderRadius: 40,
+    padding: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    width: 60,
+    height: 60,
+    alignSelf: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+  },
+  saveIcon: {
+    color: "white",
+    fontSize: 30,
+  },
+  documentButton: {
+    marginTop: isTablet ? 25 : 20,
+    marginBottom: 10,
+    backgroundColor: "#0782F9",
+    borderRadius: 30,
+    padding: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    width: 60,
+    height: 60,
+    alignSelf: "center",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+  },
+  documentIcon: {
+    color: "white",
+    fontSize: 30,
+  },
+  showMapButton: {
+    marginTop: 100,
+    padding: 10,
+    backgroundColor: "#4CAF50",
+    borderRadius: 30,
+    margin: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  mapModalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+  hideMapButton: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: "#f44336",
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  mapIconButton: {
+    marginTop: isTablet ? 2 : 20,
+    position: "absolute",
+    right: 20,
+    top: Platform.OS === "ios" ? (isTablet ? 450 : 410) : isTablet ? 500 : 410,
+    backgroundColor: "#4CAF50",
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 4,
   },
 });
 

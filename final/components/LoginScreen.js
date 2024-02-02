@@ -28,11 +28,11 @@ import {
   MaterialIcons,
   MaterialCommunityIcons,
   FontAwesome5,
-} from "@expo/vector-icons"; // Import Material Icons or any other icon library
+} from "@expo/vector-icons";
 import * as Font from "expo-font";
 
 const screenWidth = Dimensions.get("window").width;
-const isTablet = screenWidth > 768; // Common breakpoint for tablet devices
+const isTablet = screenWidth > 768;
 
 // Login screen component
 const LoginScreen = () => {
@@ -125,6 +125,7 @@ const LoginScreen = () => {
             value={email}
             onChangeText={(text) => setEmail(text.toLowerCase())}
             style={styles.input}
+            textContentType="oneTimeCode"
           />
           <TextInput
             placeholder="Password"
@@ -212,7 +213,7 @@ const styles = StyleSheet.create({
     marginTop: hp("4%"),
   },
   button: {
-    backgroundColor: "#76453B",
+    backgroundColor: "#265073",
     width: "100%",
     padding: isTablet ? hp("2%") : hp("2.5%"),
     borderRadius: 10,
