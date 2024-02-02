@@ -174,6 +174,15 @@ const TaskDetailsScreen = ({ navigation, route }) => {
   };
 
   const handleDocumentUpload = async () => {
+    // Prevent adding more documents if the limit is reached
+    if (documentUrls.length >= 2) {
+      Alert.alert(
+        "Limit Reached",
+        "You can only upload up to two attachments."
+      );
+      return; // Exit the function to prevent further execution
+    }
+
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: "*/*",
@@ -185,9 +194,10 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         return;
       }
 
-      // Upload each selected document and get their download URLs
+      const newDocuments = result.assets.slice(0, 2 - documentUrls.length);
+
       const newDocumentUrls = await Promise.all(
-        result.assets.map(async (document) => {
+        newDocuments.map(async (document) => {
           const storage = getStorage();
           const storageRef = ref(storage, `taskDocuments/${document.name}`);
           const response = await fetch(document.uri);
@@ -198,9 +208,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
           return new Promise((resolve, reject) => {
             uploadTask.on(
               "state_changed",
-              (snapshot) => {
-                // Optional: Handle upload progress
-              },
+              (snapshot) => {},
               (error) => {
                 reject(error);
               },
@@ -214,8 +222,11 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         })
       );
 
-      // Update the state to include the URLs of the newly uploaded documents
-      setDocumentUrls([...documentUrls, ...newDocumentUrls]);
+      // Updating here the state to include the URLs of the newly uploaded documents
+      // Ensuring not to exceed the limit of 2 documents
+      setDocumentUrls((currentUrls) =>
+        [...currentUrls, ...newDocumentUrls].slice(0, 2)
+      );
     } catch (error) {
       console.error("Error during document upload:", error);
       Alert.alert("Upload Error", "There was an error uploading the document.");
@@ -249,7 +260,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
             value={taskName}
             onChangeText={setTaskName}
             onSubmitEditing={() => {}}
-            returnKeyType="done" // for iOS to show "Done" instead of "return"
+            returnKeyType="done"
           />
         </View>
 
@@ -394,14 +405,17 @@ const TaskDetailsScreen = ({ navigation, route }) => {
               </TouchableOpacity>
             </View>
           ))}
-          <TouchableOpacity onPress={handleDocumentUpload}>
-            <Text>Add/Update Document</Text>
+          <TouchableOpacity
+            onPress={handleDocumentUpload}
+            style={styles.documentButton}
+          >
+            <Icon name="attach-file" style={styles.documentIcon} />
           </TouchableOpacity>
         </View>
 
         {/* Save and Cancel Buttons */}
-        <TouchableOpacity style={styles.button} onPress={handleSave}>
-          <Text style={styles.buttonText}>Save Task</Text>
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <Icon name="check" style={styles.saveIcon} />
         </TouchableOpacity>
       </SafeAreaView>
     </KeyboardAvoidingView>
@@ -461,6 +475,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   selectedDocumentContainer: {
+    marginTop: isTablet ? 100 : 170,
     alignItems: "center",
     marginBottom: 20,
   },
@@ -489,7 +504,7 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     backgroundColor: "#D2DE32",
-    borderRadius: 30,
+    borderRadius: 40,
     padding: 15,
     alignItems: "center",
     justifyContent: "center",
@@ -510,7 +525,7 @@ const styles = StyleSheet.create({
     fontSize: 30,
   },
   documentButton: {
-    marginTop: 90,
+    marginTop: isTablet ? 25 : 20,
     marginBottom: 10,
     backgroundColor: "#0782F9",
     borderRadius: 30,
@@ -536,7 +551,7 @@ const styles = StyleSheet.create({
     marginTop: 100,
     padding: 10,
     backgroundColor: "#4CAF50",
-    borderRadius: 20,
+    borderRadius: 30,
     margin: 20,
     justifyContent: "center",
     alignItems: "center",
@@ -556,14 +571,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   mapIconButton: {
-    marginTop: 30,
+    marginTop: isTablet ? 2 : 20,
     position: "absolute",
     right: 20,
-    top: Platform.OS === "ios" ? (isTablet ? 500 : 410) : isTablet ? 500 : 410,
+    top: Platform.OS === "ios" ? (isTablet ? 450 : 410) : isTablet ? 500 : 410,
     backgroundColor: "#4CAF50",
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
     elevation: 4,

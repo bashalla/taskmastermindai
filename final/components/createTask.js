@@ -185,6 +185,15 @@ const CreateTask = ({ navigation, route }) => {
 
   // Function to select documents
   const selectDocument = async () => {
+    // Check if the current number of documents is 2 or more
+    if (documents.length >= 2) {
+      Alert.alert(
+        "Limit Reached",
+        "You can only upload up to two attachments."
+      );
+      return; // Prevent further execution
+    }
+
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: "*/*",
@@ -194,10 +203,20 @@ const CreateTask = ({ navigation, route }) => {
       if (result.cancelled) {
         console.log("Document selection was cancelled");
       } else {
-        setDocuments((currentDocuments) => [
-          ...currentDocuments,
-          ...(result.assets || []),
-        ]);
+        const newDocuments = result.assets || [];
+        const totalPossibleDocuments = documents.length + newDocuments.length;
+
+        if (totalPossibleDocuments <= 2) {
+          setDocuments((currentDocuments) => [
+            ...currentDocuments,
+            ...newDocuments,
+          ]);
+        } else {
+          Alert.alert(
+            "Limit Exceeded",
+            "You can only upload up to two attachments."
+          );
+        }
       }
     } catch (err) {
       console.error("Error picking documents:", err);
