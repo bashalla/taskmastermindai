@@ -125,6 +125,7 @@ const LoginScreen = () => {
             value={email}
             onChangeText={(text) => setEmail(text.toLowerCase())}
             style={styles.input}
+            textContentType="oneTimeCode"
           />
           <TextInput
             placeholder="Password"

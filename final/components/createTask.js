@@ -46,8 +46,12 @@ const CreateTask = ({ navigation, route }) => {
   const [documents, setDocuments] = useState([]);
   const [location, setLocation] = useState("");
   const [region, setRegion] = useState(null);
-  const [selectedFileName, setSelectedFileName] = useState(""); // Added state for selected file name
+  const [selectedFileName, setSelectedFileName] = useState("");
   const [isMapVisible, setIsMapVisible] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [isLocationInputFocused, setIsLocationInputFocused] = useState(false);
+  const [googlePlacesInputFocused, setGooglePlacesInputFocused] =
+    useState(false);
 
   // Function to upload documents to Firebase Storage
   const uploadDocumentsToFirebase = async (documents) => {
@@ -128,6 +132,27 @@ const CreateTask = ({ navigation, route }) => {
     };
 
     fetchLocation();
+  }, []);
+
+  // Additional useEffect for keyboard event listeners to make keyboard up
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      "keyboardDidShow",
+      () => {
+        setKeyboardVisible(true);
+      }
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      "keyboardDidHide",
+      () => {
+        setKeyboardVisible(false);
+      }
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
   }, []);
 
   const handleSaveTask = async () => {
@@ -343,6 +368,7 @@ const CreateTask = ({ navigation, route }) => {
           placeholder="Search for places"
           fetchDetails={true}
           onPress={(data, details = null) => {
+            // Logic to handle the selection of a place
             setRegion({
               latitude: details.geometry.location.lat,
               longitude: details.geometry.location.lng,
@@ -357,9 +383,8 @@ const CreateTask = ({ navigation, route }) => {
           styles={{
             container: {
               position: "absolute",
-              top: isTablet ? 370 : 360,
+              top: keyboardVisible && isLocationInputFocused ? "10%" : "48%",
               width: "100%",
-              zIndex: 5,
             },
             textInputContainer: {
               flexDirection: "row",
@@ -373,11 +398,15 @@ const CreateTask = ({ navigation, route }) => {
               color: "#5d5d5d",
               fontSize: 16,
             },
-            predefinedPlacesDescription: {
-              color: "#1faadb",
+            listView: {
+              backgroundColor: "white",
+              zIndex: 1000,
             },
           }}
+          onFocus={() => setIsLocationInputFocused(true)}
+          onBlur={() => setIsLocationInputFocused(false)}
         />
+
         {/* Map Button */}
         <TouchableOpacity
           style={styles.mapIconButton}
@@ -541,7 +570,7 @@ const styles = StyleSheet.create({
     fontSize: 30,
   },
   documentButton: {
-    marginTop: 90,
+    marginTop: 110,
     marginBottom: 10,
     backgroundColor: "#0782F9",
     borderRadius: 30,
@@ -587,7 +616,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   mapIconButton: {
-    marginTop: 30,
+    marginTop: 50,
     position: "absolute",
     right: 20,
     top: Platform.OS === "ios" ? (isTablet ? 500 : 410) : isTablet ? 500 : 410,

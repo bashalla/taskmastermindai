@@ -50,6 +50,10 @@ const TaskDetailsScreen = ({ navigation, route }) => {
     longitudeDelta: 0.005,
   });
   const [isMapVisible, setIsMapVisible] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [isLocationInputFocused, setIsLocationInputFocused] = useState(false);
+  const [googlePlacesInputFocused, setGooglePlacesInputFocused] =
+    useState(false);
 
   useEffect(() => {
     (async () => {
@@ -59,6 +63,27 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         return;
       }
     })();
+  }, []);
+
+  // Additional useEffect for keyboard event listeners to make keyboard up
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      "keyboardDidShow",
+      () => {
+        setKeyboardVisible(true);
+      }
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      "keyboardDidHide",
+      () => {
+        setKeyboardVisible(false);
+      }
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
   }, []);
 
   const updateTaskAndCalendarEvent = async (
@@ -319,9 +344,10 @@ const TaskDetailsScreen = ({ navigation, route }) => {
 
         {/* Location Input with GooglePlacesAutocomplete */}
         <GooglePlacesAutocomplete
-          placeholder="Update Location"
+          placeholder="Search for places"
           fetchDetails={true}
           onPress={(data, details = null) => {
+            // Logic to handle the selection of a place
             setRegion({
               latitude: details.geometry.location.lat,
               longitude: details.geometry.location.lng,
@@ -336,9 +362,15 @@ const TaskDetailsScreen = ({ navigation, route }) => {
           styles={{
             container: {
               position: "absolute",
-              top: isTablet ? 370 : 360,
+              top:
+                keyboardVisible && isLocationInputFocused
+                  ? isTablet
+                    ? "20%"
+                    : "10%"
+                  : isTablet
+                  ? "35%"
+                  : "45%",
               width: "100%",
-              zIndex: 5,
             },
             textInputContainer: {
               flexDirection: "row",
@@ -352,10 +384,13 @@ const TaskDetailsScreen = ({ navigation, route }) => {
               color: "#5d5d5d",
               fontSize: 16,
             },
-            predefinedPlacesDescription: {
-              color: "#1faadb",
+            listView: {
+              backgroundColor: "white",
+              zIndex: 1000,
             },
           }}
+          onFocus={() => setIsLocationInputFocused(true)}
+          onBlur={() => setIsLocationInputFocused(false)}
         />
 
         {/* Map Button */}
