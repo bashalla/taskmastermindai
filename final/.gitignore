@@ -144,4 +144,8 @@ dist
 #app.json
 app.json
 
+#app.json
 eas.json
+
+#firebase.js
+firebase.js
