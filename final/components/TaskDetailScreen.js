@@ -144,7 +144,6 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         deadline: newDeadlineDate.toISOString(),
         documentUrls,
         location: region,
-        // Initially not changing the deadlineChangeCount
       };
 
       // Check if the deadline has changed
@@ -164,7 +163,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
 
       Alert.alert("Task Updated", "Your task has been updated successfully.");
       if (route.params?.onTaskUpdate) {
-        route.params.onTaskUpdate(); // Refresh or handle post-update logic if provided
+        route.params.onTaskUpdate();
       }
       navigation.goBack();
     } catch (error) {

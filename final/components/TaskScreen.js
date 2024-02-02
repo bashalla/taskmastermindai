@@ -27,7 +27,7 @@ import { auth, db } from "../firebase";
 import * as Calendar from "expo-calendar";
 
 const screenWidth = Dimensions.get("window").width;
-const isTablet = screenWidth > 768; // Common breakpoint for tablet devices
+const isTablet = screenWidth > 768;
 
 const TaskScreen = ({ navigation, route }) => {
   const { categoryId, categoryName } = route.params;
@@ -204,7 +204,7 @@ const TaskScreen = ({ navigation, route }) => {
       }
 
       // If no calendar event is associated with this task, proceed to add a new calendar event
-      const calendarId = await findOrCreateCalendar(); // Make sure you have defined this function
+      const calendarId = await findOrCreateCalendar();
 
       // Convert the deadline to a Date object
       let deadlineDate = new Date(task.deadline);
@@ -225,11 +225,10 @@ const TaskScreen = ({ navigation, route }) => {
       const taskRef = doc(db, "tasks", task.id);
       await updateDoc(taskRef, { calendarEventId: eventId });
 
-      // Alert user of success
+      // Alerting user of success
       Alert.alert("Success", "Task added to calendar");
 
-      // Optionally refresh tasks to reflect changes
-      fetchTasks(); // Ensure you have a fetchTasks function to refresh the task list
+      fetchTasks();
     } catch (error) {
       console.error("Error adding to calendar: ", error);
       Alert.alert("Error", "Unable to add task to calendar.");
@@ -241,7 +240,6 @@ const TaskScreen = ({ navigation, route }) => {
     const calendars = await Calendar.getCalendarsAsync(
       Calendar.EntityTypes.EVENT
     );
-    // console.log("Calendars:", calendars);
     const expoCalendar = calendars.find((c) => c.title === "Expo Calendar");
 
     if (expoCalendar) {
@@ -253,7 +251,6 @@ const TaskScreen = ({ navigation, route }) => {
           ? await getDefaultCalendarSource()
           : { isLocalAccount: true, name: "Expo Calendar" };
 
-      // console.log("Creating new calendar with source:", defaultCalendarSource);
       return await Calendar.createCalendarAsync({
         title: "Expo Calendar",
         color: "blue",
@@ -277,12 +274,11 @@ const TaskScreen = ({ navigation, route }) => {
 
       let defaultSource = null;
       if (Platform.OS === "ios") {
-        // Find inga default source
         defaultSource = calendars.find(
           (calendar) => calendar.source && calendar.source.isLocalAccount
         );
 
-        // If no default source is found, create one or choose a fallback
+        // If no default source is found, creatin one or choosign a fallback
         if (!defaultSource) {
           console.log(
             "No suitable default calendar source found on iOS. Creating or choosing a fallback."

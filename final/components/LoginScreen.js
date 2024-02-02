@@ -28,11 +28,11 @@ import {
   MaterialIcons,
   MaterialCommunityIcons,
   FontAwesome5,
-} from "@expo/vector-icons"; // Import Material Icons or any other icon library
+} from "@expo/vector-icons";
 import * as Font from "expo-font";
 
 const screenWidth = Dimensions.get("window").width;
-const isTablet = screenWidth > 768; // Common breakpoint for tablet devices
+const isTablet = screenWidth > 768;
 
 // Login screen component
 const LoginScreen = () => {

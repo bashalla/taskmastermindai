@@ -274,12 +274,12 @@ const styles = StyleSheet.create({
     marginVertical: heightPercentageToDP("1%"),
   },
   genderButton: {
-    padding: widthPercentageToDP("2.5%"), // Smaller padding
+    padding: widthPercentageToDP("2.5%"),
     borderRadius: 5,
-    marginHorizontal: widthPercentageToDP("1%"), // Smaller margin
+    marginHorizontal: widthPercentageToDP("1%"),
   },
   genderText: {
-    fontSize: widthPercentageToDP("3.5%"), // Smaller font size
+    fontSize: widthPercentageToDP("3.5%"),
   },
   genderButtonSelected: {
     backgroundColor: "#0782F9",

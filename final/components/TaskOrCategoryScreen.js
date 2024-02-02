@@ -15,7 +15,6 @@ import {
 import { db, auth } from "../firebase";
 import { collection, getDocs, addDoc, query, where } from "firebase/firestore";
 
-// Get device dimensions to make UI responsive
 const { width: screenWidth } = Dimensions.get("window");
 const isTablet = screenWidth > 768;
 
@@ -63,7 +62,7 @@ function TaskOrCategoryScreen({ navigation }) {
       setNewLabelName("");
       setSelectedColor("");
       Keyboard.dismiss(); // Dismiss the keyboard after submission
-      fetchCategories(); // Refresh the categories list
+      fetchCategories(); // Refreshing the categories list
     } catch (error) {
       console.error("Error creating category:", error);
       Alert.alert("Error", "Failed to create a new category.");
@@ -147,7 +146,6 @@ function TaskOrCategoryScreen({ navigation }) {
   );
 }
 
-// Adjusted styles for responsiveness
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,

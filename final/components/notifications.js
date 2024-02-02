@@ -7,7 +7,7 @@ import {
   where,
   updateDoc,
 } from "firebase/firestore";
-import { db, auth } from "../firebase"; // Ensure this path is correct
+import { db, auth } from "../firebase";
 
 // Handler for incoming notifications
 Notifications.setNotificationHandler({
@@ -38,7 +38,7 @@ export const registerForPushNotificationsAsync = async () => {
     token = (
       await Notifications.getExpoPushTokenAsync({
         experienceId: "@bashalla/unifinaltaskmanager",
-        projectId: "1e34c809-583a-48f3-86a6-671d63be523d", // Use the Expo project ID you obtained
+        projectId: "1e34c809-583a-48f3-86a6-671d63be523d",
       })
     ).data;
   } else {
@@ -57,7 +57,7 @@ export const registerForPushNotificationsAsync = async () => {
   return token;
 };
 
-// Function to schedule a notification
+// Function to schedule the notification
 const scheduleNotification = async (task) => {
   // Create a new date object for the next day at 10:00 AM
   let notificationTime = new Date();

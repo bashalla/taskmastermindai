@@ -43,7 +43,7 @@ const SearchScreen = ({ navigation }) => {
       const taskSnapshot = await getDocs(qTasks);
       const categorySnapshot = await getDocs(qCategories);
 
-      // Filter results client-side
+      // Filter results
       const results = [];
       taskSnapshot.forEach((doc) => {
         const data = doc.data();

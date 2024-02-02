@@ -43,9 +43,9 @@ const getSuggestionsFromGPT = async (categories) => {
       ", "
     )}. Suggest 3-4 tasks that are likely to be useful for the user:`;
     const response = await axios.post(
-      "https://api.openai.com/v1/chat/completions", // Use chat completions endpoint
+      "https://api.openai.com/v1/chat/completions", // GPT-3.5 API endpoint
       {
-        model: "gpt-3.5-turbo-1106", // Specifying the model here
+        model: "gpt-3.5-turbo-1106", // GPT-3.5 model
         messages: [{ role: "system", content: prompt }], // Format the prompt as a message
       },
       {
@@ -97,7 +97,7 @@ export const getPredictiveSuggestions = async (userId) => {
     }
   }
 
-  // Determine top two categories
+  // Determining here top two categories
   const sortedCategories = Object.entries(categoryCounts).sort(
     (a, b) => b[1] - a[1]
   );

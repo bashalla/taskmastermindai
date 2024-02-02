@@ -39,7 +39,6 @@ const SuggestionsPage = ({ route, navigation }) => {
     await Clipboard.setStringAsync(text);
     setCopiedText(text);
 
-    // Show a toast on Android or an alert on iOS
     if (Platform.OS === "android") {
       ToastAndroid.show("Copied to clipboard", ToastAndroid.SHORT);
     } else {
@@ -97,7 +96,7 @@ const SuggestionsPage = ({ route, navigation }) => {
   };
 
   useEffect(() => {
-    fetchUserInfo(); // Call fetchUserInfo when the component mounts
+    fetchUserInfo();
   }, []);
 
   return (

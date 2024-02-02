@@ -26,7 +26,7 @@ import {
 } from "firebase/firestore";
 
 const screenWidth = Dimensions.get("window").width;
-const isTablet = screenWidth > 768; // Common breakpoint for tablet devices
+const isTablet = screenWidth > 768;
 
 // This component will be used to create a new category
 const CategoryScreen = ({ navigation }) => {

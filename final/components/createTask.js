@@ -26,7 +26,7 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
-import Icon from "react-native-vector-icons/MaterialIcons"; // Import Icon
+import Icon from "react-native-vector-icons/MaterialIcons";
 import { db, auth } from "../firebase";
 import * as Location from "expo-location";
 import MapView, { Marker } from "react-native-maps";
@@ -72,7 +72,7 @@ const CreateTask = ({ navigation, route }) => {
             reject(error);
           },
           () => {
-            // Upload completed successfully, now we can get the download URL
+            // Upload completed successfully, now getting the download URL
             getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
               resolve(downloadURL);
             });
@@ -151,7 +151,7 @@ const CreateTask = ({ navigation, route }) => {
     };
 
     try {
-      // Upload documents to Firebase Storage and get their URLs (if documents are selected)
+      // Upload documents to Firebase Storage and get the URLs (if documents are selected)
       if (documents.length > 0) {
         const uploadedDocuments = await uploadDocumentsToFirebase(documents);
         taskData.documentUrls = uploadedDocuments.map((doc) => ({

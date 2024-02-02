@@ -6,6 +6,7 @@ import {
   ScrollView,
   Image,
   RefreshControl,
+  Dimensions,
 } from "react-native";
 import { auth, db } from "../firebase";
 import {
@@ -21,6 +22,9 @@ import {
 } from "firebase/firestore";
 import { useFocusEffect } from "@react-navigation/native";
 
+const screenWidth = Dimensions.get("window").width;
+const isTablet = screenWidth > 768;
+
 const userTypes = [
   { name: "Starter", minPoints: 0, maxPoints: 99 },
   { name: "Rookie", minPoints: 100, maxPoints: 499 },
@@ -33,7 +37,7 @@ const userTypes = [
 
 // Placeholder for badge data
 const badges = [
-  { name: "Bronze", points: 0, image: require("../assets/badges/bronze.png") },
+  { name: "Bronze", points: 1, image: require("../assets/badges/bronze.png") },
   {
     name: "Silver",
     points: 500,
@@ -57,6 +61,10 @@ const badges = [
   },
   { name: "Ruby", points: 7500, image: require("../assets/badges/ruby.png") },
 ];
+
+const getCurrentMonthName = () => {
+  return new Date().toLocaleString("default", { month: "long" });
+};
 
 // Rewards screen component
 function RewardsScreen() {
@@ -112,7 +120,7 @@ function RewardsScreen() {
       setMonthlyTaskCount(0);
       setMonthlyRewardAwarded(false);
     } else {
-      // Document for the current month exists, continue with normal operation
+      // Document for the current month exists, continuing with normal operation
       const startOfMonth = new Date();
       startOfMonth.setDate(1); // First day of the current month
       startOfMonth.setHours(0, 0, 0, 0); // Start of the day
@@ -249,38 +257,41 @@ function RewardsScreen() {
       <Text style={styles.subHeaderText}>
         Your progress and achievements, {userName}
       </Text>
-
       {/* Points and User Type */}
       <View style={styles.pointsContainer}>
         <Text style={styles.pointsText}>Points: {userPoints}</Text>
-        <Text style={styles.userTypeText}>User Type: {userType}</Text>
+        <Text style={styles.userTypeText}>
+          User Type: {userType || "Starter"}
+        </Text>
       </View>
-
-      {/* Earned Badge */}
       {earnedBadge && (
         <View style={styles.badgeContainer}>
           <Text style={styles.badgeText}>Earned Badge: {earnedBadge.name}</Text>
           <Image source={earnedBadge.image} style={styles.badgeImage} />
         </View>
       )}
-
+      {!earnedBadge && (
+        <View style={styles.badgeContainer}>
+          <Text style={styles.badgeText}>No Badge Earned Yet</Text>
+        </View>
+      )}
       {/* Separator Line and Monthly Competition Header */}
       <View style={styles.separatorContainer}>
         <View style={styles.separatorLine} />
-        <Text style={styles.competitionHeaderText}>Monthly Competition</Text>
+        <Text style={styles.competitionHeaderText}>
+          Monthly Competition {getCurrentMonthName()}
+        </Text>
         <View style={styles.separatorLine} />
       </View>
-
       {/* Monthly Task Counter Display */}
       <View style={styles.counterDisplayContainer}>
         <CounterDisplay count={monthlyTaskCount} />
         <Text style={styles.counterInfoText}>
           {monthlyTaskCount >= 10
             ? "Monthly goal achieved!"
-            : `${10 - monthlyTaskCount} tasks left for 100 points`}
+            : `${10 - monthlyTaskCount} tasks left for 100 extra points`}
         </Text>
       </View>
-
       {/* Monthly Rewards History */}
       <View style={styles.historyContainer}>
         <Text style={styles.historyHeaderText}>Monthly Rewards History:</Text>
@@ -300,92 +311,95 @@ function RewardsScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 65,
     flex: 1,
-    backgroundColor: "#f4f4f4",
-    padding: 20,
+    backgroundColor: "#F8FAE5",
+    padding: isTablet ? 40 : 25,
   },
   headerText: {
-    fontSize: 26,
+    fontSize: isTablet ? 32 : 26,
     fontWeight: "bold",
     color: "#333",
     textAlign: "center",
-    marginBottom: 10,
+    marginBottom: isTablet ? 20 : 10,
   },
   subHeaderText: {
-    fontSize: 18,
+    fontSize: isTablet ? 24 : 18,
     color: "#555",
     textAlign: "center",
     marginBottom: 20,
   },
   pointsContainer: {
-    marginVertical: 20,
+    marginVertical: isTablet ? 30 : 20,
     alignItems: "center",
   },
   pointsText: {
-    fontSize: 40,
+    fontSize: isTablet ? 48 : 40,
     fontWeight: "bold",
-    color: "#0782F9",
+    color: "#265073",
   },
   userTypeText: {
-    fontSize: 22,
+    fontSize: isTablet ? 26 : 22,
     fontWeight: "bold",
-    color: "#4CAF50",
+    color: "#A94438",
     marginTop: 10,
   },
   badgeContainer: {
     alignItems: "center",
-    marginVertical: 20,
+    marginVertical: isTablet ? 30 : 20,
   },
   badgeText: {
-    fontSize: 20,
+    fontSize: isTablet ? 24 : 20,
     fontWeight: "bold",
     marginBottom: 10,
   },
   badgeImage: {
-    width: 100,
-    height: 100,
+    width: isTablet ? 150 : 100,
+    height: isTablet ? 150 : 100,
     resizeMode: "contain",
-  },
-  monthlyTaskContainer: {
-    alignItems: "center",
-    marginVertical: 20,
-  },
-  monthlyTaskText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  rewardText: {
-    fontSize: 16,
-    color: "#4CAF50",
   },
   historyContainer: {
     marginTop: 20,
-    padding: 10,
-    backgroundColor: "#f0f0f0",
+    padding: 20,
+    backgroundColor: "#638889",
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+    marginBottom: 20,
   },
   historyHeaderText: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: "bold",
-    color: "#333",
-    marginBottom: 10,
+    color: "#0F1035",
+    marginBottom: 15,
   },
   historyMonthText: {
-    fontSize: 16,
-    color: "#333",
-  },
-  historyEmptyText: {
-    fontSize: 16,
-    color: "#777",
+    fontSize: 18,
+    color: "#555",
+    marginBottom: 8,
+    paddingLeft: 10,
+    paddingTop: 4,
+    paddingBottom: 4,
+    backgroundColor: "#C5E898",
+    borderRadius: 5,
+    overflow: "hidden",
     textAlign: "center",
   },
+  historyEmptyText: {
+    fontSize: 18,
+    color: "#777",
+    textAlign: "center",
+    fontStyle: "italic",
+    marginTop: 10,
+  },
   counterContainer: {
-    padding: 20,
-    backgroundColor: "#4CAF50",
-    borderRadius: 50,
-    width: 150,
-    height: 150,
+    padding: isTablet ? 30 : 20,
+    backgroundColor: "#D2DE32",
+    borderRadius: isTablet ? 75 : 50,
+    width: isTablet ? 200 : 150,
+    height: isTablet ? 200 : 150,
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
@@ -395,16 +409,16 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   counterText: {
-    fontSize: 40,
+    fontSize: isTablet ? 60 : 40,
     color: "white",
     fontWeight: "bold",
   },
   counterDisplayContainer: {
     alignItems: "center",
-    marginVertical: 20,
+    marginVertical: isTablet ? 30 : 20,
   },
   counterInfoText: {
-    fontSize: 16,
+    fontSize: isTablet ? 20 : 16,
     color: "#555",
     marginTop: 10,
     textAlign: "center",
@@ -412,7 +426,7 @@ const styles = StyleSheet.create({
   separatorContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 20,
+    marginVertical: isTablet ? 30 : 20,
   },
   separatorLine: {
     flex: 1,
@@ -421,7 +435,7 @@ const styles = StyleSheet.create({
   },
   competitionHeaderText: {
     marginHorizontal: 10,
-    fontSize: 18,
+    fontSize: isTablet ? 22 : 18,
     fontWeight: "bold",
     color: "#333",
   },
