@@ -85,7 +85,8 @@ function RewardsScreen() {
       if (userDoc.exists()) {
         const userData = userDoc.data();
         setUserPoints(userData.points || 0);
-        setUserName(userData.name || "");
+        setUserName(userData.firstName || "User");
+
         setUserType(getUserType(userData.points));
         setEarnedBadge(getEarnedBadge(userData.points));
         await fetchMonthlyTaskCount();
