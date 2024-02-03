@@ -14,6 +14,7 @@ import {
   ScrollView,
   Modal,
   Keyboard,
+  ActivityIndicator,
 } from "react-native";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import {
@@ -52,39 +53,48 @@ const CreateTask = ({ navigation, route }) => {
   const [isLocationInputFocused, setIsLocationInputFocused] = useState(false);
   const [googlePlacesInputFocused, setGooglePlacesInputFocused] =
     useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Function to upload documents to Firebase Storage
   const uploadDocumentsToFirebase = async (documents) => {
+    setIsUploading(true); // Start uploading
     const urls = [];
 
-    // Upload each document to Firebase Storage
-    for (const document of documents) {
-      const storage = getStorage();
-      const storageRef = ref(storage, `taskDocuments/${document.name}`);
-      const response = await fetch(document.uri);
-      const blob = await response.blob();
+    try {
+      for (const document of documents) {
+        const storage = getStorage();
+        const storageRef = ref(storage, `taskDocuments/${document.name}`);
+        const response = await fetch(document.uri);
+        const blob = await response.blob();
 
-      const uploadTask = uploadBytesResumable(storageRef, blob);
+        const uploadTask = uploadBytesResumable(storageRef, blob);
 
-      const url = await new Promise((resolve, reject) => {
-        uploadTask.on(
-          "state_changed",
-          (snapshot) => {
-            /* ... */
-          },
-          (error) => {
-            reject(error);
-          },
-          () => {
-            // Upload completed successfully, now getting the download URL
-            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-              resolve(downloadURL);
-            });
-          }
-        );
-      });
+        const url = await new Promise((resolve, reject) => {
+          uploadTask.on(
+            "state_changed",
+            null,
+            (error) => {
+              reject(error);
+            },
+            () => {
+              // Upload completed successfully, now getting the download URL
+              getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                resolve(downloadURL);
+              });
+            }
+          );
+        });
 
-      urls.push({ name: document.name, url });
+        urls.push({ name: document.name, url });
+      }
+    } catch (error) {
+      console.error("Error uploading documents:", error);
+      Alert.alert(
+        "Upload Failed",
+        "There was an error uploading your documents."
+      );
+    } finally {
+      setIsUploading(false); // End uploading
     }
 
     return urls;
@@ -210,11 +220,16 @@ const CreateTask = ({ navigation, route }) => {
 
   // Function to select documents
   const selectDocument = async () => {
-    // Check if the current number of documents is 2 or more
-    if (documents.length >= 2) {
+    // Determine the maximum number of documents based on the platform
+    const maxDocumentsAllowed = Platform.OS === "android" ? 1 : 2;
+
+    // Check if the current number of documents has reached the limit
+    if (documents.length >= maxDocumentsAllowed) {
       Alert.alert(
         "Limit Reached",
-        "You can only upload up to two attachments."
+        `You can only upload up to ${maxDocumentsAllowed} attachment${
+          maxDocumentsAllowed > 1 ? "s" : ""
+        }.`
       );
       return; // Prevent further execution
     }
@@ -222,26 +237,32 @@ const CreateTask = ({ navigation, route }) => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: "*/*",
-        multiple: true,
+        // For iOS, we allow multiple selection if more than one document is allowed
+        multiple: Platform.OS === "ios" && maxDocumentsAllowed > 1,
       });
 
       if (result.cancelled) {
         console.log("Document selection was cancelled");
-      } else {
-        const newDocuments = result.assets || [];
-        const totalPossibleDocuments = documents.length + newDocuments.length;
+        return;
+      }
 
-        if (totalPossibleDocuments <= 2) {
-          setDocuments((currentDocuments) => [
-            ...currentDocuments,
-            ...newDocuments,
-          ]);
-        } else {
-          Alert.alert(
-            "Limit Exceeded",
-            "You can only upload up to two attachments."
-          );
-        }
+      // Handle single document selection on Android
+      const newDocuments =
+        Platform.OS === "android" ? [result] : result.assets || [];
+      const totalPossibleDocuments = documents.length + newDocuments.length;
+
+      if (totalPossibleDocuments <= maxDocumentsAllowed) {
+        setDocuments((currentDocuments) => [
+          ...currentDocuments,
+          ...newDocuments.map((doc) => ({ name: doc.name, uri: doc.uri })),
+        ]);
+      } else {
+        Alert.alert(
+          "Limit Exceeded",
+          `You can only upload up to ${maxDocumentsAllowed} attachment${
+            maxDocumentsAllowed > 1 ? "s" : ""
+          }.`
+        );
       }
     } catch (err) {
       console.error("Error picking documents:", err);
@@ -463,6 +484,11 @@ const CreateTask = ({ navigation, route }) => {
         <TouchableOpacity style={styles.saveButton} onPress={handleSaveTask}>
           <Icon name="check" style={styles.saveIcon} />
         </TouchableOpacity>
+        {isUploading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#0000ff" />
+          </View>
+        )}
       </SafeAreaView>
     </KeyboardAvoidingView>
   );
@@ -627,6 +653,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     elevation: 4,
+  },
+  loadingContainer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.3)",
   },
 });
 

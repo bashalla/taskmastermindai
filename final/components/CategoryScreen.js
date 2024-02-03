@@ -72,8 +72,8 @@ const CategoryScreen = ({ navigation }) => {
 
     Keyboard.dismiss(); // Dismiss the keyboard
 
-    const categoryCreateHaptic = [200];
-    Vibration.vibrate(categoryCreateHaptic);
+    const pattern = Platform.OS === "android" ? [0, 50, 50, 50] : [0, 50];
+    Vibration.vibrate(pattern);
 
     await addDoc(collection(db, "categories"), {
       name: categoryName,

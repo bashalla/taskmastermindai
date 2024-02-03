@@ -14,6 +14,7 @@ import {
   KeyboardAvoidingView,
   Modal,
   Keyboard,
+  ActivityIndicator,
 } from "react-native";
 import { updateDoc, doc, getDoc } from "firebase/firestore";
 import {
@@ -54,6 +55,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
   const [isLocationInputFocused, setIsLocationInputFocused] = useState(false);
   const [googlePlacesInputFocused, setGooglePlacesInputFocused] =
     useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -198,27 +200,38 @@ const TaskDetailsScreen = ({ navigation, route }) => {
   };
 
   const handleDocumentUpload = async () => {
-    // Prevent adding more documents if the limit is reached
-    if (documentUrls.length >= 2) {
+    // Adjustinging the maximum number of documents allowed based on the platform
+    const maxDocumentsAllowed = Platform.OS === "ios" ? 2 : 1; // 2 documents for iOS, 1 for Android
+
+    if (documentUrls.length >= maxDocumentsAllowed) {
       Alert.alert(
         "Limit Reached",
-        "You can only upload up to two attachments."
+        `You can only upload up to ${maxDocumentsAllowed} attachment${
+          maxDocumentsAllowed > 1 ? "s" : ""
+        }.`
       );
-      return; // Exit the function to prevent further execution
+      return;
     }
+
+    setIsUploading(true); // Start uploading
 
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: "*/*",
-        multiple: true,
+        multiple: Platform.OS === "ios", // Enable multiple selection only for iOS
       });
 
-      // Check if the document picker was cancelled or if no files were selected
-      if (result.cancelled || !result.assets) {
+      if (result.cancelled) {
+        setIsUploading(false); // End uploading if cancelled
         return;
       }
 
-      const newDocuments = result.assets.slice(0, 2 - documentUrls.length);
+      // For Android, ensure only the first selected document is considered, even if multiple were somehow selected by the user
+      // For iOS, accept multiple documents up to the remaining limit of 2
+      const newDocuments =
+        Platform.OS === "android"
+          ? [result]
+          : result.assets.slice(0, maxDocumentsAllowed - documentUrls.length);
 
       const newDocumentUrls = await Promise.all(
         newDocuments.map(async (document) => {
@@ -232,8 +245,9 @@ const TaskDetailsScreen = ({ navigation, route }) => {
           return new Promise((resolve, reject) => {
             uploadTask.on(
               "state_changed",
-              (snapshot) => {},
+              null, // Progress handler could be added here
               (error) => {
+                console.error("Upload error: ", error);
                 reject(error);
               },
               () => {
@@ -246,14 +260,14 @@ const TaskDetailsScreen = ({ navigation, route }) => {
         })
       );
 
-      // Updating here the state to include the URLs of the newly uploaded documents
-      // Ensuring not to exceed the limit of 2 documents
       setDocumentUrls((currentUrls) =>
-        [...currentUrls, ...newDocumentUrls].slice(0, 2)
+        [...currentUrls, ...newDocumentUrls].slice(0, maxDocumentsAllowed)
       );
     } catch (error) {
       console.error("Error during document upload:", error);
       Alert.alert("Upload Error", "There was an error uploading the document.");
+    } finally {
+      setIsUploading(false); // Ensuring to stop the loading indicator also at the end  of the process
     }
   };
 
@@ -452,6 +466,11 @@ const TaskDetailsScreen = ({ navigation, route }) => {
           <Icon name="check" style={styles.saveIcon} />
         </TouchableOpacity>
       </SafeAreaView>
+      {isUploading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 };
@@ -616,6 +635,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     elevation: 4,
+  },
+  loadingContainer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.3)",
   },
 });
 

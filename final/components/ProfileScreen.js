@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
     borderRadius: isTablet ? 60 : 50,
   },
   userName: {
-    fontFamily: "AvenirNext-Regular",
+    fontFamily: Platform.OS === "ios" ? "AvenirNext-Regular" : "Roboto",
     fontSize: isTablet ? 40 : 30,
     marginLeft: isTablet ? 30 : 10,
     fontWeight: "bold",
