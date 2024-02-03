@@ -8,6 +8,7 @@ import {
   View,
   Alert,
   Image,
+  Platform,
   ScrollView,
   Dimensions,
   StatusBar,

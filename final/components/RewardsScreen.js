@@ -7,6 +7,7 @@ import {
   Image,
   RefreshControl,
   Dimensions,
+  Platform,
 } from "react-native";
 import { auth, db } from "../firebase";
 import {

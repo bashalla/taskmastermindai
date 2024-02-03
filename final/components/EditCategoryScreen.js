@@ -8,6 +8,7 @@ import {
   StyleSheet,
   View,
   Alert,
+  Platform,
   Dimensions,
 } from "react-native";
 import { db } from "../firebase";

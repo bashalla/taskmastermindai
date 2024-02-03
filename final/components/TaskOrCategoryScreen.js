@@ -9,6 +9,7 @@ import {
   Alert,
   SafeAreaView,
   RefreshControl,
+  Platform,
   Keyboard,
   Dimensions,
 } from "react-native";

@@ -7,6 +7,7 @@ import {
   View,
   FlatList,
   SafeAreaView,
+  Platform,
   RefreshControl,
   ActivityIndicator,
   Dimensions,
