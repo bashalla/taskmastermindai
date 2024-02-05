@@ -16,8 +16,8 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSCalendarsFullAccessUsageDescription": "The app needs to access your calendar.",
-        "NSRemindersFullAccessUsageDescription": "The app needs to access your reminders."
+        "NSCalendarsUsageDescription": "The app needs to access your calendar.",
+        "NSRemindersUsageDescription": "The app needs to access your reminders."
       },
       "bundleIdentifier": "com.bashalla.unifinaltaskmanager"
     },
