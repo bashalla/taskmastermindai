@@ -141,6 +141,8 @@ dist
 #Firebase Api Keys
 .firebase
 
+#app.json
+
 eas.json
 
 #firebase.js
