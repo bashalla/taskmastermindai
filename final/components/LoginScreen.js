@@ -17,6 +17,9 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signInWithCredential,
 } from "firebase/auth";
 import { useNavigation } from "@react-navigation/core";
 import { auth } from "../firebase";
@@ -24,13 +27,19 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   MaterialIcons,
   MaterialCommunityIcons,
   FontAwesome5,
 } from "@expo/vector-icons";
 import * as Font from "expo-font";
+import * as Google from "expo-auth-session/providers/google";
+import * as WebBrowser from "expo-web-browser";
+import { IOS_APP_ID } from "@env";
+import { ANDROID_APP_ID } from "@env";
+
+WebBrowser.maybeCompleteAuthSession();
 
 const screenWidth = Dimensions.get("window").width;
 const isTablet = screenWidth > 768;
@@ -40,6 +49,21 @@ const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigation = useNavigation();
+  const [userInfo, setUserInfo] = useState("");
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    iosClientId:
+      "1092527297385-ch2kpcu2hife6685id5dj38mdod6qtdv.apps.googleusercontent.com",
+    androidClientId: "ANDROID_APP_ID",
+  });
+
+  //Handling Sign in with Google
+  useEffect(() => {
+    if (response?.type == "success") {
+      const { id_token } = response.params;
+      const credential = GoogleAuthProvider.credential(id_token);
+      signInWithCredential(auth, credential);
+    }
+  }, [response]);
 
   useEffect(() => {
     const loadFonts = async () => {
@@ -153,8 +177,8 @@ const LoginScreen = () => {
           >
             <Text style={styles.buttonOutlineText}>Reset Password</Text>
           </TouchableOpacity>
-          {/* <TouchableOpacity
-            onPress={handleGoogleSignIn}
+          <TouchableOpacity
+            onPress={() => promptAsync()}
             style={styles.googleButton}
           >
             <MaterialCommunityIcons
@@ -164,7 +188,7 @@ const LoginScreen = () => {
               style={styles.googleIcon}
             />
             <Text style={styles.googleButtonText}>Sign in with Google</Text>
-          </TouchableOpacity> */}
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </ScrollView>
@@ -181,7 +205,7 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: isTablet ? hp("5%") : hp("7"),
+    marginTop: isTablet ? hp("5%") : hp("3"),
   },
   logo: {
     width: isTablet ? wp("20%") : wp("30%"),
@@ -240,15 +264,18 @@ const styles = StyleSheet.create({
   googleButton: {
     backgroundColor: "#db4437",
     width: "100%",
-    padding: isTablet ? hp("2%") : hp("2.5%"),
-    borderRadius: 10,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    padding: isTablet ? hp("1.5%") : hp("2%"),
+    borderRadius: 10,
     marginTop: hp("2%"),
   },
   googleButtonText: {
     color: "white",
     fontWeight: "700",
     fontSize: isTablet ? wp("3.5%") : wp("4%"),
+    marginLeft: 10,
   },
   googleIcon: {
     marginRight: isTablet ? wp("2%") : wp("3%"),

@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "YourTasks Ai",
+    "slug": "unifinaltaskmanager",
+    "description": "Ai Task Manager App for University Final Project",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/logo.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCalendarsFullAccessUsageDescription": "This app requires access to your calendar to manage tasks.",
+        "NSRemindersFullAccessUsageDescription": "This app requires access to your reminders to manage task reminders."
+      },
+      "bundleIdentifier": "com.bashalla.unifinaltaskmanager"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.bashalla.unifinaltaskmanager"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "1e34c809-583a-48f3-86a6-671d63be523d"
+      }
+    },
+    "owner": "bashalla",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/1e34c809-583a-48f3-86a6-671d63be523d"
+    },
+    "scheme": "unifinaltaskmanager"
+  }
+}
