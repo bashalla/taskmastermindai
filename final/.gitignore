@@ -145,6 +145,8 @@ dist
 
 eas.json
 
+.expo
+
 #firebase.js
 firebase.js
 
