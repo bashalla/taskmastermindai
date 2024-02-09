@@ -51,8 +51,7 @@ const LoginScreen = () => {
   const navigation = useNavigation();
   const [userInfo, setUserInfo] = useState("");
   const [request, response, promptAsync] = Google.useAuthRequest({
-    iosClientId:
-      "1092527297385-ch2kpcu2hife6685id5dj38mdod6qtdv.apps.googleusercontent.com",
+    iosClientId: "IOS_APP_ID",
     androidClientId: "ANDROID_APP_ID",
   });
 
