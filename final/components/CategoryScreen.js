@@ -9,6 +9,7 @@ import {
   FlatList,
   View,
   Alert,
+  Platform,
   Vibration,
   Dimensions,
   Keyboard,

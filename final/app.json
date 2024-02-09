@@ -16,12 +16,13 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSCalendarUsageDescription": "This app requires access to your calendar to manage tasks.",
-        "NSRemindersUsageDescription": "This app requires access to your reminders to manage task reminders."
+        "NSCalendarsFullAccessUsageDescription": "The app needs to access your calendar.",
+        "NSRemindersFullAccessUsageDescription": "The app needs to access your reminders."
       },
       "bundleIdentifier": "com.bashalla.unifinaltaskmanager"
     },
     "android": {
+      "permissions": ["READ_CALENDAR", "WRITE_CALENDAR"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -42,6 +43,14 @@
     },
     "updates": {
       "url": "https://u.expo.dev/1e34c809-583a-48f3-86a6-671d63be523d"
-    }
+    },
+    "plugins": [
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "The app needs to access your calendar."
+        }
+      ]
+    ]
   }
 }

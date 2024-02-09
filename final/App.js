@@ -18,7 +18,7 @@ import SuggestionsScreen from "./components/SuggestionsScreen";
 import SearchScreen from "./components/SearchScreen";
 import HelpScreen from "./components/HelpScreen";
 
-import { StatusBar } from "react-native";
+import { StatusBar, Platform } from "react-native";
 
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { registerForPushNotificationsAsync } from "./components/notifications";

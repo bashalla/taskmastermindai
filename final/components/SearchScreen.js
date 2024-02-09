@@ -6,6 +6,7 @@ import {
   TextInput,
   FlatList,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { collection, query, where, getDocs } from "firebase/firestore";
