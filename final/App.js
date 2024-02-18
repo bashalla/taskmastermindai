@@ -17,6 +17,10 @@ import TaskOrCategoryScreen from "./components/TaskOrCategoryScreen";
 import SuggestionsScreen from "./components/SuggestionsScreen";
 import SearchScreen from "./components/SearchScreen";
 import HelpScreen from "./components/HelpScreen";
+import { LogBox } from "react-native";
+
+// Only for android on newer react native versions
+LogBox.ignoreLogs(["new NativeEventEmitter"]);
 
 import { StatusBar, Platform } from "react-native";
 

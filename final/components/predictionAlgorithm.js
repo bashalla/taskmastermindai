@@ -45,7 +45,7 @@ const getSuggestionsFromGPT = async (categories) => {
     const response = await axios.post(
       "https://api.openai.com/v1/chat/completions", // GPT-3.5 API endpoint
       {
-        model: "gpt-3.5-turbo-1106", // GPT-3.5 model
+        model: "gpt-3.5-turbo", // GPT-3.5 model
         messages: [{ role: "system", content: prompt }], // Format the prompt as a message
       },
       {

@@ -121,7 +121,7 @@ function HomeScreen({ navigation }) {
           onPress={onSignOut}
           style={[styles.headerIcon, styles.signOutButton]}
         >
-          <Icon name="exit-to-app" size={40} color="#0782F9" />
+          <Icon name="exit-to-app" size={34} color="#0782F9" />
           <Text style={styles.invisibleText}></Text>
         </TouchableOpacity>
       </View>
@@ -374,7 +374,7 @@ function HomeScreen({ navigation }) {
       console.error("Error fetching suggestions:", error);
       Alert.alert("Error", "Unable to fetch suggestions.");
     }
-    setIsLoading(false); // End loading
+    setIsLoading(false);
   };
 
   return (
@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
     marginLeft: wp("4%"),
   },
   signOutButton: {
-    marginTop: hp("1.2%"),
+    marginTop: Platform.OS === "android" ? hp("2%") : hp("1.2%"),
     marginRight: wp("4%"),
   },
   taskItem: {
@@ -573,7 +573,7 @@ const styles = StyleSheet.create({
   lampButton: {
     position: "absolute",
     left: wp("5%"),
-    top: isTablet ? hp("5") : hp("10%"),
+    top: Platform.OS === "android" ? hp("8%") : hp("10%"),
   },
   suggestionText: {
     fontSize: isTablet ? wp("3%") : wp("4%"),
