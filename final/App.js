@@ -20,7 +20,7 @@ import HelpScreen from "./components/HelpScreen";
 import { LogBox } from "react-native";
 
 // Only for android on newer react native versions
-LogBox.ignoreLogs(["new NativeEventEmitter"]);
+//LogBox.ignoreLogs(["new NativeEventEmitter"]);
 
 import { StatusBar, Platform } from "react-native";
 
