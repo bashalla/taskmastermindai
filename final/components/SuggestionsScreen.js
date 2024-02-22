@@ -9,6 +9,7 @@ import {
   Alert,
   Platform,
   ToastAndroid,
+  Dimensions,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import * as Clipboard from "expo-clipboard";
@@ -26,6 +27,9 @@ import {
   getDoc,
   updateDoc,
 } from "firebase/firestore";
+
+const screenWidth = Dimensions.get("window").width;
+const isTablet = screenWidth > 768;
 
 const SuggestionsPage = ({ route, navigation }) => {
   const { suggestions } = route.params;
@@ -119,49 +123,51 @@ const SuggestionsPage = ({ route, navigation }) => {
   );
 };
 
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F8FAE5",
   },
   header: {
-    fontSize: wp("5%"),
+    fontSize: isTablet ? wp("4%") : wp("5%"),
     fontWeight: "bold",
     textAlign: "left",
     color: "#1A1A1A",
-    paddingTop: hp("2%"),
+    paddingTop: isTablet ? hp("1%") : hp("2%"),
+    marginBottom: isTablet ? hp("1%") : hp("5%"),
   },
   subheader: {
-    fontSize: wp("4%"),
-    marginBottom: hp("3%"),
+    fontSize: isTablet ? wp("3.5%") : wp("4%"),
+    marginBottom: isTablet ? hp("3%") : hp("3%"),
     textAlign: "left",
     color: "#1A1A1A",
-    paddingTop: hp("2%"),
+    paddingTop: isTablet ? hp("1%") : hp("2%"),
   },
   cardsContainer: {
     flex: 1,
-    paddingTop: hp("5%"),
-    paddingHorizontal: wp("5%"),
+    paddingTop: isTablet ? hp("3%") : hp("5%"),
+    paddingHorizontal: isTablet ? wp("4%") : wp("5%"),
   },
   suggestionCard: {
-    padding: wp("4%"),
-    borderRadius: wp("3%"),
-    marginBottom: hp("2%"),
+    padding: isTablet ? wp("3%") : wp("4%"),
+    borderRadius: isTablet ? wp("2%") : wp("3%"),
+    marginBottom: isTablet ? hp("1.5%") : hp("2%"),
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: hp("1%") },
+    shadowOffset: { width: 0, height: isTablet ? hp("0.5%") : hp("1%") },
     shadowOpacity: 0.2,
-    shadowRadius: wp("2%"),
+    shadowRadius: isTablet ? wp("1.5%") : wp("2%"),
     elevation: 5,
   },
   suggestionText: {
-    fontSize: wp("4%"),
+    fontSize: isTablet ? wp("3.5%") : wp("4%"),
     color: "#333",
-    marginBottom: hp("1%"),
+    marginBottom: isTablet ? hp("0.5%") : hp("1%"),
   },
   addButton: {
     position: "absolute",
     right: wp("5%"),
-    bottom: hp("8%"),
+    bottom: isTablet ? hp("5%") : hp("8%"),
   },
 });
 

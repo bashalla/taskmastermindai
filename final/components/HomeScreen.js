@@ -40,6 +40,7 @@ import {
 
 const screenWidth = Dimensions.get("window").width;
 const isTablet = screenWidth > 768;
+const lampIconSize = isTablet ? wp("10%") : wp("8%"); // Adjust the size values as needed
 
 // This component will be used to display the user's tasks due today
 function HomeScreen({ navigation }) {
@@ -573,8 +574,9 @@ const styles = StyleSheet.create({
   lampButton: {
     position: "absolute",
     left: wp("5%"),
-    top: Platform.OS === "android" ? hp("8%") : hp("10%"),
+    top: Platform.OS === "android" ? hp("8%") : isTablet ? hp("6%") : hp("10%"),
   },
+
   suggestionText: {
     fontSize: isTablet ? wp("3%") : wp("4%"),
     color: "#333",

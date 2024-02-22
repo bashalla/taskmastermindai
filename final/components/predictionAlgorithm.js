@@ -37,8 +37,7 @@ const fetchUserTasks = async (userId) => {
 };
 
 const cleanSuggestion = (suggestion) => {
-  // Remove a trailing "2" or "3" from the suggestion
-  return suggestion.replace(/\s+[234]$/, "");
+  return suggestion.replace(/^\d+\.\s+|\n\d+\.\s+/g, "");
 };
 
 // Function to get suggestions from GPT API
