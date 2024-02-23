@@ -31,14 +31,13 @@ jest.mock("../firebase", () => {
     doc: jest.fn(),
   };
 
-  // Mock the getFirestore function
+  // Mocking the getFirestore function
   const mockGetFirestore = jest.fn(() => mockFirestore);
 
-  // Return the mock functions if needed
+  // Returning the mock functions if needed
   return {
     __esModule: true,
     auth: {
-      // Mock auth object if needed
       currentUser: { uid: "user-id" },
     },
     db: mockFirestore,
@@ -94,7 +93,7 @@ jest.mock("firebase/firestore", () => {
   };
 });
 
-// Mock the useNavigation hook
+// Mocking the useNavigation hook
 jest.mock("@react-navigation/native", () => {
   const actualNav = jest.requireActual("@react-navigation/native");
   return {
@@ -105,7 +104,7 @@ jest.mock("@react-navigation/native", () => {
   };
 });
 
-// Mock the useFocusEffect hook
+// Mocking the useFocusEffect hook
 jest.mock("@react-native-async-storage/async-storage", () => ({
   setItem: jest.fn(),
   getItem: jest.fn(),
@@ -113,15 +112,13 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
   clear: jest.fn(),
 }));
 
-// Mock the useFocusEffect hook
 jest.mock("@expo/vector-icons", () => ({
   MaterialIcons: "MaterialIcons",
 }));
 
-// Mock for the navigation prop
 const mockNavigation = {
   navigate: jest.fn(),
-  addListener: jest.fn((_, fn) => fn()), // Mock implementation that immediately calls the provided function
+  addListener: jest.fn((_, fn) => fn()),
 };
 
 describe("CategoryScreen", () => {
@@ -135,7 +132,6 @@ describe("CategoryScreen", () => {
   });
 
   it("allows category creation", () => {
-    // Passing the mockNavigation to my component
     const { getByText, getByPlaceholderText } = render(
       <CategoryScreen navigation={mockNavigation} />
     );

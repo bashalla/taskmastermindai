@@ -116,6 +116,7 @@ const SuggestionsPage = ({ route, navigation }) => {
       <TouchableOpacity
         style={styles.addButton}
         onPress={navigateToTaskCreation}
+        testID="addButton"
       >
         <Icon name="add-circle-outline" size={wp("10%")} color="#0782F9" />
       </TouchableOpacity>

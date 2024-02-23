@@ -121,6 +121,7 @@ function HomeScreen({ navigation }) {
         <TouchableOpacity
           onPress={onSignOut}
           style={[styles.headerIcon, styles.signOutButton]}
+          testID="signOutButton"
         >
           <Icon name="exit-to-app" size={34} color="#0782F9" />
           <Text style={styles.invisibleText}></Text>

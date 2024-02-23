@@ -379,6 +379,7 @@ const TaskScreen = ({ navigation, route }) => {
       />
       <TouchableOpacity
         style={styles.addButton}
+        testID="addTaskButton"
         onPress={() => navigation.navigate("CreateTask", { categoryId })}
       >
         <Text style={styles.addButtonIcon}>+</Text>

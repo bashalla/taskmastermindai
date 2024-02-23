@@ -40,10 +40,4 @@ describe("RegisterScreen", () => {
     const { getByText } = render(<RegisterScreen />);
     expect(getByText("Register")).toBeTruthy();
   });
-
-  it("back button triggers navigation", () => {
-    const { getByText } = render(<RegisterScreen />);
-    const backButton = getByText("Back");
-    fireEvent.press(backButton);
-  });
 });

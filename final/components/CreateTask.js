@@ -461,6 +461,7 @@ const CreateTask = ({ navigation, route }) => {
         <TouchableOpacity
           style={styles.documentButton}
           onPress={selectDocument}
+          testID="selectDocumentButton"
         >
           <Icon name="attach-file" style={styles.documentIcon} />
         </TouchableOpacity>
@@ -476,7 +477,11 @@ const CreateTask = ({ navigation, route }) => {
         </View>
 
         {/* Save  Button */}
-        <TouchableOpacity style={styles.saveButton} onPress={handleSaveTask}>
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={handleSaveTask}
+          testID="saveTaskButton"
+        >
           <Icon name="check" style={styles.saveIcon} />
         </TouchableOpacity>
         {isUploading && (
