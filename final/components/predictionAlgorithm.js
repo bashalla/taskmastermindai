@@ -36,10 +36,6 @@ const fetchUserTasks = async (userId) => {
   return tasks;
 };
 
-const cleanSuggestion = (suggestion) => {
-  return suggestion.replace(/^\d+\.\s+|\n\d+\.\s+/g, "");
-};
-
 // Function to get suggestions from GPT API
 const getSuggestionsFromGPT = async (categories) => {
   try {
@@ -65,9 +61,8 @@ const getSuggestionsFromGPT = async (categories) => {
     // Extracting and limiting the number of suggestions
     if (response.data.choices && response.data.choices.length > 0) {
       const suggestions = response.data.choices
-        .map((choice) => cleanSuggestion(choice.message.content)) // Apply the cleaning function here
+        .map((choice) => choice.message.content)
         .filter((content) => content);
-
       return suggestions.slice(0, 4); // Limit to the first 3-4 suggestions
     } else {
       console.error("No valid suggestions received");

@@ -22,6 +22,7 @@ jest.mock("../firebase", () => {
         ],
       })
     ),
+    // Mocking the query function
     query: jest.fn(),
     where: jest.fn(),
     writeBatch: jest.fn(() => ({
@@ -121,16 +122,19 @@ const mockNavigation = {
   addListener: jest.fn((_, fn) => fn()),
 };
 
+// Test suite for the CategoryScreen component
 describe("CategoryScreen", () => {
   it("renders correctly", () => {
     // Passing the mockNavigation to my component
     const { getByText, getByPlaceholderText } = render(
       <CategoryScreen navigation={mockNavigation} />
     );
+    // Checking if the component renders the expected elements
     expect(getByText("Select a Color:")).toBeTruthy();
     expect(getByPlaceholderText("Category Name")).toBeTruthy();
   });
 
+  // Test case for category creation
   it("allows category creation", () => {
     const { getByText, getByPlaceholderText } = render(
       <CategoryScreen navigation={mockNavigation} />

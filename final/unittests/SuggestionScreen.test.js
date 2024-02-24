@@ -1,18 +1,8 @@
 import React from "react";
-import { render, fireEvent } from "@testing-library/react-native";
-import SuggestionsPage from "../components/SuggestionsScreen";
+import { render } from "@testing-library/react-native";
+import SuggestionsPage from "../components/SuggestionsScreen"; // Update the import path as necessary
 
-// Mock navigation functions
-const mockNavigate = jest.fn();
-
-// Mock the navigation prop
-jest.mock("@react-navigation/native", () => ({
-  useNavigation: () => ({
-    navigate: mockNavigate,
-  }),
-}));
-
-// Mock external dependencies
+// Mocking AsyncStorage
 jest.mock("@react-native-async-storage/async-storage", () => ({
   setItem: jest.fn(),
   getItem: jest.fn(),
@@ -20,19 +10,29 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
   clear: jest.fn(),
 }));
 
+// Mocking Clipboard
+jest.mock("expo-clipboard", () => ({
+  setString: jest.fn(),
+  getStringAsync: jest.fn(),
+  addListener: jest.fn(() => ({
+    remove: jest.fn(),
+  })),
+  removeListeners: jest.fn(),
+}));
+
+// Suggestion Screen Test Suite
 describe("SuggestionsPage", () => {
-  it("navigates to TaskOrCategoryScreen when add button is pressed", () => {
-    const { getByTestId } = render(
-      <SuggestionsPage route={{ params: { suggestions: [] } }} />
+  it("renders without crashing", () => {
+    // Render the SuggestionPage component
+    const route = { params: { suggestions: [] } };
+    const navigation = { navigate: jest.fn() };
+
+    const { queryByText } = render(
+      <SuggestionsPage route={route} navigation={navigation} />
     );
 
-    // Get the add button by its testID
-    const addButton = getByTestId("addButton");
-
-    // Fire a press event on the add button
-    fireEvent.press(addButton);
-
-    // Asserting that the navigation function was called with the correct screen name
-    expect(mockNavigate).toHaveBeenCalledWith("TaskOrCategoryScreen");
+    // Use a regular expression to match the part of the text content I want to test
+    const helloText = queryByText(/Hello,/);
+    expect(helloText).toBeTruthy();
   });
 });

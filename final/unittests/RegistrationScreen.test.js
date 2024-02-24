@@ -19,6 +19,7 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
   clear: jest.fn(),
 }));
 
+// Test Suite Registration Screen
 describe("RegisterScreen", () => {
   it("renders all input fields", () => {
     const { getByPlaceholderText } = render(<RegisterScreen />);
@@ -29,6 +30,7 @@ describe("RegisterScreen", () => {
     expect(getByPlaceholderText("Name")).toBeTruthy();
   });
 
+  // Button tests
   it("renders gender selection buttons", () => {
     const { getByText } = render(<RegisterScreen />);
     expect(getByText("Male")).toBeTruthy();

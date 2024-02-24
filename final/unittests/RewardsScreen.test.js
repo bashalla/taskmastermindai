@@ -46,17 +46,19 @@ describe("RewardsScreen Tests", () => {
     jest.clearAllMocks();
   });
 
+  // Test to check if the component renders correctly
   it("displays user points and type", async () => {
     const { findByText } = render(<RewardsScreen />);
 
     const pointsText = await findByText(/Points: 100/);
     expect(pointsText).toBeTruthy();
 
-    // Updated to expect "Rookie" based on the provided points
+    // Expecting "Rookie" based on the provided points
     const userTypeText = await findByText(/User Type: Rookie/);
     expect(userTypeText).toBeTruthy();
   });
 
+  // Test to check if the monthly competition header is rendered correctly
   it("renders the monthly competition header correctly", async () => {
     const { getByText } = render(<RewardsScreen />);
     expect(getByText(/Monthly Competition/)).toBeTruthy();

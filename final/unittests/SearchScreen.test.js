@@ -33,6 +33,7 @@ jest.mock("../firebase", () => ({
   db: {},
 }));
 
+// SearchScreen tests
 describe("SearchScreen", () => {
   it("renders search input correctly", () => {
     const { getByPlaceholderText } = render(<SearchScreen />);

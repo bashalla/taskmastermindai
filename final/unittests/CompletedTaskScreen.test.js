@@ -6,7 +6,7 @@ import CompletedTaskScreen from "../components/CompletedTaskScreen";
 jest.mock("react-native-vector-icons/Ionicons", () => "Icon");
 
 describe("CompletedTaskScreen", () => {
-  // Example task object to use as route parameter here
+  // Mock task data
   const mockTask = {
     name: "Test Task",
     description: "This is a test description.",
@@ -23,6 +23,7 @@ describe("CompletedTaskScreen", () => {
     },
   };
 
+  // Test to check if the component renders without crashing
   it("renders task details correctly", () => {
     const { getByText } = render(
       <CompletedTaskScreen navigation={mockNavigation} route={mockRoute} />

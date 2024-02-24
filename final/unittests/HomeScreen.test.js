@@ -3,6 +3,7 @@ import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import HomeScreen from "../components/HomeScreen";
 import { auth } from "../firebase";
 
+// Mock Firebase Firestore
 jest.mock("firebase/firestore", () => ({
   collection: jest.fn(() => ({})),
   query: jest.fn(),
@@ -15,6 +16,7 @@ jest.mock("firebase/firestore", () => ({
   updateDoc: jest.fn(() => Promise.resolve()),
 }));
 
+// Mock Firebase Auth
 jest.mock("../firebase", () => ({
   auth: {
     currentUser: { uid: "user-id" },
@@ -23,6 +25,7 @@ jest.mock("../firebase", () => ({
   db: {},
 }));
 
+// Today's Tasks
 describe("HomeScreen", () => {
   it("renders correctly", () => {
     const navigationMock = { addListener: jest.fn(() => () => {}) };
@@ -30,6 +33,7 @@ describe("HomeScreen", () => {
     expect(getByText("Today's Tasks")).toBeTruthy();
   });
 
+  // Sign Out test
   it("handles sign out correctly", async () => {
     const navigationMock = {
       replace: jest.fn(),

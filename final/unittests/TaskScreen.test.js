@@ -2,6 +2,7 @@ import React from "react";
 import { render } from "@testing-library/react-native";
 import TaskScreen from "../components/TaskScreen";
 
+// Mocking MaterialIcons and AsyncStorage
 jest.mock("react-native-vector-icons/MaterialIcons", () => "MaterialIcons");
 jest.mock("@react-native-async-storage/async-storage", () => ({
   setItem: jest.fn(),
@@ -60,11 +61,13 @@ describe("TaskScreen", () => {
     },
   };
 
+  // Test Suite
   it("renders the screen title", () => {
     const { getByText } = render(<TaskScreen route={route} />);
     expect(getByText(/Open Tasks for Work/i)).toBeTruthy();
   });
 
+  // Add Task button test
   it("renders the add task button", () => {
     const { getByTestId } = render(<TaskScreen route={route} />);
     const addButton = getByTestId("addTaskButton");

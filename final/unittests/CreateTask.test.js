@@ -2,6 +2,7 @@ import React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 import CreateTask from "../components/CreateTask";
 
+// Mocking Firebase Initialization
 jest.mock("firebase/firestore", () => ({
   addDoc: jest.fn(),
   collection: jest.fn(),
@@ -63,17 +64,20 @@ jest.mock("firebase/firestore", () => ({
 describe("CreateTask", () => {
   const route = { params: { categoryId: "1" } };
 
+  // render test
   it("renders all input fields", () => {
     const { getByPlaceholderText } = render(<CreateTask route={route} />);
     expect(getByPlaceholderText("Task Name")).toBeTruthy();
     expect(getByPlaceholderText("Description")).toBeTruthy();
   });
 
+  // saveTaskButton test
   it("renders 'Save Task' button", () => {
     const { getByTestId } = render(<CreateTask route={route} />);
     expect(getByTestId("saveTaskButton")).toBeTruthy();
   });
 
+  // selectDocumentButton test
   it("triggers document picker on button press", () => {
     const { getByTestId } = render(<CreateTask route={route} />);
     const selectDocumentButton = getByTestId("selectDocumentButton");

@@ -4,12 +4,14 @@ import ProfileScreen from "../components/ProfileScreen";
 import * as ImagePicker from "expo-image-picker";
 import { updatePassword } from "firebase/auth";
 
+// Mocking Firebase Initialization
 jest.mock("firebase/auth", () => ({
   auth: jest.fn(),
   updatePassword: jest.fn(),
   deleteUser: jest.fn(),
 }));
 
+// Mocking Firebase Firestore
 jest.mock("firebase/firestore", () => ({
   doc: jest.fn(),
   getDoc: jest.fn(() =>
@@ -26,12 +28,14 @@ jest.mock("firebase/firestore", () => ({
   deleteDoc: jest.fn(),
 }));
 
+// Mocking Firebase Storage
 jest.mock("firebase/storage", () => ({
   ref: jest.fn(),
   uploadBytes: jest.fn(),
   getDownloadURL: jest.fn(),
 }));
 
+// Mocking Image Picker
 jest.mock("expo-image-picker", () => ({
   requestMediaLibraryPermissionsAsync: jest.fn(),
   launchImageLibraryAsync: jest.fn(),
@@ -63,6 +67,7 @@ jest.mock("react-native/Libraries/Alert/Alert", () => ({
   alert: jest.fn(),
 }));
 
+// Profile Update Tests
 describe("ProfileScreen", () => {
   it("renders the update profile button", () => {
     const { getByText } = render(<ProfileScreen />);
@@ -70,6 +75,7 @@ describe("ProfileScreen", () => {
     expect(updateButton).toBeTruthy();
   });
 
+  // Delete Account Test
   it("renders the delete account button", () => {
     const { getByText } = render(<ProfileScreen />);
     const deleteButton = getByText("Delete Account");
