@@ -2,6 +2,8 @@
 
 ### In order to get the project running locally, you need to follow these preparations:
 
+#### On the first page of the university report, you will also find QR Codes to start the project directly in Expo Go on you smartphone. No local setup is needed in this case.
+
 #### Setting up Firebase Backend System
 
 1. **Set up a Firebase account** and add a `firebase.js` file in the root folder of the project. Fill out the "XXX" placeholders with information from Firebase.

@@ -64,14 +64,14 @@ const CategoryScreen = ({ navigation }) => {
     setCategories(fetchedCategories);
   };
 
-  // Create a new category in Firestore
+  // Creating a new category in Firestore
   const handleCreateCategory = async () => {
     if (!categoryName.trim() || !labelName.trim() || !selectedColor) {
       alert("Please fill in all fields.");
       return;
     }
 
-    Keyboard.dismiss(); // Dismiss the keyboard
+    Keyboard.dismiss(); // Dismissing the keyboard
 
     const pattern = Platform.OS === "android" ? [0, 50, 50, 50] : [0, 50];
     Vibration.vibrate(pattern);
@@ -89,7 +89,7 @@ const CategoryScreen = ({ navigation }) => {
     fetchCategories();
   };
 
-  // Delete a category and all associated tasks
+  // Deleting here a category and all associated tasks
   const handleDeleteCategory = async (categoryId) => {
     Alert.alert(
       "Confirm Delete",
@@ -119,7 +119,7 @@ const CategoryScreen = ({ navigation }) => {
         batch.delete(doc.ref);
       });
 
-      // Commit the batch
+      // Committing the batch
       await batch.commit();
       fetchCategories();
     } catch (error) {
@@ -136,7 +136,7 @@ const CategoryScreen = ({ navigation }) => {
     navigation.navigate("EditCategoryScreen", { category });
   };
 
-  // Render the screen
+  // Rendering the screen
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.sectionHeader}>Create New Category</Text>
