@@ -26,7 +26,7 @@ import { registerForPushNotificationsAsync } from "./components/notifications";
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Main App component
+// Main App component with navigation
 function MyTabs() {
   return (
     <Tab.Navigator
