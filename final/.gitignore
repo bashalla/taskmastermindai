@@ -142,13 +142,14 @@ dist
 .firebase
 
 #app.json
-app.json
 
-#app.json
 eas.json
+
+.expo
 
 #firebase.js
 firebase.js
 
 #package-lock.json  
 package-lock.json
+

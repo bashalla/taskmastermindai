@@ -6,6 +6,7 @@ import {
   TextInput,
   FlatList,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -24,7 +25,7 @@ const SearchScreen = ({ navigation }) => {
     if (searchQuery) {
       performSearch();
     } else {
-      setSearchResults([]); // Clear results if search query is empty
+      setSearchResults([]); // Clearing always results if search query is empty
     }
   }, [searchQuery]);
 

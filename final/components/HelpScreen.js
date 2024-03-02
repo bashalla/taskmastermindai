@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
+  Platform,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import {
@@ -13,6 +14,7 @@ import {
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 
+// HelpScreen component
 const HelpScreen = ({ navigation }) => {
   return (
     <ScrollView style={styles.container}>

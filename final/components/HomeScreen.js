@@ -7,6 +7,7 @@ import {
   View,
   FlatList,
   SafeAreaView,
+  Platform,
   RefreshControl,
   ActivityIndicator,
   Dimensions,
@@ -39,6 +40,7 @@ import {
 
 const screenWidth = Dimensions.get("window").width;
 const isTablet = screenWidth > 768;
+const lampIconSize = isTablet ? wp("10%") : wp("8%"); // Adjust the size values as needed
 
 // This component will be used to display the user's tasks due today
 function HomeScreen({ navigation }) {
@@ -61,10 +63,11 @@ function HomeScreen({ navigation }) {
     setCategories(fetchedCategories);
   };
 
+  // Fetch user info from Firestore
   useEffect(() => {
     const updateDayOrNight = () => {
       const currentHour = new Date().getHours();
-      setIsNight(currentHour < 6 || currentHour >= 18); // Night is considered from 6 PM to 6 AM
+      setIsNight(currentHour < 6 || currentHour >= 18); // Night is considered here from 6 PM to 6 AM
     };
 
     const initialize = async () => {
@@ -81,7 +84,7 @@ function HomeScreen({ navigation }) {
       }
     };
 
-    updateDayOrNight(); // Determine if it's currently day or night
+    updateDayOrNight(); // Determining if it's currently day or night
     initialize();
 
     const intervalId = setInterval(updateDayOrNight, 3600000); // Update every hour
@@ -119,8 +122,9 @@ function HomeScreen({ navigation }) {
         <TouchableOpacity
           onPress={onSignOut}
           style={[styles.headerIcon, styles.signOutButton]}
+          testID="signOutButton"
         >
-          <Icon name="exit-to-app" size={40} color="#0782F9" />
+          <Icon name="exit-to-app" size={34} color="#0782F9" />
           <Text style={styles.invisibleText}></Text>
         </TouchableOpacity>
       </View>
@@ -255,7 +259,7 @@ function HomeScreen({ navigation }) {
       case "very heavy rain":
       case "extreme rain":
       case "freezing rain":
-        return "umbrella"; // This icon is a close approximation
+        return "umbrella";
       case "thunderstorm":
       case "thunderstorm with light rain":
       case "thunderstorm with rain":
@@ -324,7 +328,7 @@ function HomeScreen({ navigation }) {
         }
       }
 
-      // Update the task in Firestore as completed along with completion time and points awarded flag
+      // Updating the task in Firestore as completed along with completion time and points awarded flag
       await updateDoc(taskRef, {
         isCompleted: true,
         completedDate: now.toISOString(), // Storing the completion date
@@ -363,7 +367,7 @@ function HomeScreen({ navigation }) {
   };
 
   const handleLampClick = async () => {
-    setIsLoading(true); // Start loading
+    setIsLoading(true);
     console.log("Lamp clicked");
     const userId = auth.currentUser.uid;
     try {
@@ -373,7 +377,7 @@ function HomeScreen({ navigation }) {
       console.error("Error fetching suggestions:", error);
       Alert.alert("Error", "Unable to fetch suggestions.");
     }
-    setIsLoading(false); // End loading
+    setIsLoading(false);
   };
 
   return (
@@ -475,7 +479,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#E8EAED",
-    paddingTop: Platform.OS === "android" ? 25 : 0, // Adjust for Android status bar
+    paddingTop: Platform.OS === "android" ? 25 : 0, // Adjusting here for Android status bar
   },
   headerText: {
     fontSize: isTablet ? wp("6%") : wp("7%"),
@@ -515,7 +519,7 @@ const styles = StyleSheet.create({
     marginLeft: wp("4%"),
   },
   signOutButton: {
-    marginTop: hp("1.2%"),
+    marginTop: Platform.OS === "android" ? hp("2%") : hp("1.2%"),
     marginRight: wp("4%"),
   },
   taskItem: {
@@ -572,8 +576,9 @@ const styles = StyleSheet.create({
   lampButton: {
     position: "absolute",
     left: wp("5%"),
-    top: isTablet ? hp("5") : hp("10%"),
+    top: Platform.OS === "android" ? hp("8%") : isTablet ? hp("6%") : hp("10%"),
   },
+
   suggestionText: {
     fontSize: isTablet ? wp("3%") : wp("4%"),
     color: "#333",

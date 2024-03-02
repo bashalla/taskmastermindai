@@ -16,7 +16,7 @@ jest.mock("firebase/firestore", () => {
 jest.mock("../firebase", () => {
   const mockFirestore = {
     doc: jest.fn(() => ({
-      // Mock the 'doc' function
+      // Mocking here the 'doc' function
     })),
     updateDoc: jest.fn(() => Promise.resolve()),
   };
@@ -54,13 +54,14 @@ const mockRoute = {
   },
 };
 
-// Mock Alert
+// Test Suite
 describe("EditCategoryScreen", () => {
   it("allows category update", async () => {
     const { getByText, getByPlaceholderText } = render(
       <EditCategoryScreen navigation={mockNavigation} route={mockRoute} />
     );
 
+    // Update category name
     fireEvent.changeText(
       getByPlaceholderText("Category Name"),
       "Updated Category Name"

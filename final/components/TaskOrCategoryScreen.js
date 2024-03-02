@@ -9,6 +9,7 @@ import {
   Alert,
   SafeAreaView,
   RefreshControl,
+  Platform,
   Keyboard,
   Dimensions,
 } from "react-native";
@@ -30,6 +31,7 @@ function TaskOrCategoryScreen({ navigation }) {
     fetchCategories();
   }, []);
 
+  // Fetch categories from Firestore
   const fetchCategories = async () => {
     setRefreshing(true);
     const q = query(
@@ -45,6 +47,7 @@ function TaskOrCategoryScreen({ navigation }) {
     setRefreshing(false);
   };
 
+  // Create a new category
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim() || !newLabelName.trim() || !selectedColor) {
       Alert.alert("Error", "Please fill in all fields.");
@@ -61,7 +64,7 @@ function TaskOrCategoryScreen({ navigation }) {
       setNewCategoryName("");
       setNewLabelName("");
       setSelectedColor("");
-      Keyboard.dismiss(); // Dismiss the keyboard after submission
+      Keyboard.dismiss(); // Dismissing always the keyboard after submission
       fetchCategories(); // Refreshing the categories list
     } catch (error) {
       console.error("Error creating category:", error);

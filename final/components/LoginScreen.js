@@ -8,6 +8,7 @@ import {
   View,
   Alert,
   Image,
+  Platform,
   ScrollView,
   Dimensions,
   StatusBar,
@@ -105,11 +106,6 @@ const LoginScreen = () => {
     }
   };
 
-  // Placeholder for Google Sign-In functionality
-  const handleGoogleSignIn = () => {
-    Alert.alert("Google Sign-In", "Functionality to be implemented.");
-  };
-
   // Return the screen content
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -152,18 +148,6 @@ const LoginScreen = () => {
           >
             <Text style={styles.buttonOutlineText}>Reset Password</Text>
           </TouchableOpacity>
-          {/* <TouchableOpacity
-            onPress={handleGoogleSignIn}
-            style={styles.googleButton}
-          >
-            <MaterialCommunityIcons
-              name="google"
-              size={isTablet ? wp("4%") : wp("5%")}
-              color="white"
-              style={styles.googleIcon}
-            />
-            <Text style={styles.googleButtonText}>Sign in with Google</Text>
-          </TouchableOpacity> */}
         </View>
       </KeyboardAvoidingView>
     </ScrollView>
@@ -235,22 +219,6 @@ const styles = StyleSheet.create({
     color: "#0782F9",
     fontWeight: "700",
     fontSize: isTablet ? wp("3.5%") : wp("4%"),
-  },
-  googleButton: {
-    backgroundColor: "#db4437",
-    width: "100%",
-    padding: isTablet ? hp("2%") : hp("2.5%"),
-    borderRadius: 10,
-    alignItems: "center",
-    marginTop: hp("2%"),
-  },
-  googleButtonText: {
-    color: "white",
-    fontWeight: "700",
-    fontSize: isTablet ? wp("3.5%") : wp("4%"),
-  },
-  googleIcon: {
-    marginRight: isTablet ? wp("2%") : wp("3%"),
   },
 });
 

@@ -7,6 +7,7 @@ import {
   Image,
   RefreshControl,
   Dimensions,
+  Platform,
 } from "react-native";
 import { auth, db } from "../firebase";
 import {
@@ -77,6 +78,7 @@ function RewardsScreen() {
   const [monthlyRewardAwarded, setMonthlyRewardAwarded] = useState(false);
   const [monthlyRewardsHistory, setMonthlyRewardsHistory] = useState([]);
 
+  // Fetch user data from Firestore
   const fetchUserData = async () => {
     setIsRefreshing(true);
     const userRef = doc(db, "users", auth.currentUser.uid);
@@ -85,7 +87,8 @@ function RewardsScreen() {
       if (userDoc.exists()) {
         const userData = userDoc.data();
         setUserPoints(userData.points || 0);
-        setUserName(userData.name || "");
+        setUserName(userData.firstName || "User");
+
         setUserType(getUserType(userData.points));
         setEarnedBadge(getEarnedBadge(userData.points));
         await fetchMonthlyTaskCount();
@@ -98,6 +101,7 @@ function RewardsScreen() {
     }
   };
 
+  // Fetch monthly task count and rewards history
   const fetchMonthlyTaskCount = async () => {
     const currentYearMonth = new Date().toISOString().slice(0, 7);
     const monthlyCompRef = doc(
@@ -108,9 +112,9 @@ function RewardsScreen() {
 
     const monthlyCompDoc = await getDoc(monthlyCompRef);
 
-    // Check if a document for the current month exists
+    // Checking if a document for the current month exists
     if (!monthlyCompDoc.exists()) {
-      // No document for the current month, create a new one and reset states
+      // If No document for the current month, creating a new one and reset states
       await setDoc(monthlyCompRef, {
         userId: auth.currentUser.uid,
         taskCount: 0,
@@ -120,7 +124,7 @@ function RewardsScreen() {
       setMonthlyTaskCount(0);
       setMonthlyRewardAwarded(false);
     } else {
-      // Document for the current month exists, continuing with normal operation
+      // Yes, Document for the current month exists, continuing with normal operation
       const startOfMonth = new Date();
       startOfMonth.setDate(1); // First day of the current month
       startOfMonth.setHours(0, 0, 0, 0); // Start of the day

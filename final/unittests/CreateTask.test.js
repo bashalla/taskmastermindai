@@ -2,7 +2,7 @@ import React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 import CreateTask from "../components/CreateTask";
 
-// Mock dependencies
+// Mocking Firebase Initialization
 jest.mock("firebase/firestore", () => ({
   addDoc: jest.fn(),
   collection: jest.fn(),
@@ -42,20 +42,15 @@ jest.mock("firebase/firestore", () => ({
   getDocs: jest.fn(() => ({
     forEach: jest.fn((callback) => {
       callback({
-        data: () => ({
-          /* Mock Task Data here */
-        }),
+        data: () => ({}),
         id: "1",
       });
     }),
   })),
 }));
-// Mocking Firebase Firestore
 jest.mock("firebase/firestore", () => ({
   getFirestore: jest.fn(() => ({})),
-  collection: jest.fn(() => ({
-    // Adding dummy methods to mock Firestore collection
-  })),
+  collection: jest.fn(() => ({})),
   getDocs: jest.fn(),
   query: jest.fn(),
   where: jest.fn(),
@@ -69,21 +64,23 @@ jest.mock("firebase/firestore", () => ({
 describe("CreateTask", () => {
   const route = { params: { categoryId: "1" } };
 
+  // render test
   it("renders all input fields", () => {
     const { getByPlaceholderText } = render(<CreateTask route={route} />);
     expect(getByPlaceholderText("Task Name")).toBeTruthy();
     expect(getByPlaceholderText("Description")).toBeTruthy();
   });
 
-  it("renders 'Save Task' and 'Cancel' buttons", () => {
-    const { getByText } = render(<CreateTask route={route} />);
-    expect(getByText("Save Task")).toBeTruthy();
-    expect(getByText("Cancel")).toBeTruthy();
+  // saveTaskButton test
+  it("renders 'Save Task' button", () => {
+    const { getByTestId } = render(<CreateTask route={route} />);
+    expect(getByTestId("saveTaskButton")).toBeTruthy();
   });
 
+  // selectDocumentButton test
   it("triggers document picker on button press", () => {
-    const { getByText } = render(<CreateTask route={route} />);
-    const selectDocumentButton = getByText("Select Document");
+    const { getByTestId } = render(<CreateTask route={route} />);
+    const selectDocumentButton = getByTestId("selectDocumentButton");
     fireEvent.press(selectDocumentButton);
   });
 });

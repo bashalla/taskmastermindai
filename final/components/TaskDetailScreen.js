@@ -183,7 +183,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
       // Update task in Firestore
       await updateDoc(taskRef, updatedTask);
 
-      // Optionally, update the calendar event if there's an associated ID
+      // Updating the calendar event if there's an associated ID
       if (task.calendarEventId && task.calendarEventId !== "") {
         await updateCalendarEvent(task.calendarEventId, newDeadlineDate);
       }
@@ -200,8 +200,8 @@ const TaskDetailsScreen = ({ navigation, route }) => {
   };
 
   const handleDocumentUpload = async () => {
-    // Adjustinging the maximum number of documents allowed based on the platform
-    const maxDocumentsAllowed = Platform.OS === "ios" ? 2 : 1; // 2 documents for iOS, 1 for Android
+    // Adjusting the maximum number of documents allowed based on the platform
+    const maxDocumentsAllowed = Platform.OS === "ios" ? 2 : 1;
 
     if (documentUrls.length >= maxDocumentsAllowed) {
       Alert.alert(
@@ -213,7 +213,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
       return;
     }
 
-    setIsUploading(true); // Start uploading
+    setIsUploading(true);
 
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -222,52 +222,51 @@ const TaskDetailsScreen = ({ navigation, route }) => {
       });
 
       if (result.cancelled) {
-        setIsUploading(false); // End uploading if cancelled
+        console.log("Document selection was cancelled");
+        setIsUploading(false); // Stop uploading indicator if cancelled
         return;
       }
 
-      // For Android, ensure only the first selected document is considered, even if multiple were somehow selected by the user
-      // For iOS, accept multiple documents up to the remaining limit of 2
-      const newDocuments =
-        Platform.OS === "android"
-          ? [result]
-          : result.assets.slice(0, maxDocumentsAllowed - documentUrls.length);
-
-      const newDocumentUrls = await Promise.all(
-        newDocuments.map(async (document) => {
-          const storage = getStorage();
-          const storageRef = ref(storage, `taskDocuments/${document.name}`);
-          const response = await fetch(document.uri);
-          const blob = await response.blob();
-
-          const uploadTask = uploadBytesResumable(storageRef, blob);
-
-          return new Promise((resolve, reject) => {
-            uploadTask.on(
-              "state_changed",
-              null, // Progress handler could be added here
-              (error) => {
-                console.error("Upload error: ", error);
-                reject(error);
-              },
-              () => {
-                getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-                  resolve({ name: document.name, url: downloadURL });
-                });
-              }
-            );
-          });
-        })
+      // Converting a single selection to array for processing
+      const newDocuments = result.assets ? result.assets : [result];
+      // Limitting now the number of new documents based on the current count and maximum allowed
+      const allowedNewDocuments = newDocuments.slice(
+        0,
+        maxDocumentsAllowed - documentUrls.length
       );
 
+      // Uploading new documents and get their URLs
+      const uploadPromises = allowedNewDocuments.map(async (document) => {
+        const storage = getStorage();
+        const storageRef = ref(storage, `taskDocuments/${document.name}`);
+        const response = await fetch(document.uri);
+        const blob = await response.blob();
+
+        const uploadTask = uploadBytesResumable(storageRef, blob);
+        return new Promise((resolve, reject) => {
+          uploadTask.on(
+            "state_changed",
+            null,
+            (error) => reject(error),
+            () => {
+              getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                resolve({ name: document.name, url: downloadURL });
+              });
+            }
+          );
+        });
+      });
+
+      const newUrls = await Promise.all(uploadPromises);
+      // Updating here state with new document URLs, respecting the platform-specific limits
       setDocumentUrls((currentUrls) =>
-        [...currentUrls, ...newDocumentUrls].slice(0, maxDocumentsAllowed)
+        [...currentUrls, ...newUrls].slice(0, maxDocumentsAllowed)
       );
     } catch (error) {
       console.error("Error during document upload:", error);
       Alert.alert("Upload Error", "There was an error uploading the document.");
     } finally {
-      setIsUploading(false); // Ensuring to stop the loading indicator also at the end  of the process
+      setIsUploading(false); // Ensuring also to stop the loading indicator
     }
   };
 
