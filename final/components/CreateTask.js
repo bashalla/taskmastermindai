@@ -246,7 +246,7 @@ const CreateTask = ({ navigation, route }) => {
         return;
       }
 
-      // Adjust logic to handle both single and multiple document cases
+      // Adjusting logic to handle both single and multiple document cases
       const newDocuments = result.assets ? result.assets : [result];
       const totalPossibleDocuments = documents.length + newDocuments.length;
 

@@ -63,7 +63,7 @@ const getSuggestionsFromGPT = async (categories) => {
       const suggestions = response.data.choices
         .map((choice) => choice.message.content)
         .filter((content) => content);
-      return suggestions.slice(0, 4); // Limit to the first 3-4 suggestions
+      return suggestions.slice(0, 4); // Limitting to the first 3-4 suggestions
     } else {
       console.error("No valid suggestions received");
       return [];
