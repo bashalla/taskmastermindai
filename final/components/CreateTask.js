@@ -37,7 +37,7 @@ import { GOOGLE_API_KEY } from "@env";
 const screenWidth = Dimensions.get("window").width;
 const isTablet = screenWidth > 768;
 
-// This component will be used to create a new task
+// This components will be used to create a new task
 const CreateTask = ({ navigation, route }) => {
   const { categoryId } = route.params;
   const [taskName, setTaskName] = useState("");
@@ -77,7 +77,7 @@ const CreateTask = ({ navigation, route }) => {
               reject(error);
             },
             () => {
-              // Upload completed successfully, now getting the download URL
+              // Upload completed successfully, now I'm getting the download URL
               getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
                 resolve(downloadURL);
               });
@@ -200,12 +200,12 @@ const CreateTask = ({ navigation, route }) => {
       console.log("Task created with ID: ", docRef.id);
       Alert.alert("Task Created", "Your task has been created successfully.");
 
-      // Navigation or additional logic after successful task creation
+      // Navigation and additional logic after successful task creation
       // Check if navigated from TaskOrCategoryScreen
       if (route.params?.from === "TaskOrCategoryScreen") {
-        navigation.navigate("Home", { screen: "Dashboard" }); // Navigate to HomeScreen
+        navigation.navigate("Home", { screen: "Dashboard" });
       } else {
-        navigation.goBack(); // Go back to the previous screen
+        navigation.goBack();
       }
     } catch (error) {
       console.error("Error saving task:", error);
@@ -220,10 +220,10 @@ const CreateTask = ({ navigation, route }) => {
 
   // Function to select documents
   const selectDocument = async () => {
-    // Determine the maximum number of documents based on the platform
+    // Defining the maximum number of documents allowed based on the platform
     const maxDocumentsAllowed = Platform.OS === "android" ? 1 : 2;
 
-    // Check if the current number of documents has reached the limit
+    // Check if the current number of documents has reached the platform-specific limit
     if (documents.length >= maxDocumentsAllowed) {
       Alert.alert(
         "Limit Reached",
@@ -231,14 +231,14 @@ const CreateTask = ({ navigation, route }) => {
           maxDocumentsAllowed > 1 ? "s" : ""
         }.`
       );
-      return; // Prevent further execution
+      return;
     }
 
     try {
+      // On Android, always setting multiple to false to ensure only a single document can be picked
       const result = await DocumentPicker.getDocumentAsync({
         type: "*/*",
-        // For iOS, we allow multiple selection if more than one document is allowed
-        multiple: Platform.OS === "ios" && maxDocumentsAllowed > 1,
+        multiple: Platform.OS === "ios",
       });
 
       if (result.cancelled) {
@@ -246,15 +246,19 @@ const CreateTask = ({ navigation, route }) => {
         return;
       }
 
-      // Handle single document selection on Android
-      const newDocuments =
-        Platform.OS === "android" ? [result] : result.assets || [];
+      // Adjusting logic to handle both single and multiple document cases
+      const newDocuments = result.assets ? result.assets : [result];
       const totalPossibleDocuments = documents.length + newDocuments.length;
 
+      // Ensure the total number of documents does not exceed the maximum allowed
       if (totalPossibleDocuments <= maxDocumentsAllowed) {
         setDocuments((currentDocuments) => [
           ...currentDocuments,
-          ...newDocuments.map((doc) => ({ name: doc.name, uri: doc.uri })),
+          ...newDocuments.map((doc) => ({
+            name: doc.name,
+            uri: doc.uri,
+            type: doc.type,
+          })),
         ]);
       } else {
         Alert.alert(
@@ -404,24 +408,15 @@ const CreateTask = ({ navigation, route }) => {
           styles={{
             container: {
               position: "absolute",
-              top: keyboardVisible && isLocationInputFocused ? "10%" : "48%",
+              top:
+                keyboardVisible && isLocationInputFocused
+                  ? isTablet
+                    ? "20%"
+                    : "10%"
+                  : isTablet
+                  ? "35%"
+                  : "45%",
               width: "100%",
-            },
-            textInputContainer: {
-              flexDirection: "row",
-              backgroundColor: "rgba(255, 255, 255, 0.9)",
-              borderRadius: 20,
-              padding: 5,
-              paddingLeft: 10,
-            },
-            textInput: {
-              height: 38,
-              color: "#5d5d5d",
-              fontSize: 16,
-            },
-            listView: {
-              backgroundColor: "white",
-              zIndex: 1000,
             },
           }}
           onFocus={() => setIsLocationInputFocused(true)}
@@ -466,6 +461,7 @@ const CreateTask = ({ navigation, route }) => {
         <TouchableOpacity
           style={styles.documentButton}
           onPress={selectDocument}
+          testID="selectDocumentButton"
         >
           <Icon name="attach-file" style={styles.documentIcon} />
         </TouchableOpacity>
@@ -481,7 +477,11 @@ const CreateTask = ({ navigation, route }) => {
         </View>
 
         {/* Save  Button */}
-        <TouchableOpacity style={styles.saveButton} onPress={handleSaveTask}>
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={handleSaveTask}
+          testID="saveTaskButton"
+        >
           <Icon name="check" style={styles.saveIcon} />
         </TouchableOpacity>
         {isUploading && (
