@@ -100,7 +100,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.bashalla.unifinaltaskmanager"
+      "package": "XXX"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -117,7 +117,7 @@
     "updates": {
       "url": "https://u.expo.dev/XXXX"
     },
-    "scheme": "unifinaltaskmanager"
+    "scheme": "XXX"
   }
   }
 
