@@ -183,7 +183,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
       // Update task in Firestore
       await updateDoc(taskRef, updatedTask);
 
-      // Optionally, updating the calendar event if there's an associated ID
+      // Updating the calendar event if there's an associated ID
       if (task.calendarEventId && task.calendarEventId !== "") {
         await updateCalendarEvent(task.calendarEventId, newDeadlineDate);
       }
@@ -266,7 +266,7 @@ const TaskDetailsScreen = ({ navigation, route }) => {
       console.error("Error during document upload:", error);
       Alert.alert("Upload Error", "There was an error uploading the document.");
     } finally {
-      setIsUploading(false); // Ensuring also  to stop the loading indicator
+      setIsUploading(false); // Ensuring also to stop the loading indicator
     }
   };
 

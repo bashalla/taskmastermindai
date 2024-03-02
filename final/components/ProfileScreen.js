@@ -91,6 +91,7 @@ function ProfileScreen({ navigation }) {
     setCountryPickerVisible(false);
   };
 
+  // Capture image from camera
   const handleCaptureImage = async () => {
     const { status } = await Camera.requestCameraPermissionsAsync();
     if (status !== "granted") {
@@ -108,6 +109,7 @@ function ProfileScreen({ navigation }) {
       return;
     }
 
+    // Resize and upload the image
     const imageUri = result.assets[0].uri;
     const resizedImage = await resizeImage(imageUri);
 
@@ -181,9 +183,10 @@ function ProfileScreen({ navigation }) {
     });
   };
 
+  // Select image source
   const selectImageSource = () => {
     if (Platform.OS === "ios") {
-      // Existing ActionSheetIOS code for iOS
+      // iOS specific code
       ActionSheetIOS.showActionSheetWithOptions(
         {
           options: ["Cancel", "Take Photo", "Choose from Library"],
@@ -273,7 +276,7 @@ function ProfileScreen({ navigation }) {
       style={styles.container}
     >
       <ScrollView
-        showsVerticalScrollIndicator={false} // This line hides the scroll indicator
+        showsVerticalScrollIndicator={false} // This line hides the scroll indicator here
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }

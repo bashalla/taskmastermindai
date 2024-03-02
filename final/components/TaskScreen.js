@@ -37,6 +37,7 @@ const TaskScreen = ({ navigation, route }) => {
   const [hasOpenTasks, setHasOpenTasks] = useState(false);
   const [hasDoneTasks, setHasDoneTasks] = useState(false);
 
+  // Fetch tasks from Firestore
   const fetchTasks = async () => {
     setRefreshing(true);
     try {
@@ -68,7 +69,7 @@ const TaskScreen = ({ navigation, route }) => {
       setHasOpenTasks(overdueTasks.length > 0 || onTimeTasks.length > 0);
       setHasDoneTasks(completedTasks.length > 0);
 
-      // Concatenate the arrays: first overdue, then on-time, then completed
+      // Concatenating here my arrays: first overdue, then on-time, then completed
       const sortedTasks = [...overdueTasks, ...onTimeTasks];
 
       if (completedTasks.length > 0) {
@@ -145,7 +146,7 @@ const TaskScreen = ({ navigation, route }) => {
         pointsAwarded: pointsAwardedFlag, // Storing if points were awarded
       });
 
-      // Preparing alert message based on task completion status and points awarded
+      // Preparing an alert message to the user based on task completion status and points awarded
       let alertMessage = "Task marked as completed.";
       alertMessage += pointsAwardedFlag
         ? " You've been awarded 10 points!"
@@ -158,7 +159,7 @@ const TaskScreen = ({ navigation, route }) => {
       }
       Alert.alert("Task Update", alertMessage);
 
-      fetchTasks(); // Fetch or refresh the tasks list if needed
+      fetchTasks(); // Fetching or refresh the tasks list if needed
     } catch (error) {
       console.error("Error marking task as done: ", error);
       Alert.alert("Error", "Unable to mark task as done.");
@@ -184,7 +185,7 @@ const TaskScreen = ({ navigation, route }) => {
       // Navigate to the CompletedTaskScreen for viewing completed tasks
       navigation.navigate("CompletedTaskScreen", { task: item });
     } else {
-      // Set the state to indicate a refresh may be needed
+      // Set the state to indicate a refresh is needed
       setNeedsRefresh(true);
       // Navigate to the TaskDetailScreen for editing incomplete tasks
       navigation.navigate("TaskDetailScreen", { task: item });
@@ -200,7 +201,7 @@ const TaskScreen = ({ navigation, route }) => {
           "Duplicate Event",
           "This task already has a calendar entry in iCal."
         );
-        return; // Exit the function early
+        return;
       }
 
       // If no calendar event is associated with this task, proceed to add a new calendar event
@@ -216,7 +217,7 @@ const TaskScreen = ({ navigation, route }) => {
       const eventId = await Calendar.createEventAsync(calendarId, {
         title: task.name,
         startDate: deadlineDate,
-        endDate: deadlineDate, // should be the same as startDate for a single-day event
+        endDate: deadlineDate, // needs to be the same as startDate for a single-day event
         allDay: true,
         timeZone: Calendar.DEFAULT_TIMEZONE,
       });
@@ -264,7 +265,7 @@ const TaskScreen = ({ navigation, route }) => {
     }
   };
 
-  // Get the default calendar source
+  // Getting the default calendar source
   const getDefaultCalendarSource = async () => {
     try {
       const calendars = await Calendar.getCalendarsAsync(
@@ -278,7 +279,7 @@ const TaskScreen = ({ navigation, route }) => {
           (calendar) => calendar.source && calendar.source.isLocalAccount
         );
 
-        // If no default source is found, creatin one or choosign a fallback
+        // If no default source is found, creating one or choosign a fallback
         if (!defaultSource) {
           console.log(
             "No suitable default calendar source found on iOS. Creating or choosing a fallback."

@@ -69,6 +69,7 @@ const SuggestionsPage = ({ route, navigation }) => {
     }
   };
 
+  // Render suggestion cards
   const renderSuggestionCards = () => {
     let cardIndex = 0;
     return suggestions.flatMap((suggestion, index) =>

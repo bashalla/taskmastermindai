@@ -25,7 +25,7 @@ const SearchScreen = ({ navigation }) => {
     if (searchQuery) {
       performSearch();
     } else {
-      setSearchResults([]); // Clear results if search query is empty
+      setSearchResults([]); // Clearing always results if search query is empty
     }
   }, [searchQuery]);
 

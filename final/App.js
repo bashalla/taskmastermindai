@@ -26,6 +26,7 @@ import { registerForPushNotificationsAsync } from "./components/notifications";
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
+// Main App component
 function MyTabs() {
   return (
     <Tab.Navigator
@@ -71,11 +72,11 @@ function MyTabs() {
         name="Rewards"
         component={RewardsScreen}
         options={{
-          headerShown: true, // Show the header
+          headerShown: true,
           headerStyle: {
-            backgroundColor: "#43766C", // Set your desired color here
+            backgroundColor: "#43766C",
           },
-          headerTintColor: "#fff", // Set your desired header tint color here
+          headerTintColor: "#fff",
         }}
       />
       <Tab.Screen
