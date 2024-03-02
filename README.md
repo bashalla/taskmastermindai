@@ -2,7 +2,7 @@
 
 ### In order to get the project running locally, you need to follow these preparations:
 
-#### On the first page of the university report, you will also find QR Codes to start the project directly in Expo Go on you smartphone. No local setup is needed in this case.
+#### On the first page of the university report, you will also find QR Codes to start the project directly in Expo Go on your smartphone. No local setup is needed in this case.
 
 #### Setting up Firebase Backend System
 
@@ -67,7 +67,7 @@
 
 #### Deploying it on Expo Dev
 
-- To deploy directly on Expo Dev, create an Expo Account and adjust the `app.json` file with your information in the "XXX" placeholders and afterward run `eas update`.
+- To deploy directly on Expo Dev, create an Expo Account and adjust the `app.json` file and `notofications.js` with your information in the "XXX" placeholders and afterward run `eas update`.
 
   ```javascript
 
@@ -122,3 +122,47 @@
   }
 
   ```
+
+  ````javascript
+  // Function to request permission for push notifications
+  export const registerForPushNotificationsAsync = async () => {
+  let token;
+  if (Constants.isDevice) {
+    const { status: existingStatus } =
+      await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (existingStatus !== "granted") {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    if (finalStatus !== "granted") {
+      alert("Failed to get push token for push notification!");
+      return;
+    }
+
+    // Get the Expo push token
+    token = (
+      await Notifications.getExpoPushTokenAsync({
+        experienceId: "XXX",
+        projectId: "XXX",
+      })
+    ).data;
+  } else {
+    alert("Must use physical device for Push Notifications");
+  }
+
+  if (Platform.OS === "android") {
+    Notifications.setNotificationChannelAsync("default", {
+      name: "default",
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: "#FF231F7C",
+    });
+  }
+
+  return token;
+  };
+
+
+    ```
+  ````

@@ -14,6 +14,7 @@ import {
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 
+// HelpScreen component
 const HelpScreen = ({ navigation }) => {
   return (
     <ScrollView style={styles.container}>

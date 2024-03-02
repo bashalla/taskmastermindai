@@ -37,7 +37,7 @@ import { GOOGLE_API_KEY } from "@env";
 const screenWidth = Dimensions.get("window").width;
 const isTablet = screenWidth > 768;
 
-// This component will be used to create a new task
+// This components will be used to create a new task
 const CreateTask = ({ navigation, route }) => {
   const { categoryId } = route.params;
   const [taskName, setTaskName] = useState("");
@@ -77,7 +77,7 @@ const CreateTask = ({ navigation, route }) => {
               reject(error);
             },
             () => {
-              // Upload completed successfully, now getting the download URL
+              // Upload completed successfully, now I'm getting the download URL
               getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
                 resolve(downloadURL);
               });
@@ -200,7 +200,7 @@ const CreateTask = ({ navigation, route }) => {
       console.log("Task created with ID: ", docRef.id);
       Alert.alert("Task Created", "Your task has been created successfully.");
 
-      // Navigation or additional logic after successful task creation
+      // Navigation and additional logic after successful task creation
       // Check if navigated from TaskOrCategoryScreen
       if (route.params?.from === "TaskOrCategoryScreen") {
         navigation.navigate("Home", { screen: "Dashboard" });
@@ -220,7 +220,7 @@ const CreateTask = ({ navigation, route }) => {
 
   // Function to select documents
   const selectDocument = async () => {
-    // Define the maximum number of documents allowed based on the platform
+    // Defining the maximum number of documents allowed based on the platform
     const maxDocumentsAllowed = Platform.OS === "android" ? 1 : 2;
 
     // Check if the current number of documents has reached the platform-specific limit

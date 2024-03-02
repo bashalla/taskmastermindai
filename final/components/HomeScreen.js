@@ -63,10 +63,11 @@ function HomeScreen({ navigation }) {
     setCategories(fetchedCategories);
   };
 
+  // Fetch user info from Firestore
   useEffect(() => {
     const updateDayOrNight = () => {
       const currentHour = new Date().getHours();
-      setIsNight(currentHour < 6 || currentHour >= 18); // Night is considered from 6 PM to 6 AM
+      setIsNight(currentHour < 6 || currentHour >= 18); // Night is considered here from 6 PM to 6 AM
     };
 
     const initialize = async () => {
@@ -83,7 +84,7 @@ function HomeScreen({ navigation }) {
       }
     };
 
-    updateDayOrNight(); // Determine if it's currently day or night
+    updateDayOrNight(); // Determining if it's currently day or night
     initialize();
 
     const intervalId = setInterval(updateDayOrNight, 3600000); // Update every hour
@@ -258,7 +259,7 @@ function HomeScreen({ navigation }) {
       case "very heavy rain":
       case "extreme rain":
       case "freezing rain":
-        return "umbrella"; // This icon is a close approximation
+        return "umbrella";
       case "thunderstorm":
       case "thunderstorm with light rain":
       case "thunderstorm with rain":
@@ -327,7 +328,7 @@ function HomeScreen({ navigation }) {
         }
       }
 
-      // Update the task in Firestore as completed along with completion time and points awarded flag
+      // Updating the task in Firestore as completed along with completion time and points awarded flag
       await updateDoc(taskRef, {
         isCompleted: true,
         completedDate: now.toISOString(), // Storing the completion date
@@ -366,7 +367,7 @@ function HomeScreen({ navigation }) {
   };
 
   const handleLampClick = async () => {
-    setIsLoading(true); // Start loading
+    setIsLoading(true);
     console.log("Lamp clicked");
     const userId = auth.currentUser.uid;
     try {
@@ -478,7 +479,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#E8EAED",
-    paddingTop: Platform.OS === "android" ? 25 : 0, // Adjust for Android status bar
+    paddingTop: Platform.OS === "android" ? 25 : 0, // Adjusting here for Android status bar
   },
   headerText: {
     fontSize: isTablet ? wp("6%") : wp("7%"),
