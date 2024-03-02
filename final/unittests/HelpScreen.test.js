@@ -20,7 +20,7 @@ describe("HelpScreen", () => {
 
     expect(getByText("Monthly Challenge")).toBeTruthy();
     expect(
-      // Using a regular expression to match the part of the text content we're sure about
+      // Using a regular expression to match the part of the text content I am sure about
       getByText(
         /Try the Monthly Challenge, as you can earn an extra 100 points/
       )

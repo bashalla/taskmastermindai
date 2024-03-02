@@ -1,6 +1,6 @@
 import React from "react";
 import { render } from "@testing-library/react-native";
-import SuggestionsPage from "../components/SuggestionsScreen"; // Update the import path as necessary
+import SuggestionsPage from "../components/SuggestionsScreen";
 
 // Mocking AsyncStorage
 jest.mock("@react-native-async-storage/async-storage", () => ({
