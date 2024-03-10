@@ -167,24 +167,21 @@ function HomeScreen({ navigation }) {
   const fetchTasksDueToday = async () => {
     try {
       const today = new Date();
-      const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
-      const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
+      const dateStringToday = today.toISOString().split("T")[0];
 
-      // Reference to my tasks collection in Firestore
+      // Reference to the tasks collection in Firestore
       const tasksRef = collection(db, "tasks");
       const q = query(tasksRef, where("userId", "==", auth.currentUser.uid));
       const querySnapshot = await getDocs(q);
 
       let fetchedTasks = [];
       querySnapshot.forEach((doc) => {
+        // Only add tasks that are not completed and are due today or earlier
         const task = doc.data();
-        const taskDeadline = new Date(task.deadline).toISOString();
-        if (
-          !task.isCompleted &&
-          taskDeadline >= startOfDay &&
-          taskDeadline <= endOfDay
-        ) {
-          fetchedTasks.push({ ...task, id: doc.id });
+        const taskDate = task.deadline.split("T")[0];
+        if (!task.isCompleted && taskDate <= dateStringToday) {
+          const isOverdue = taskDate < dateStringToday;
+          fetchedTasks.push({ ...task, id: doc.id, isOverdue });
         }
       });
 
