@@ -166,8 +166,16 @@ function HomeScreen({ navigation }) {
   // Fetch tasks due today from Firestore
   const fetchTasksDueToday = async () => {
     try {
-      const today = new Date();
-      const dateStringToday = today.toISOString().split("T")[0];
+      const now = new Date();
+      // Start of today in local time zone
+      const startOfToday = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate()
+      );
+      // End of today in local time zone
+      const endOfToday = new Date(startOfToday);
+      endOfToday.setDate(startOfToday.getDate() + 1);
 
       // Reference to the tasks collection in Firestore
       const tasksRef = collection(db, "tasks");
@@ -176,12 +184,17 @@ function HomeScreen({ navigation }) {
 
       let fetchedTasks = [];
       querySnapshot.forEach((doc) => {
-        // Only add tasks that are not completed and are due today or earlier
         const task = doc.data();
-        const taskDate = task.deadline.split("T")[0];
-        if (!task.isCompleted && taskDate <= dateStringToday) {
-          const isOverdue = taskDate < dateStringToday;
-          fetchedTasks.push({ ...task, id: doc.id, isOverdue });
+        // Convert deadline from UTC string to local Date object
+        const deadline = new Date(task.deadline);
+
+        if (!task.isCompleted) {
+          const isOverdue = deadline < startOfToday; // Task deadline is before start of today
+          const isDueToday = deadline >= startOfToday && deadline < endOfToday; // Task deadline is within today
+
+          if (isOverdue || isDueToday) {
+            fetchedTasks.push({ ...task, id: doc.id, isOverdue });
+          }
         }
       });
 
