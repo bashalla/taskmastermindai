@@ -229,44 +229,49 @@ const TaskDetailsScreen = ({ navigation, route }) => {
 
       // Converting a single selection to array for processing
       const newDocuments = result.assets ? result.assets : [result];
-      // Limitting now the number of new documents based on the current count and maximum allowed
-      const allowedNewDocuments = newDocuments.slice(
+      // Filtering out any document entries that might not have a valid URI, for exmapke when cancelling the selection
+      const validDocuments = newDocuments.filter((doc) => doc.uri);
+
+      // Limiting the number of new documents based on the current count and maximum allowed
+      const allowedNewDocuments = validDocuments.slice(
         0,
         maxDocumentsAllowed - documentUrls.length
       );
 
-      // Uploading new documents and get their URLs
-      const uploadPromises = allowedNewDocuments.map(async (document) => {
-        const storage = getStorage();
-        const storageRef = ref(storage, `taskDocuments/${document.name}`);
-        const response = await fetch(document.uri);
-        const blob = await response.blob();
+      // Proceed with upload only if there are valid documents
+      if (allowedNewDocuments.length > 0) {
+        const uploadPromises = allowedNewDocuments.map(async (document) => {
+          const storage = getStorage();
+          const storageRef = ref(storage, `taskDocuments/${document.name}`);
+          const response = await fetch(document.uri);
+          const blob = await response.blob();
 
-        const uploadTask = uploadBytesResumable(storageRef, blob);
-        return new Promise((resolve, reject) => {
-          uploadTask.on(
-            "state_changed",
-            null,
-            (error) => reject(error),
-            () => {
-              getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-                resolve({ name: document.name, url: downloadURL });
-              });
-            }
-          );
+          const uploadTask = uploadBytesResumable(storageRef, blob);
+          return new Promise((resolve, reject) => {
+            uploadTask.on(
+              "state_changed",
+              null,
+              (error) => reject(error),
+              () => {
+                getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                  resolve({ name: document.name, url: downloadURL });
+                });
+              }
+            );
+          });
         });
-      });
 
-      const newUrls = await Promise.all(uploadPromises);
-      // Updating here state with new document URLs, respecting the platform-specific limits
-      setDocumentUrls((currentUrls) =>
-        [...currentUrls, ...newUrls].slice(0, maxDocumentsAllowed)
-      );
+        const newUrls = await Promise.all(uploadPromises);
+        // Updating the state with new document URLs, respecting the platform-specific limits
+        setDocumentUrls((currentUrls) =>
+          [...currentUrls, ...newUrls].slice(0, maxDocumentsAllowed)
+        );
+      }
     } catch (error) {
       console.error("Error during document upload:", error);
       Alert.alert("Upload Error", "There was an error uploading the document.");
     } finally {
-      setIsUploading(false); // Ensuring also to stop the loading indicator
+      setIsUploading(false); // Ensuring to stop the loading indicator
     }
   };
 

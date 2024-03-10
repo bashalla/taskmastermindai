@@ -271,6 +271,11 @@ const CreateTask = ({ navigation, route }) => {
     } catch (err) {
       console.error("Error picking documents:", err);
     }
+
+    // Making sure in case I cancel the upload of the document, it will not be added to the list
+    setDocuments((currentDocuments) =>
+      currentDocuments.filter((doc) => doc && doc.uri)
+    );
   };
 
   // Function to handle date change
